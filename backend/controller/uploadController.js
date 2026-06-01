@@ -1,7 +1,8 @@
 const cloudinary = require("../config/cloudinaryConfig");
 const multer = require("multer");
+const streamifier = require("streamifier");
 
-// Multer: keep file in memory (no disk storage needed)
+// Multer: keep file in memory
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
@@ -19,7 +20,29 @@ const upload = multer({
   fileFilter,
 }).single("file");
 
-exports.uploadMiddleware = upload;
+// Wrap multer so its errors are forwarded as proper HTTP responses
+// instead of crashing or hanging the request
+exports.uploadMiddleware = (req, res, next) => {
+  upload(req, res, (err) => {
+    if (!err) return next();
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({ success: false, message: "File too large. Max size is 10MB." });
+    }
+    return res.status(400).json({ success: false, message: err.message || "File upload error." });
+  });
+};
+
+// Upload buffer directly to Cloudinary via upload_stream (no base64 conversion).
+// This is the correct approach for multer memoryStorage — avoids the ~33% size
+// overhead of base64 strings and works reliably for both images and PDFs.
+const uploadToCloudinary = (buffer, options) =>
+  new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (error) return reject(error);
+      resolve(result);
+    });
+    streamifier.createReadStream(buffer).pipe(stream);
+  });
 
 exports.uploadMedicalFile = async (req, res) => {
   try {
@@ -27,24 +50,13 @@ exports.uploadMedicalFile = async (req, res) => {
       return res.status(400).json({ success: false, message: "No file uploaded" });
     }
 
-    // Convert buffer to base64 for Cloudinary
-    const base64Data = req.file.buffer.toString("base64");
-    const dataUri = `data:${req.file.mimetype};base64,${base64Data}`;
-
-    // Fix: do NOT mix resource_type:"auto" with a forced format.
-    // For PDFs use resource_type:"raw" so Cloudinary stores it as-is.
-    // For images use resource_type:"image" (default). 
     const isPdf = req.file.mimetype === "application/pdf";
 
-    const uploadOptions = {
+    const result = await uploadToCloudinary(req.file.buffer, {
       folder: `healthhub/medical-reports/${req.user.id}`,
       public_id: `report_${Date.now()}`,
-      use_filename: true,
-      // resource_type must match the file type; mixing "auto" + explicit format causes failures
       resource_type: isPdf ? "raw" : "image",
-    };
-
-    const result = await cloudinary.uploader.upload(dataUri, uploadOptions);
+    });
 
     return res.status(200).json({
       success: true,
