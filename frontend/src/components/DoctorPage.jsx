@@ -70,14 +70,24 @@ const DoctorPage = () => {
         originalApp: app,
       }));
 
-      const formattedPatientList = accepted.map((app) => ({
-        id: app.patientId?._id,
-        name: app.patientId?.name || 'Unknown Patient',
-        symptoms: app.reason,
-        status: app.status,
-        meetLink: app.meetLink || null,
-        appointmentId: app._id,
-      }));
+      // Deduplicate by patientId — a patient may have sent multiple requests
+      // to the same doctor; in the chat list they should appear only once.
+      // We keep the most recent accepted appointment's meetLink per patient.
+      const seenPatientIds = new Set();
+      const formattedPatientList = accepted.reduce((acc, app) => {
+        const patientKey = app.patientId?._id?.toString();
+        if (!patientKey || seenPatientIds.has(patientKey)) return acc;
+        seenPatientIds.add(patientKey);
+        acc.push({
+          id: app.patientId?._id,
+          name: app.patientId?.name || 'Unknown Patient',
+          symptoms: app.reason,
+          status: app.status,
+          meetLink: app.meetLink || null,
+          appointmentId: app._id,
+        });
+        return acc;
+      }, []);
 
       setPendingRequests(formattedPendingRequests);
       setPatients(formattedPatientList);

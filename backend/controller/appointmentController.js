@@ -12,6 +12,75 @@ const getResend = () => {
   return resend;
 };
 
+// Helper: send email via Resend
+const sendEmail = async ({ to, subject, html }) => {
+  const emailService = getResend();
+  if (!emailService) return; // silently skip if no API key configured
+  // Use Resend's default sandbox sender so no custom domain verification is needed.
+  // In production, replace with your verified domain e.g. "HealthHub <noreply@yourdomain.com>"
+  const fromAddress = process.env.EMAIL_FROM || "HealthHub <onboarding@resend.dev>";
+  try {
+    await emailService.emails.send({ from: fromAddress, to, subject, html });
+  } catch (err) {
+    console.error("Email send error:", err.message);
+  }
+};
+
+// Schedule a pre-meeting reminder email 5 minutes before the appointment
+const scheduleReminderEmail = (appointment) => {
+  if (!appointment.appointmentDate) return;
+  if (!appointment.patientId?.email) return;
+
+  const appointmentTime = new Date(appointment.appointmentDate).getTime();
+  const reminderTime = appointmentTime - 5 * 60 * 1000; // 5 minutes before
+  const now = Date.now();
+  const delay = reminderTime - now;
+
+  if (delay <= 0) return; // appointment already past or within 5 minutes
+
+  setTimeout(async () => {
+    try {
+      // Re-fetch appointment to make sure it wasn't cancelled
+      const freshApp = await Appointment.findById(appointment._id)
+        .populate("patientId", "name email")
+        .populate("doctorId", "name");
+
+      if (!freshApp || freshApp.status !== "accepted") return;
+
+      await sendEmail({
+        to: freshApp.patientId.email,
+        subject: "⏰ Reminder: Your Video Appointment Starts in 5 Minutes — HealthHub",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: #1F3A4B; padding: 24px; border-radius: 12px; text-align: center;">
+              <h1 style="color: #C2F84F; font-style: italic; margin: 0;">HealthHub</h1>
+            </div>
+            <div style="padding: 24px; background: white; border-radius: 0 0 12px 12px; border: 1px solid #e5e7eb;">
+              <h2 style="color: #1F3A4B;">Hi ${freshApp.patientId.name},</h2>
+              <p style="color: #555; line-height: 1.6;">
+                Your video appointment with <strong>Dr. ${freshApp.doctorId?.name || "your doctor"}</strong> 
+                starts in <strong style="color: #476407;">5 minutes</strong>!
+              </p>
+              <div style="background: #FAFDEE; border-left: 4px solid #C2F84F; padding: 16px; border-radius: 4px; margin: 20px 0;">
+                <strong>Reason:</strong> ${freshApp.reason}<br><br>
+                <strong>Join your video call now:</strong><br>
+                <a href="${freshApp.meetLink}" style="display: inline-block; margin-top: 10px; padding: 12px 24px; background: #1F3A4B; color: #C2F84F; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                  Join Video Call →
+                </a>
+              </div>
+              <p style="color: #888; font-size: 14px; margin-top: 24px;">
+                Best regards,<br><strong>The HealthHub Team</strong>
+              </p>
+            </div>
+          </div>
+        `,
+      });
+    } catch (err) {
+      console.error("Reminder email error:", err.message);
+    }
+  }, delay);
+};
+
 // Book appointment controller
 const bookAppointment = async (req, res) => {
   try {
@@ -38,7 +107,9 @@ const bookAppointment = async (req, res) => {
   }
 };
 
-// Get appointments for doctor
+// Get appointments for doctor — returns all appointments but the frontend
+// must deduplicate patients in the "My Patients" chat list.
+// We also provide a deduplicated patients list for convenience.
 const getDoctorAppointments = async (req, res) => {
   try {
     console.log("--- getDoctorAppointments Called ---");
@@ -55,7 +126,8 @@ const getDoctorAppointments = async (req, res) => {
   }
 };
 
-// Get all accepted doctors for the authenticated patient
+// Get all accepted appointments for the authenticated patient
+// Deduplicates by doctorId so patient chat list shows each doctor once
 const getPatientAcceptedDoctors = async (req, res) => {
   try {
     const patientId = req.user.id;
@@ -68,14 +140,23 @@ const getPatientAcceptedDoctors = async (req, res) => {
         path: "doctorId",
         select: "name specialization",
       })
+      .sort({ updatedAt: -1 }) // newest first so we keep the latest meetLink per doctor
       .exec();
+
+    // Deduplicate by doctorId — keep the first (newest) appointment per doctor
+    const seenDoctors = new Set();
+    const deduplicatedAppointments = acceptedAppointments.filter((app) => {
+      const doctorKey = app.doctorId?._id?.toString();
+      if (!doctorKey || seenDoctors.has(doctorKey)) return false;
+      seenDoctors.add(doctorKey);
+      return true;
+    });
 
     return res.status(200).json({
       success: true,
       message: "Accepted doctors retrieved successfully.",
-      data: acceptedAppointments,
+      data: deduplicatedAppointments,
     });
-
   } catch (error) {
     console.error("Error fetching accepted doctors for patient:", error);
     res.status(500).json({
@@ -109,44 +190,54 @@ const updateAppointmentStatus = async (req, res) => {
       .populate("patientId", "name email")
       .populate("doctorId", "name email");
 
-    // Send email notification to patient (Issue 11.3)
+    if (!appointment) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+
+    // Send email notification to patient when accepted or rejected
     if ((status === "accepted" || status === "rejected") && appointment?.patientId?.email) {
-      const emailService = getResend();
-      if (emailService) {
-        try {
-          const isAccepted = status === "accepted";
-          await emailService.emails.send({
-            from: "HealthHub <noreply@yourdomain.com>",
-            to: appointment.patientId.email,
-            subject: isAccepted
-              ? `Appointment Confirmed ✅ — HealthHub`
-              : `Appointment Update — HealthHub`,
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <div style="background: #1F3A4B; padding: 24px; border-radius: 12px; text-align: center;">
-                  <h1 style="color: #C2F84F; font-style: italic; margin: 0;">HealthHub</h1>
-                </div>
-                <div style="padding: 24px; background: white; border-radius: 0 0 12px 12px; border: 1px solid #e5e7eb;">
-                  <h2 style="color: #1F3A4B;">Hi ${appointment.patientId.name},</h2>
-                  <p style="color: #555; line-height: 1.6;">
-                    Your appointment with <strong>Dr. ${appointment.doctorId?.name || "your doctor"}</strong> has been 
-                    <strong style="color: ${isAccepted ? "#476407" : "#dc2626"};">${status}</strong>.
-                  </p>
-                  <div style="background: #FAFDEE; border-left: 4px solid #C2F84F; padding: 16px; border-radius: 4px; margin: 20px 0;">
-                    <strong>Reason:</strong> ${appointment.reason}
-                    ${isAccepted && appointment.meetLink ? `<br><br><strong>Video Call Link:</strong> <a href="${appointment.meetLink}" style="color: #476407;">${appointment.meetLink}</a>` : ""}
-                  </div>
-                  <p style="color: #888; font-size: 14px; margin-top: 24px;">
-                    Best regards,<br><strong>The HealthHub Team</strong>
-                  </p>
-                </div>
+      const isAccepted = status === "accepted";
+      await sendEmail({
+        to: appointment.patientId.email,
+        subject: isAccepted
+          ? `Appointment Confirmed ✅ — HealthHub`
+          : `Appointment Update — HealthHub`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: #1F3A4B; padding: 24px; border-radius: 12px; text-align: center;">
+              <h1 style="color: #C2F84F; font-style: italic; margin: 0;">HealthHub</h1>
+            </div>
+            <div style="padding: 24px; background: white; border-radius: 0 0 12px 12px; border: 1px solid #e5e7eb;">
+              <h2 style="color: #1F3A4B;">Hi ${appointment.patientId.name},</h2>
+              <p style="color: #555; line-height: 1.6;">
+                Your appointment with <strong>Dr. ${appointment.doctorId?.name || "your doctor"}</strong> has been 
+                <strong style="color: ${isAccepted ? "#476407" : "#dc2626"};">${status}</strong>.
+              </p>
+              <div style="background: #FAFDEE; border-left: 4px solid #C2F84F; padding: 16px; border-radius: 4px; margin: 20px 0;">
+                <strong>Reason:</strong> ${appointment.reason}
+                ${
+                  isAccepted && appointment.meetLink
+                    ? `<br><br>
+                       <strong>Your Video Call Link:</strong><br>
+                       <a href="${appointment.meetLink}" style="display: inline-block; margin-top: 10px; padding: 12px 24px; background: #1F3A4B; color: #C2F84F; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                         Join Video Call →
+                       </a>
+                       <br><br>
+                       <span style="font-size: 12px; color: #888;">You will also receive a reminder email 5 minutes before your appointment.</span>`
+                    : ""
+                }
               </div>
-            `,
-          });
-        } catch (emailErr) {
-          console.error("Email notification error:", emailErr.message);
-          // Don't fail the request if email fails
-        }
+              <p style="color: #888; font-size: 14px; margin-top: 24px;">
+                Best regards,<br><strong>The HealthHub Team</strong>
+              </p>
+            </div>
+          </div>
+        `,
+      });
+
+      // Schedule 5-minute reminder if appointment was accepted and has a date
+      if (isAccepted) {
+        scheduleReminderEmail(appointment);
       }
     }
 

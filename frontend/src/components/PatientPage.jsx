@@ -60,6 +60,7 @@ const PatientPage = () => {
     }
   }, []);
 
+  // Decode token and set userId once on mount
   useEffect(() => {
     const token = localStorage.getItem('userToken');
     if (token) {
@@ -67,8 +68,7 @@ const PatientPage = () => {
         const decoded = jwtDecode(token);
         setUserName(decoded.name || 'User');
         setUserSubscription(decoded.subscription || 'Free');
-        const patientId = decoded.id;
-        setUserId(patientId);
+        setUserId(decoded.id);
         fetchDoctors(token);
       } catch (err) {
         navigate('/login');
@@ -76,6 +76,12 @@ const PatientPage = () => {
     } else {
       navigate('/login');
     }
+  }, [navigate, fetchDoctors]);
+
+  // Socket listeners in a separate effect that re-runs when userId is available
+  // so the closures capture the correct userId value, not null.
+  useEffect(() => {
+    if (!userId) return; // wait until userId is set
 
     socket.on('previousMessages', (prevMessages) => {
       const formattedMessages = prevMessages.map((msg) => ({
@@ -109,7 +115,7 @@ const PatientPage = () => {
       socket.off('previousMessages');
       socket.off('receiveMessage');
     };
-  }, [navigate, userId, fetchDoctors]);
+  }, [userId]);
 
   const handleSelectDoctor = (doctor) => {
     const roomId = [userId, doctor.id].sort().join('_');

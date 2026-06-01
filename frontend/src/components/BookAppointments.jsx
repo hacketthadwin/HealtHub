@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
@@ -13,6 +13,28 @@ const SPECIALIZATIONS = [
   'Oncologist', 'ENT Specialist', 'Ophthalmologist', 'Urologist',
 ];
 
+// Fix Issue 4: PageWrapper is defined OUTSIDE the component so it is never
+// recreated on re-render. When it was inside BookAppointments, every state
+// change (e.g. typing in the textarea) caused React to see a brand-new
+// component type and fully unmount/remount the subtree — losing focus.
+const PageWrapper = ({ children, isCenter = false, onBack }) => (
+  <div className="min-h-screen w-full bg-[#FAFDEE] dark:bg-[#0a111a] transition-all duration-500 font-sans relative overflow-x-hidden pt-24 pb-24 px-4 md:px-6">
+    <div className="fixed inset-0 pointer-events-none opacity-40 dark:opacity-20">
+      <div className="absolute top-[-5%] left-[-5%] w-[45%] h-[45%] bg-[#C2F84F] rounded-full blur-[140px]" />
+      <div className="absolute bottom-[-5%] right-[-5%] w-[35%] h-[35%] bg-cyan-400 rounded-full blur-[140px]" />
+    </div>
+    <button
+      onClick={onBack}
+      className="absolute top-6 left-6 z-20 group flex items-center gap-2.5 px-4 py-2 rounded-xl border border-[#1F3A4B]/20 dark:border-white/10 bg-white/50 dark:bg-[#1F3A4B]/20 backdrop-blur-md text-[#1F3A4B] dark:text-[#FAFDEE] font-bold text-xs md:text-sm tracking-widest transition-all hover:border-[#1F3A4B] dark:hover:border-[#C2F84F] hover:shadow-lg"
+    >
+      <ArrowLeft size={16} /><span>BACK</span>
+    </button>
+    <div className={`max-w-5xl mx-auto relative z-10 ${isCenter ? 'flex flex-col items-center justify-center min-h-[70vh]' : 'mt-6 md:mt-10'}`}>
+      {children}
+    </div>
+  </div>
+);
+
 const BookAppointments = () => {
   const navigate = useNavigate();
   const [doctorsList, setDoctorsList] = useState([]);
@@ -22,7 +44,9 @@ const BookAppointments = () => {
   const [error, setError] = useState(null);
   const [filterSpec, setFilterSpec] = useState('All');
 
-  const fetchDoctors = async () => {
+  const goBack = useCallback(() => navigate('/patient'), [navigate]);
+
+  const fetchDoctors = useCallback(async () => {
     try {
       const token = localStorage.getItem('userToken');
       if (!token) throw new Error('Authentication required.');
@@ -42,14 +66,21 @@ const BookAppointments = () => {
       setError(errorMessage);
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { fetchDoctors(); }, []);
+  useEffect(() => { fetchDoctors(); }, [fetchDoctors]);
 
-  const handleReasonChange = (id, value) => setReasons((prev) => ({ ...prev, [id]: value }));
-  const handleDateChange = (id, value) => setAppointmentDates((prev) => ({ ...prev, [id]: value }));
+  // Fix Issue 4: use useCallback so these handlers have stable references
+  // and don't cause unnecessary re-renders of child elements.
+  const handleReasonChange = useCallback((id, value) => {
+    setReasons((prev) => ({ ...prev, [id]: value }));
+  }, []);
 
-  const handleBook = async (doctor) => {
+  const handleDateChange = useCallback((id, value) => {
+    setAppointmentDates((prev) => ({ ...prev, [id]: value }));
+  }, []);
+
+  const handleBook = useCallback(async (doctor) => {
     const reason = reasons[doctor._id]?.trim();
     const appointmentDate = appointmentDates[doctor._id];
     const token = localStorage.getItem('userToken');
@@ -69,33 +100,15 @@ const BookAppointments = () => {
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Booking failed');
     }
-  };
+  }, [reasons, appointmentDates]);
 
   const filteredDoctors = filterSpec === 'All'
     ? doctorsList
     : doctorsList.filter((d) => d.specialization === filterSpec);
 
-  const PageWrapper = ({ children, isCenter = false }) => (
-    <div className="min-h-screen w-full bg-[#FAFDEE] dark:bg-[#0a111a] transition-all duration-500 font-sans relative overflow-x-hidden pt-24 pb-24 px-4 md:px-6">
-      <div className="fixed inset-0 pointer-events-none opacity-40 dark:opacity-20">
-        <div className="absolute top-[-5%] left-[-5%] w-[45%] h-[45%] bg-[#C2F84F] rounded-full blur-[140px]" />
-        <div className="absolute bottom-[-5%] right-[-5%] w-[35%] h-[35%] bg-cyan-400 rounded-full blur-[140px]" />
-      </div>
-      <button
-        onClick={() => navigate('/patient')}
-        className="absolute top-6 left-6 z-20 group flex items-center gap-2.5 px-4 py-2 rounded-xl border border-[#1F3A4B]/20 dark:border-white/10 bg-white/50 dark:bg-[#1F3A4B]/20 backdrop-blur-md text-[#1F3A4B] dark:text-[#FAFDEE] font-bold text-xs md:text-sm tracking-widest transition-all hover:border-[#1F3A4B] dark:hover:border-[#C2F84F] hover:shadow-lg"
-      >
-        <ArrowLeft size={16} /><span>BACK</span>
-      </button>
-      <div className={`max-w-5xl mx-auto relative z-10 ${isCenter ? 'flex flex-col items-center justify-center min-h-[70vh]' : 'mt-6 md:mt-10'}`}>
-        {children}
-      </div>
-    </div>
-  );
-
   if (loading) {
     return (
-      <PageWrapper isCenter>
+      <PageWrapper isCenter onBack={goBack}>
         <Activity className="animate-spin text-[#1F3A4B] dark:text-[#C2F84F] mb-4" size={48} />
         <p className="text-[#1F3A4B] dark:text-[#FAFDEE] font-black italic uppercase tracking-widest text-xs sm:text-base">Syncing Staff Log...</p>
       </PageWrapper>
@@ -104,7 +117,7 @@ const BookAppointments = () => {
 
   if (error) {
     return (
-      <PageWrapper isCenter>
+      <PageWrapper isCenter onBack={goBack}>
         <div className="bg-white dark:bg-white/5 backdrop-blur-xl p-8 rounded-[2rem] sm:rounded-[3rem] border-2 border-[#1F3A4B]/10 shadow-3xl text-center max-w-md mx-auto w-full">
           <AlertCircle className="text-rose-600 mx-auto mb-4" size={48} />
           <p className="text-[#1F3A4B] dark:text-[#FAFDEE] text-lg font-bold mb-6 italic">{error}</p>
@@ -117,7 +130,7 @@ const BookAppointments = () => {
   }
 
   return (
-    <PageWrapper>
+    <PageWrapper onBack={goBack}>
       <Toaster position="top-right" toastOptions={{ duration: 3000, style: { background: '#1F3A4B', color: '#FAFDEE', borderRadius: '20px' } }} />
 
       <div className="text-center mb-10 sm:mb-14">
@@ -129,7 +142,7 @@ const BookAppointments = () => {
         </p>
       </div>
 
-      {/* Specialization filter (Issue 11.1) */}
+      {/* Specialization filter */}
       <div className="flex flex-wrap gap-2 mb-8 justify-center">
         {SPECIALIZATIONS.slice(0, 8).map((spec) => (
           <button
@@ -153,94 +166,108 @@ const BookAppointments = () => {
           </div>
         ) : (
           filteredDoctors.map((doctor) => (
-            <div
+            <DoctorCard
               key={doctor._id}
-              className="bg-white dark:bg-white/5 backdrop-blur-xl rounded-[2rem] sm:rounded-[4rem] p-6 sm:p-10 border-2 border-[#1F3A4B]/5 dark:border-white/5 shadow-3xl hover:border-[#C2F84F] transition-all group overflow-hidden relative"
-            >
-              <Stethoscope className="absolute right-[-10px] top-[-10px] opacity-[0.03] dark:opacity-[0.07] transition-all group-hover:rotate-12 hidden md:block" size={240} />
-
-              <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 sm:gap-8 relative z-10">
-                {/* Doctor info */}
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 sm:gap-4 mb-2">
-                    <div className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-[#1F3A4B] text-[#C2F84F] shadow-lg shrink-0">
-                      <Calendar size={20} className="sm:w-6 sm:h-6" />
-                    </div>
-                    <h3 className="text-xl sm:text-3xl font-black italic tracking-tight text-[#1F3A4B] dark:text-[#FAFDEE] uppercase leading-none">
-                      {doctor.name.startsWith('Dr. ') ? doctor.name : `Dr. ${doctor.name}`}
-                    </h3>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 mt-3 sm:ml-12">
-                    {doctor.specialization && (
-                      <span className="text-[9px] sm:text-[10px] font-black uppercase text-[#1F3A4B]/60 dark:text-[#FAFDEE]/60 tracking-widest bg-[#1F3A4B]/5 dark:bg-white/5 py-1 px-3 rounded-full border border-[#1F3A4B]/10">
-                        {doctor.specialization}
-                      </span>
-                    )}
-                    {doctor.experience && (
-                      <span className="text-[9px] sm:text-[10px] font-black uppercase text-[#1F3A4B]/60 dark:text-[#FAFDEE]/60 tracking-widest bg-[#1F3A4B]/5 dark:bg-white/5 py-1 px-3 rounded-full border border-[#1F3A4B]/10">
-                        {doctor.experience} yrs exp
-                      </span>
-                    )}
-                    {doctor.availability && (
-                      <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-widest py-1 px-3 rounded-full flex items-center gap-1 ${
-                        doctor.availability === 'Available' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' :
-                        doctor.availability === 'Busy' ? 'bg-amber-50 text-amber-700' :
-                        'bg-rose-50 text-rose-700'
-                      }`}>
-                        <CheckCircle size={10} />
-                        {doctor.availability}
-                      </span>
-                    )}
-                  </div>
-
-                  {doctor.bio && (
-                    <p className="text-xs text-[#1F3A4B]/60 dark:text-[#FAFDEE]/60 mt-3 sm:ml-12 italic leading-relaxed max-w-sm">{doctor.bio}</p>
-                  )}
-                </div>
-
-                {/* Booking form */}
-                <div className="flex-1 space-y-3 sm:space-y-4">
-                  <p className="text-[9px] sm:text-[10px] font-black uppercase text-[#1F3A4B] dark:text-[#FAFDEE] tracking-widest leading-none">Consultation Reason</p>
-                  <textarea
-                    className="w-full p-4 sm:p-5 bg-[#1F3A4B]/5 dark:bg-white/5 rounded-[1.5rem] sm:rounded-[2rem] text-[#1F3A4B] dark:text-white font-bold outline-none border-2 border-transparent focus:border-[#C2F84F] transition-all placeholder-[#1F3A4B]/20 dark:placeholder-white/20 text-xs sm:text-sm italic resize-none"
-                    rows={2}
-                    placeholder="Brief clinical context..."
-                    value={reasons[doctor._id] || ''}
-                    onChange={(e) => handleReasonChange(doctor._id, e.target.value)}
-                  />
-
-                  {/* Issue 11.2: Date-time picker */}
-                  <div className="space-y-1">
-                    <p className="text-[9px] sm:text-[10px] font-black uppercase text-[#1F3A4B] dark:text-[#FAFDEE] tracking-widest leading-none flex items-center gap-1.5">
-                      <Clock size={10} /> Preferred Date & Time
-                    </p>
-                    <input
-                      type="datetime-local"
-                      className="w-full p-3 sm:p-4 bg-[#1F3A4B]/5 dark:bg-white/5 rounded-[1.5rem] text-[#1F3A4B] dark:text-white font-bold outline-none border-2 border-transparent focus:border-[#C2F84F] transition-all text-xs sm:text-sm"
-                      value={appointmentDates[doctor._id] || ''}
-                      onChange={(e) => handleDateChange(doctor._id, e.target.value)}
-                      min={new Date().toISOString().slice(0, 16)}
-                    />
-                  </div>
-                </div>
-
-                <div className="lg:w-fit w-full flex justify-end">
-                  <button
-                    onClick={() => handleBook(doctor)}
-                    className="w-full lg:w-auto group flex items-center justify-center gap-3 px-8 sm:px-10 py-4 sm:py-5 bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] font-black italic rounded-[1.5rem] sm:rounded-[2.5rem] hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-[#1F3A4B]/30 leading-none text-sm sm:text-base tracking-wide"
-                  >
-                    <Send size={18} className="transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
-                    Request Appointment
-                  </button>
-                </div>
-              </div>
-            </div>
+              doctor={doctor}
+              reason={reasons[doctor._id] || ''}
+              appointmentDate={appointmentDates[doctor._id] || ''}
+              onReasonChange={handleReasonChange}
+              onDateChange={handleDateChange}
+              onBook={handleBook}
+            />
           ))
         )}
       </div>
     </PageWrapper>
   );
 };
+
+// Fix Issue 4: Extract DoctorCard as a separate stable component.
+// When it was inline (inside .map()), every parent state update re-created
+// the element trees including the textarea, resetting focus.
+// As a named component with stable props, React reconciles it correctly.
+const DoctorCard = React.memo(({ doctor, reason, appointmentDate, onReasonChange, onDateChange, onBook }) => (
+  <div
+    className="bg-white dark:bg-white/5 backdrop-blur-xl rounded-[2rem] sm:rounded-[4rem] p-6 sm:p-10 border-2 border-[#1F3A4B]/5 dark:border-white/5 shadow-3xl hover:border-[#C2F84F] transition-all group overflow-hidden relative"
+  >
+    <Stethoscope className="absolute right-[-10px] top-[-10px] opacity-[0.03] dark:opacity-[0.07] transition-all group-hover:rotate-12 hidden md:block" size={240} />
+
+    <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 sm:gap-8 relative z-10">
+      {/* Doctor info */}
+      <div className="flex-1">
+        <div className="flex items-center gap-3 sm:gap-4 mb-2">
+          <div className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-[#1F3A4B] text-[#C2F84F] shadow-lg shrink-0">
+            <Calendar size={20} className="sm:w-6 sm:h-6" />
+          </div>
+          <h3 className="text-xl sm:text-3xl font-black italic tracking-tight text-[#1F3A4B] dark:text-[#FAFDEE] uppercase leading-none">
+            {doctor.name.startsWith('Dr. ') ? doctor.name : `Dr. ${doctor.name}`}
+          </h3>
+        </div>
+
+        <div className="flex flex-wrap gap-2 mt-3 sm:ml-12">
+          {doctor.specialization && (
+            <span className="text-[9px] sm:text-[10px] font-black uppercase text-[#1F3A4B]/60 dark:text-[#FAFDEE]/60 tracking-widest bg-[#1F3A4B]/5 dark:bg-white/5 py-1 px-3 rounded-full border border-[#1F3A4B]/10">
+              {doctor.specialization}
+            </span>
+          )}
+          {doctor.experience && (
+            <span className="text-[9px] sm:text-[10px] font-black uppercase text-[#1F3A4B]/60 dark:text-[#FAFDEE]/60 tracking-widest bg-[#1F3A4B]/5 dark:bg-white/5 py-1 px-3 rounded-full border border-[#1F3A4B]/10">
+              {doctor.experience} yrs exp
+            </span>
+          )}
+          {doctor.availability && (
+            <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-widest py-1 px-3 rounded-full flex items-center gap-1 ${
+              doctor.availability === 'Available' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' :
+              doctor.availability === 'Busy' ? 'bg-amber-50 text-amber-700' :
+              'bg-rose-50 text-rose-700'
+            }`}>
+              <CheckCircle size={10} />
+              {doctor.availability}
+            </span>
+          )}
+        </div>
+
+        {doctor.bio && (
+          <p className="text-xs text-[#1F3A4B]/60 dark:text-[#FAFDEE]/60 mt-3 sm:ml-12 italic leading-relaxed max-w-sm">{doctor.bio}</p>
+        )}
+      </div>
+
+      {/* Booking form */}
+      <div className="flex-1 space-y-3 sm:space-y-4">
+        <p className="text-[9px] sm:text-[10px] font-black uppercase text-[#1F3A4B] dark:text-[#FAFDEE] tracking-widest leading-none">Consultation Reason</p>
+        <textarea
+          className="w-full p-4 sm:p-5 bg-[#1F3A4B]/5 dark:bg-white/5 rounded-[1.5rem] sm:rounded-[2rem] text-[#1F3A4B] dark:text-white font-bold outline-none border-2 border-transparent focus:border-[#C2F84F] transition-all placeholder-[#1F3A4B]/20 dark:placeholder-white/20 text-xs sm:text-sm italic resize-none"
+          rows={2}
+          placeholder="Brief clinical context..."
+          value={reason}
+          onChange={(e) => onReasonChange(doctor._id, e.target.value)}
+        />
+
+        <div className="space-y-1">
+          <p className="text-[9px] sm:text-[10px] font-black uppercase text-[#1F3A4B] dark:text-[#FAFDEE] tracking-widest leading-none flex items-center gap-1.5">
+            <Clock size={10} /> Preferred Date & Time
+          </p>
+          <input
+            type="datetime-local"
+            className="w-full p-3 sm:p-4 bg-[#1F3A4B]/5 dark:bg-white/5 rounded-[1.5rem] text-[#1F3A4B] dark:text-white font-bold outline-none border-2 border-transparent focus:border-[#C2F84F] transition-all text-xs sm:text-sm"
+            value={appointmentDate}
+            onChange={(e) => onDateChange(doctor._id, e.target.value)}
+            min={new Date().toISOString().slice(0, 16)}
+          />
+        </div>
+      </div>
+
+      <div className="lg:w-fit w-full flex justify-end">
+        <button
+          onClick={() => onBook(doctor)}
+          className="w-full lg:w-auto group flex items-center justify-center gap-3 px-8 sm:px-10 py-4 sm:py-5 bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] font-black italic rounded-[1.5rem] sm:rounded-[2.5rem] hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-[#1F3A4B]/30 leading-none text-sm sm:text-base tracking-wide"
+        >
+          <Send size={18} className="transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
+          Request Appointment
+        </button>
+      </div>
+    </div>
+  </div>
+));
 
 export default BookAppointments;

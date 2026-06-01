@@ -31,13 +31,20 @@ exports.uploadMedicalFile = async (req, res) => {
     const base64Data = req.file.buffer.toString("base64");
     const dataUri = `data:${req.file.mimetype};base64,${base64Data}`;
 
-    const result = await cloudinary.uploader.upload(dataUri, {
+    // Fix: do NOT mix resource_type:"auto" with a forced format.
+    // For PDFs use resource_type:"raw" so Cloudinary stores it as-is.
+    // For images use resource_type:"image" (default). 
+    const isPdf = req.file.mimetype === "application/pdf";
+
+    const uploadOptions = {
       folder: `healthhub/medical-reports/${req.user.id}`,
-      resource_type: "auto",
-      format: req.file.mimetype === "application/pdf" ? "pdf" : undefined,
       public_id: `report_${Date.now()}`,
       use_filename: true,
-    });
+      // resource_type must match the file type; mixing "auto" + explicit format causes failures
+      resource_type: isPdf ? "raw" : "image",
+    };
+
+    const result = await cloudinary.uploader.upload(dataUri, uploadOptions);
 
     return res.status(200).json({
       success: true,
