@@ -7,19 +7,19 @@ const values = [
     icon: Shield,
     title: "Absolute Privacy",
     description: "Every patient profile and medical private chat is fully protected behind secure login locks.",
-    cornerStyle: "sm:translate-x-2 sm:rounded-br-[2px]",
+    cornerStyle: " sm:rounded-br-[2px]",
   },
   {
     icon: Zap,
     title: "Instant Connections",
     description: "No more waiting time or busy phone lines. Book open slots immediately with live status alerts.",
-    cornerStyle: "sm:-translate-x-2 sm:rounded-br-[2px]",
+    cornerStyle: " sm:rounded-br-[2px]",
   },
   {
     icon: Smartphone,
     title: "Mobile Friendly",
     description: "Manage appointments, log records, and talk with doctors comfortably from any mobile device.",
-    cornerStyle: "sm:translate-x-2 sm:rounded-tr-[2px]",
+    cornerStyle: " sm:rounded-br-[2px]",
   }
 ];
 
@@ -106,12 +106,12 @@ export default function AboutUs() {
               Whether you need quick chat answers or system dashboard panels for an entire hospital infrastructure, HealthHub provides a smooth experience across every role.
             </p>
           </div>
-          <div className="rounded-3xl bg-gradient-to-br from-[#C2F84F] to-[#C2F84F]/5 border border-black/5 dark:border-white/10 p-6 flex flex-col justify-center h-full min-h-[140px]">
-            <span className="text-4xl font-black italic uppercase tracking-tighter text-[#1F3A4B]">100%</span>
-            <p className="text-sm font-bold uppercase tracking-tight text-[#1F3A4B] mt-1">
+          <div className="rounded-3xl bg-gradient-to-br from-emerald-800 to-emerald-800/40 dark:from-[#C2F84F] dark:to-[#C2F84F]/40 border border-black/5 dark:border-white/5 p-6 flex flex-col justify-center h-full min-h-[140px]">
+            <span className="text-4xl font-black italic uppercase tracking-tighter text-white dark:text-[#1F3A4B]">100%</span>
+            <p className="text-sm font-bold uppercase tracking-tight text-white dark:text-[#1F3A4B] mt-1">
               Digital System Setup
             </p>
-            <p className="text-xs sm:text-sm font-medium text-[#1F3A4B]/70 leading-normal mt-1">
+            <p className="text-xs sm:text-sm font-medium text-white dark:text-[#1F3A4B] leading-normal mt-1">
               No paper records needed. Comprehensive clinical dashboards keep data safe and accessible anytime.
             </p>
           </div>
