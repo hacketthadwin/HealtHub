@@ -1,21 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, ArrowRight, Moon, Sun, Home, LogOut } from 'lucide-react';
 
 const navItems = [
-  { name: 'Pricing', href: '/pricing' },
+  { name: 'Features', scrollTo: 'features' },
+  { name: 'FAQ',      scrollTo: 'faq' },
   { name: 'About Us', href: '/about' },
-  { name: 'Contact', href: '/contact' },
+  { name: 'Pricing',  href: '/pricing' },
+  { name: 'Contact',  href: '/contact' },
 ];
 
 export default function Header1() {
-  const [isScrolled, setIsScrolled]       = useState(false);
+  // const [isScrolled, setIsScrolled]             = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [theme, setTheme]                 = useState('light');
-  const [isLoggedIn, setIsLoggedIn]       = useState(false);
-  const [dashboardRoute, setDashboardRoute] = useState('/');
+  const [theme, setTheme]                       = useState('light');
+  const [isLoggedIn, setIsLoggedIn]             = useState(false);
+  const [dashboardRoute, setDashboardRoute]     = useState('/');
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem('userToken');
@@ -30,11 +33,11 @@ export default function Header1() {
     }
   }, [location]);
 
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  // useEffect(() => {
+  //   // const handleScroll = () => setIsScrolled(window.scrollY > 20);
+  //   // window.addEventListener('scroll', handleScroll);
+  //   // return () => window.removeEventListener('scroll', handleScroll);
+  // }, []);
 
   useEffect(() => {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -57,16 +60,27 @@ export default function Header1() {
     window.location.href = '/login';
   };
 
+  /* Scroll to a section by id. If not on home page, navigate there first. */
+  const handleScrollNav = (sectionId) => {
+    setIsMobileMenuOpen(false);
+    if (location.pathname === '/') {
+      const el = document.getElementById(sectionId);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      navigate('/');
+      setTimeout(() => {
+        const el = document.getElementById(sectionId);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 350);
+    }
+  };
+
   return (
     <>
       <div className="h-16 sm:h-[72px] lg:h-20" />
 
       <motion.header
-        className={`fixed top-0 left-0 right-0 z-50 border-b-2 transition-all duration-100 font-sans ${
-          isScrolled
-            ? 'bg-[#FAFDEE]/90 dark:bg-[#0a111a]/90 border-[#1F3A4B]/20 dark:border-white/20 backdrop-blur-md shadow-xl'
-            : 'bg-transparent border-transparent'
-        }`}
+        className={`fixed top-0 left-0 right-0 z-50 border-b-2 transition-all duration-100 font-sans ${'bg-[#FAFDEE]/50 dark:bg-[#0a111a]/50 border-[#1F3A4B]/20 dark:border-white/20 backdrop-blur-md shadow-xl'}`}
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
@@ -84,18 +98,37 @@ export default function Header1() {
             </div>
 
             {/* DESKTOP NAV LINKS */}
-            <nav className="hidden lg:flex items-center space-x-6 lg:space-x-10 xl:space-x-16">
+            <nav className="hidden lg:flex items-center space-x-4 lg:space-x-8 xl:space-x-12">
               {navItems.map((item) => {
-                const isActive = location.pathname === item.href;
+                const isActive = item.href && location.pathname === item.href;
+
+                /* Shared text classes — bumped to text-base / text-lg */
+                const baseClass =
+                  'relative py-1 text-base lg:text-lg font-semibold transition-all duration-200';
+                const activeClass =
+                  'text-emerald-600 dark:text-[#C2F84F] opacity-100';
+                const inactiveClass =
+                  'text-[#1F3A4B] dark:text-[#FAFDEE] opacity-70 hover:opacity-100 hover:text-emerald-600 dark:hover:text-[#C2F84F]';
+
+                /* Scroll-to items render as a plain button */
+                if (item.scrollTo) {
+                  return (
+                    <button
+                      key={item.name}
+                      onClick={() => handleScrollNav(item.scrollTo)}
+                      className={`${baseClass} ${inactiveClass} bg-transparent border-none outline-none cursor-pointer`}
+                    >
+                      {item.name}
+                    </button>
+                  );
+                }
+
+                /* Route items render as Link with active underline */
                 return (
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`relative py-1 text-sm lg:text-base font-semibold transition-all duration-200 ${
-                      isActive
-                        ? 'text-emerald-600 dark:text-[#C2F84F] opacity-100'
-                        : 'text-[#1F3A4B] dark:text-[#FAFDEE] opacity-70 hover:opacity-100 hover:text-emerald-600 dark:hover:text-[#C2F84F]'
-                    }`}
+                    className={`${baseClass} ${isActive ? activeClass : inactiveClass}`}
                   >
                     <span>{item.name}</span>
                     {isActive && (
@@ -200,16 +233,31 @@ export default function Header1() {
 
                 {/* Nav links */}
                 {navItems.map((item) => {
-                  const isActive = location.pathname === item.href;
+                  const isActive = item.href && location.pathname === item.href;
+                  const baseClass =
+                    'block py-3 px-5 rounded-xl border text-lg font-semibold transition-all w-full text-left';
+                  const activeClass =
+                    'bg-[#1F3A4B] text-[#C2F84F] dark:bg-[#C2F84F] dark:text-[#1F3A4B] border-transparent';
+                  const inactiveClass =
+                    'bg-transparent border-[#1F3A4B]/10 dark:border-white/10 text-[#1F3A4B] dark:text-[#FAFDEE] hover:bg-[#1F3A4B]/5';
+
+                  if (item.scrollTo) {
+                    return (
+                      <button
+                        key={item.name}
+                        onClick={() => handleScrollNav(item.scrollTo)}
+                        className={`${baseClass} ${inactiveClass}`}
+                      >
+                        {item.name}
+                      </button>
+                    );
+                  }
+
                   return (
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`block py-3 px-5 rounded-xl border text-base font-semibold transition-all ${
-                        isActive
-                          ? 'bg-[#1F3A4B] text-[#C2F84F] dark:bg-[#C2F84F] dark:text-[#1F3A4B] border-transparent'
-                          : 'bg-transparent border-[#1F3A4B]/10 dark:border-white/10 text-[#1F3A4B] dark:text-[#FAFDEE] hover:bg-[#1F3A4B]/5'
-                      }`}
+                      className={`${baseClass} ${isActive ? activeClass : inactiveClass}`}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       {item.name}

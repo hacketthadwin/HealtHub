@@ -184,8 +184,17 @@ const HomePage = () => {
 
         {/* Supporting Layout Core Inclusions */}
         <div className="w-full space-y-16 md:space-y-24 relative z-10">
-          <Feature3 />
-          <Faq3 />
+
+          {/* Features section — id used by header scroll nav */}
+          <div id="features" className="scroll-mt-24">
+            <Feature3 />
+          </div>
+
+          {/* FAQ section — id used by header scroll nav */}
+          <div id="faq" className="scroll-mt-24">
+            <Faq3 />
+          </div>
+
         </div>
 
         <Footer4Col />
