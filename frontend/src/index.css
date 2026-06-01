@@ -1,0 +1,197 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* LIGHT MODE: Deep Navy Background */
+    --body-bg: #FAFDEE;
+    --body-text: #1F3A4B;
+    
+    /* Separated Sparkle logic (for the glow components) */
+    --sparkle-neon: #476407; 
+  }
+
+  .dark {
+    /* DARK MODE: Cream Background */
+    --body-bg: #1F3A4B;
+    --body-text: #FAFDEE;
+    
+    /* Sparkle logic for dark mode */
+    --sparkle-neon: #C2F84F; 
+  }
+
+  body {
+    margin: 0;
+    /* Use the specific Body Background variable */
+    background-color: var(--body-bg);
+    color: var(--body-text);
+    
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    /* Removed conflicting @apply background logic */
+    @apply overflow-x-hidden min-h-screen transition-colors duration-300;
+  }
+}
+  /* Stylish Calendar Customization */
+.react-calendar {
+  border: none;
+  border-radius: 1rem;
+  padding: 1rem;
+  background: #f9fafb;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.react-calendar__navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.react-calendar__navigation button {
+  color: #1f2937;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: background 0.2s ease;
+}
+
+.react-calendar__navigation button:hover {
+  background-color: #e5e7eb;
+  border-radius: 0.5rem;
+}
+
+.react-calendar__tile {
+  padding: 0.75rem 0;
+  text-align: center;
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s ease;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.react-calendar__tile:hover {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.react-calendar__tile--now {
+  background: #facc15 !important;
+  color: #1f2937 !important;
+  font-weight: bold;
+  border-radius: 0.5rem;
+}
+
+.react-calendar__tile--active {
+  background: #10b981 !important;
+  color: white !important;
+}
+
+a {
+  text-decoration: none;
+  color: #065f46;
+  font-weight: 500;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+.bg-white {
+  @apply bg-white/10 backdrop-blur-lg;
+}
+/* Apply blur to the calendar content */
+/* Custom class for your calendar container */
+/* Make internal elements transparent to allow backdrop-blur to show */
+/* This is crucial! Inspect your calendar to find the exact classes */
+.my-custom-calendar-container .react-calendar__navigation,
+.my-custom-calendar-container .react-calendar__viewContainer,
+.my-custom-calendar-container .react-calendar__month-view__weekdays,
+.my-custom-calendar-container .react-calendar__month-view__days,
+.my-custom-calendar-container .react-calendar__tile {
+  background-color: transparent !important; /* Override any default solid backgrounds */
+}
+
+/* Ensure selected/hovered tiles also have transparent backgrounds if you want the blur to show through */
+.my-custom-calendar-container .react-calendar__tile--active,
+.my-custom-calendar-container .react-calendar__tile--hover,
+.my-custom-calendar-container .react-calendar__tile--range,
+.my-custom-calendar-container .react-calendar__tile--rangeEnd,
+.my-custom-calendar-container .react-calendar__tile--rangeStart {
+  background-color: rgba(255, 255, 255, 0.2) !important; /* A very light transparent background for interaction states */
+}
+
+
+/* --- Neon Font Styling --- */
+/* Target all text elements within the calendar */
+.my-custom-calendar-container .react-calendar__navigation__label,
+.my-custom-calendar-container .react-calendar__navigation__arrow,
+.my-custom-calendar-container .react-calendar__month-view__weekdays__weekday abbr, /* abbr for day names */
+.my-custom-calendar-container .react-calendar__tile {
+  color: #00ff00; /* Neon green base color */
+  text-shadow:
+    0 0 5px #00ff00,
+    0 0 10px #00ff00,
+    0 0 15px #00ff00; /* Multiple shadows for glow */
+  font-weight: bold; /* Optional: Make text bolder */
+}
+
+/* Style for hovered dates */
+.my-custom-calendar-container .react-calendar__tile:hover {
+  color: #00ffff; /* Different neon color on hover */
+  text-shadow:
+    0 0 5px #00ffff,
+    0 0 10px #00ffff;
+}
+
+/* Style for selected dates */
+.my-custom-calendar-container .react-calendar__tile--active {
+  color: #ff00ff; /* Another neon color for active state */
+  text-shadow:
+    0 0 5px #ff00ff,
+    0 0 10px #ff00ff;
+}
+
+/* Style for "today" date if different */
+.my-custom-calendar-container .react-calendar__tile--now {
+  color: #ffcc00; /* Neon yellow for today */
+  text-shadow:
+    0 0 5px #ffcc00,
+    0 0 10px #ffcc00;
+}
+@layer base {
+  :root {
+    --sparkle-color: #476407; /* Your Light mode color */
+  }
+
+  .dark {
+    --sparkle-color: #C2F84F; /* Your Dark mode color */
+  }
+}
+
+/* Force high-performance rendering across complex layout sections */
+canvas, 
+.bg-white\/5, 
+header {
+  will-change: transform, opacity;
+  transform: translateZ(0); /* Forces GPU Layering */
+}
+
+/* Eliminate heavy repaint drag on smooth scroll implementations */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; /* Smooth momentum scrolling for iOS */
+}
