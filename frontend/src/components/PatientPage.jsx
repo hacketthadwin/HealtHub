@@ -149,7 +149,7 @@ const PatientPage = () => {
         const { data } = await axios.post(
           `${API_URL}/api/v1/upload/medical`,
           formData,
-          { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         socket.emit('sendMessage', {
           roomId: selectedDoctor.roomId,
