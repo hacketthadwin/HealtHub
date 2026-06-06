@@ -1,5 +1,5 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React, {useEffect} from 'react';
+import { Routes, Route , useLocation} from 'react-router-dom';
 import HomePage from './components/HomePage';
 import Login from './components/Login';
 import Signup from './components/Signup';
@@ -18,6 +18,10 @@ import ContactUs1 from './components/mvpblocks/contact-us-1';
 import CongestedPricing from './components/mvpblocks/congusted-pricing';
 import AboutUs from './components/AboutUs';
 function App() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
   return (
     <ThemeProvider>
     <AIResponseProvider>
