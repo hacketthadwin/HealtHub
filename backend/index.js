@@ -28,9 +28,14 @@ app.use(helmet());
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// HTTPS enforcement in production
+
 if (process.env.NODE_ENV === "production") {
   app.use((req, res, next) => {
+    const host = req.headers.host || "";
+    if (host.startsWith("localhost") || host.startsWith("127.0.0.1")) //even if the app is in production, allow localhost for development/testing purposes
+    {
+      return next();
+    }
     if (req.headers["x-forwarded-proto"] !== "https") {
       return res.redirect(301, `https://${req.headers.host}${req.url}`);
     }

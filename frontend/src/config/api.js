@@ -1,4 +1,8 @@
-export const API_URL = process.env.REACT_APP_API_URL;
+// Falls back to http://localhost:5000 when the env var is not set.
+// For local dev set:  REACT_APP_API_URL=http://localhost:5000   (http, not https)
+// For production set: REACT_APP_API_URL=https://your-app.onrender.com
+export const API_URL =
+  process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 /**
  * Ping the backend to wake it from Render's free-tier sleep.
