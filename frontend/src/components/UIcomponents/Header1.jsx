@@ -12,11 +12,11 @@ const navItems = [
 ];
 
 export default function Header1() {
-  // const [isScrolled, setIsScrolled]             = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [theme, setTheme]                       = useState('light');
-  const [isLoggedIn, setIsLoggedIn]             = useState(false);
-  const [dashboardRoute, setDashboardRoute]     = useState('/');
+  const [theme, setTheme] = useState('light');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [dashboardRoute, setDashboardRoute] = useState('/');
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -33,11 +33,13 @@ export default function Header1() {
     }
   }, [location]);
 
-  // useEffect(() => {
-  //   // const handleScroll = () => setIsScrolled(window.scrollY > 20);
-  //   // window.addEventListener('scroll', handleScroll);
-  //   // return () => window.removeEventListener('scroll', handleScroll);
-  // }, []);
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 15);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -60,83 +62,80 @@ export default function Header1() {
     window.location.href = '/login';
   };
 
-  /* Scroll to a section by id. If not on home page, navigate there first. */
+  // Fixed Scroll Navigation handling closing height spaces first
   const handleScrollNav = (sectionId) => {
     setIsMobileMenuOpen(false);
-    if (location.pathname === '/') {
+    
+    const scrollToTarget = () => {
       const el = document.getElementById(sectionId);
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    };
+
+    if (location.pathname === '/') {
+      // Small timeout lets the menu structural block collapse before computing position
+      setTimeout(scrollToTarget, 100);
     } else {
       navigate('/');
-      setTimeout(() => {
-        const el = document.getElementById(sectionId);
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }, 350);
+      setTimeout(scrollToTarget, 350);
     }
   };
 
   return (
     <>
-      <div className="h-16 sm:h-[72px] lg:h-20" />
+      <div className="h-24" />
 
       <motion.header
-        className={`fixed top-0 left-0 right-0 z-50 border-b-2 transition-all duration-100 font-sans ${'bg-[#FAFDEE]/50 dark:bg-[#0a111a]/50 border-[#1F3A4B]/20 dark:border-white/20 backdrop-blur-md shadow-xl'}`}
-        initial={{ y: -80, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.2, ease: 'easeOut' }}
+        className="fixed top-0 left-0 right-0 z-50 py-4 font-sans px-4 sm:px-6 lg:px-8"
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 26 }}
       >
-        <div className="mx-auto max-w-[1700px] px-4 sm:px-6 md:px-8 lg:px-10">
-          <div className="flex h-16 sm:h-[72px] lg:h-20 items-center justify-between">
-
-            {/* LOGO — untouched */}
+        <div 
+          className={`mx-auto max-w-7xl rounded-2xl transition-all duration-500 border px-4 sm:px-6 lg:px-8 relative z-50 ${
+            isScrolled || isMobileMenuOpen
+              ? 'bg-white/80 dark:bg-[#0a111a]/85 backdrop-blur-xl border-gray-200/40 dark:border-white/10 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.06)] dark:shadow-[0_12px_45px_-10px_rgba(0,0,0,0.4)] py-3'
+              : 'bg-white/40 dark:bg-white/5 backdrop-blur-md border-transparent py-4'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            
+            {/* LOGO */}
             <div className="flex items-center shrink-0">
-              <Link to="/" className="group">
-                <span className="text-2xl sm:text-3xl md:text-[2rem] lg:text-4xl font-black italic tracking-tight uppercase text-[#1F3A4B] dark:text-[#FAFDEE] group-hover:text-emerald-600 dark:group-hover:text-[#C2F84F] transition-colors duration-200">
+              <Link to="/" className="group relative">
+                <span className="text-2xl sm:text-3xl font-black italic tracking-tight uppercase text-[#1F3A4B] dark:text-[#FAFDEE] group-hover:text-emerald-600 dark:group-hover:text-[#C2F84F] transition-colors duration-300">
                   HEALTH<span className="text-emerald-600 dark:text-[#C2F84F]">HUB</span>
                 </span>
               </Link>
             </div>
 
-            {/* DESKTOP NAV LINKS */}
-            <nav className="hidden lg:flex items-center space-x-4 lg:space-x-8 xl:space-x-12">
+            {/* DESKTOP NAVIGATION */}
+            <nav className="hidden lg:flex items-center bg-gray-200/30 dark:bg-white/5 p-1 rounded-full border border-gray-300/10 dark:border-white/5 backdrop-blur-md">
               {navItems.map((item) => {
                 const isActive = item.href && location.pathname === item.href;
+                const linkClass = `relative px-5 py-2 text-sm font-semibold transition-all duration-300 rounded-full text-[#1F3A4B] dark:text-[#FAFDEE] hover:text-emerald-600 dark:hover:text-[#C2F84F]`;
 
-                /* Shared text classes — bumped to text-base / text-lg */
-                const baseClass =
-                  'relative py-1 text-base lg:text-lg font-semibold transition-all duration-200';
-                const activeClass =
-                  'text-emerald-600 dark:text-[#C2F84F] opacity-100';
-                const inactiveClass =
-                  'text-[#1F3A4B] dark:text-[#FAFDEE] opacity-70 hover:opacity-100 hover:text-emerald-600 dark:hover:text-[#C2F84F]';
-
-                /* Scroll-to items render as a plain button */
                 if (item.scrollTo) {
                   return (
                     <button
                       key={item.name}
                       onClick={() => handleScrollNav(item.scrollTo)}
-                      className={`${baseClass} ${inactiveClass} bg-transparent border-none outline-none cursor-pointer`}
+                      className={`${linkClass} bg-transparent border-none outline-none cursor-pointer`}
                     >
                       {item.name}
                     </button>
                   );
                 }
 
-                /* Route items render as Link with active underline */
                 return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={`${baseClass} ${isActive ? activeClass : inactiveClass}`}
-                  >
-                    <span>{item.name}</span>
+                  <Link key={item.name} to={item.href} className={linkClass}>
+                    <span className="relative z-10">{item.name}</span>
                     {isActive && (
                       <motion.div
-                        initial={{ scaleX: 0 }}
-                        animate={{ scaleX: 1 }}
-                        className="absolute bottom-0 left-0 right-0 h-[3px] bg-emerald-600 dark:bg-[#C2F84F] rounded-full origin-left"
-                        transition={{ duration: 0.25, ease: 'easeOut' }}
+                        layoutId="activePill"
+                        className="absolute inset-0 bg-white dark:bg-[#0f172a] rounded-full shadow-sm border border-gray-200/50 dark:border-white/10"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                       />
                     )}
                   </Link>
@@ -144,53 +143,59 @@ export default function Header1() {
               })}
             </nav>
 
-            {/* DESKTOP ACTIONS */}
-            <div className="hidden lg:flex items-center space-x-4 lg:space-x-5">
-
-              {/* Theme toggle */}
-              <div
-                className="relative flex h-9 w-[72px] lg:h-10 lg:w-20 items-center rounded-full border-2 border-[#1F3A4B] dark:border-[#C2F84F] bg-white dark:bg-black cursor-pointer shadow-lg shrink-0"
+            {/* DESKTOP CONTROLS */}
+            <div className="hidden lg:flex items-center space-x-4">
+              <button
                 onClick={toggleTheme}
+                className="relative p-2.5 rounded-full border border-gray-200 dark:border-white/10 bg-white/40 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-[#1F3A4B] dark:text-[#FAFDEE]"
+                aria-label="Toggle theme"
               >
-                <div className={`absolute top-1/2 left-1 h-6 w-6 lg:h-7 lg:w-7 -translate-y-1/2 rounded-full bg-[#1F3A4B] dark:bg-[#C2F84F] transition-transform duration-300 ${theme === 'dark' ? 'translate-x-8 lg:translate-x-10' : 'translate-x-0'}`} />
-                <span className="relative z-10 flex flex-1 items-center justify-center">
-                  <Sun size={14} className={theme === 'light' ? 'text-[#C2F84F]' : 'text-gray-500'} />
-                </span>
-                <span className="relative z-10 flex flex-1 items-center justify-center">
-                  <Moon size={14} className={theme === 'dark' ? 'text-[#1F3A4B]' : 'text-gray-500'} />
-                </span>
-              </div>
+                <motion.div
+                  initial={false}
+                  animate={{ rotate: theme === 'dark' ? 180 : 0, scale: theme === 'dark' ? 0 : 1 }}
+                  transition={{ duration: 0.3 }}
+                  className={theme === 'dark' ? 'absolute' : ''}
+                >
+                  <Sun size={18} className="text-amber-500" />
+                </motion.div>
+                <motion.div
+                  initial={false}
+                  animate={{ rotate: theme === 'dark' ? 0 : -180, scale: theme === 'dark' ? 1 : 0 }}
+                  transition={{ duration: 0.3 }}
+                  className={theme === 'light' ? 'absolute' : ''}
+                >
+                  <Moon size={18} className="text-[#C2F84F]" />
+                </motion.div>
+              </button>
 
-              {/* Logged in */}
               {isLoggedIn ? (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <Link
                     to={dashboardRoute}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#1F3A4B] dark:bg-[#C2F84F] px-5 py-2.5 text-sm font-semibold text-white dark:text-[#1F3A4B] hover:scale-105 active:scale-95 transition-all shadow-md whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 dark:bg-[#C2F84F] dark:hover:bg-[#b0e342] px-5 py-2.5 text-sm font-semibold text-white dark:text-[#1F3A4B] transition-all"
                   >
                     <Home className="h-4 w-4" />
                     <span>Dashboard</span>
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white hover:scale-105 active:scale-95 transition-all shadow-md whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-gray-200/60 hover:bg-rose-50 dark:bg-white/5 dark:hover:bg-rose-950/30 px-5 py-2.5 text-sm font-semibold text-rose-600 dark:text-rose-400 transition-all"
                   >
                     <LogOut className="h-4 w-4" />
                     <span>Logout</span>
                   </button>
                 </div>
               ) : (
-                /* Not logged in */
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   <Link
                     to="/login"
-                    className="text-sm font-semibold text-[#1F3A4B] dark:text-[#FAFDEE] hover:text-emerald-600 dark:hover:text-[#C2F84F] transition-colors duration-200 whitespace-nowrap"
+                    className="text-sm font-semibold text-[#1F3A4B] dark:text-[#FAFDEE] hover:text-emerald-600 dark:hover:text-[#C2F84F] px-3 py-2"
                   >
                     Sign In
                   </Link>
                   <Link
                     to="/signup"
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#1F3A4B] dark:bg-[#C2F84F] px-5 py-2.5 text-sm font-semibold text-white dark:text-[#1F3A4B] hover:scale-105 active:scale-95 transition-all shadow-md whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-[#1F3A4B] hover:bg-[#2c536c] dark:bg-[#FAFDEE] dark:hover:bg-white px-5 py-2.5 text-sm font-semibold text-white dark:text-[#1F3A4B] transition-all"
                   >
                     <span>Get Started</span>
                     <ArrowRight className="h-4 w-4" />
@@ -199,115 +204,109 @@ export default function Header1() {
               )}
             </div>
 
-            {/* MOBILE / TABLET TOP-BAR ACTIONS */}
-            <div className="flex lg:hidden items-center gap-3">
+            {/* MOBILE NAVIGATION TRIGGERS */}
+            <div className="flex lg:hidden items-center gap-2">
               <button
                 onClick={toggleTheme}
-                className="p-2.5 rounded-xl bg-white dark:bg-black border-2 border-[#1F3A4B] dark:border-[#C2F84F] text-[#1F3A4B] dark:text-[#C2F84F]"
+                className="p-2.5 rounded-full bg-gray-200/50 dark:bg-white/5 border border-gray-300/20 dark:border-white/10 text-[#1F3A4B] dark:text-[#FAFDEE]"
                 aria-label="Toggle theme"
               >
-                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-500" /> : <Moon className="h-4 w-4 text-slate-700" />}
               </button>
               <button
-                className="p-2.5 rounded-xl bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] shadow-md"
+                className="p-2.5 rounded-full bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] transition-transform active:scale-95"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label="Toggle Menu"
               >
-                {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                {isMobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
               </button>
             </div>
           </div>
-        </div>
 
-        {/* MOBILE MENU */}
-        <AnimatePresence>
-          {isMobileMenuOpen && (
-            <motion.div
-              className="fixed top-16 sm:top-[72px] left-0 right-0 h-screen lg:hidden z-40"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              <div className="absolute inset-0 bg-[#FAFDEE] dark:bg-[#0a111a] backdrop-blur-xl border-t-2 border-[#1F3A4B]/10 dark:border-white/10" />
-              <div className="relative z-10 p-5 sm:p-6 flex flex-col gap-3">
+          {/* COMPACT DROP-DOWN CONTAINER */}
+          <AnimatePresence>
+            {isMobileMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                className="overflow-hidden lg:hidden"
+              >
+                <div className="pt-6 pb-2 border-t border-gray-200/50 dark:border-white/5 mt-4 flex flex-col gap-1">
+                  {navItems.map((item) => {
+                    const isActive = item.href && location.pathname === item.href;
+                    const itemClass = `w-full text-left py-3 px-4 rounded-xl text-sm font-semibold transition-colors flex items-center justify-between text-[#1F3A4B] dark:text-[#FAFDEE] hover:bg-gray-100 dark:hover:bg-white/5`;
 
-                {/* Nav links */}
-                {navItems.map((item) => {
-                  const isActive = item.href && location.pathname === item.href;
-                  const baseClass =
-                    'block py-3 px-5 rounded-xl border text-lg font-semibold transition-all w-full text-left';
-                  const activeClass =
-                    'bg-[#1F3A4B] text-[#C2F84F] dark:bg-[#C2F84F] dark:text-[#1F3A4B] border-transparent';
-                  const inactiveClass =
-                    'bg-transparent border-[#1F3A4B]/10 dark:border-white/10 text-[#1F3A4B] dark:text-[#FAFDEE] hover:bg-[#1F3A4B]/5';
+                    if (item.scrollTo) {
+                      return (
+                        <button
+                          key={item.name}
+                          onClick={() => handleScrollNav(item.scrollTo)}
+                          className={itemClass}
+                        >
+                          {item.name}
+                        </button>
+                      );
+                    }
 
-                  if (item.scrollTo) {
                     return (
-                      <button
+                      <Link
                         key={item.name}
-                        onClick={() => handleScrollNav(item.scrollTo)}
-                        className={`${baseClass} ${inactiveClass}`}
+                        to={item.href}
+                        className={`${itemClass} ${isActive ? 'bg-emerald-500/10 text-emerald-600 dark:text-[#C2F84F] dark:bg-[#C2F84F]/10' : ''}`}
+                        onClick={() => setIsMobileMenuOpen(false)}
                       >
-                        {item.name}
-                      </button>
+                        <span>{item.name}</span>
+                        {isActive && <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-[#C2F84F]" />}
+                      </Link>
                     );
-                  }
+                  })}
 
-                  return (
-                    <Link
-                      key={item.name}
-                      to={item.href}
-                      className={`${baseClass} ${isActive ? activeClass : inactiveClass}`}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      {item.name}
-                    </Link>
-                  );
-                })}
-
-                {/* Action buttons */}
-                <div className="pt-2 flex flex-col gap-3">
-                  {isLoggedIn ? (
-                    <>
-                      <Link
-                        to={dashboardRoute}
-                        className="w-full py-3 rounded-xl bg-[#1F3A4B] dark:bg-[#C2F84F] flex items-center justify-center gap-2 text-sm font-semibold text-white dark:text-[#1F3A4B]"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        <Home className="h-4 w-4" />
-                        Dashboard
-                      </Link>
-                      <button
-                        onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
-                        className="w-full py-3 rounded-xl bg-rose-600 flex items-center justify-center gap-2 text-sm font-semibold text-white"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        Logout
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <Link
-                        to="/login"
-                        className="w-full py-3 rounded-xl border-2 border-[#1F3A4B] dark:border-[#C2F84F] text-center text-sm font-semibold text-[#1F3A4B] dark:text-[#C2F84F]"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        Sign In
-                      </Link>
-                      <Link
-                        to="/signup"
-                        className="w-full py-3 rounded-xl bg-[#1F3A4B] dark:bg-[#C2F84F] text-center text-sm font-semibold text-white dark:text-[#1F3A4B]"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        Get Started
-                      </Link>
-                    </>
-                  )}
+                  {/* Auth Actions */}
+                  <div className="mt-4 pt-4 border-t border-gray-200/40 dark:border-white/5 flex flex-col gap-2">
+                    {isLoggedIn ? (
+                      <>
+                        <Link
+                          to={dashboardRoute}
+                          className="w-full py-3 rounded-xl bg-[#1F3A4B] dark:bg-[#C2F84F] flex items-center justify-center gap-2 text-sm font-bold text-white dark:text-[#1F3A4B]"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          <Home className="h-4 w-4" />
+                          Dashboard
+                        </Link>
+                        <button
+                          onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
+                          className="w-full py-3 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center gap-2 text-sm font-bold"
+                        >
+                          <LogOut className="h-4 w-4" />
+                          Logout
+                        </button>
+                      </>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        <Link
+                          to="/login"
+                          className="py-3 rounded-xl text-center text-sm font-bold text-[#1F3A4B] dark:text-[#FAFDEE] bg-gray-100 dark:bg-white/5 hover:bg-gray-200/50"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Sign In
+                        </Link>
+                        <Link
+                          to="/signup"
+                          className="py-3 rounded-xl bg-[#1F3A4B] dark:bg-[#C2F84F] text-center text-sm font-bold text-white dark:text-[#1F3A4B]"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          Get Started
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </motion.header>
     </>
   );
