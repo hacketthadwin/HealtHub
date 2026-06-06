@@ -179,7 +179,7 @@ export default function Header1() {
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-gray-200/60 hover:bg-rose-50 dark:bg-white/5 dark:hover:bg-rose-950/30 px-5 py-2.5 text-sm font-semibold text-rose-600 dark:text-rose-400 transition-all"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-gray-200/60 hover:bg-rose-50 dark:bg-white/5 dark:hover:bg-rose-950/30 px-5 py-2.5 text-sm font-semibold text-rose-900 dark:text-rose-400 transition-all"
                   >
                     <LogOut className="h-4 w-4" />
                     <span>Logout</span>
