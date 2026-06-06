@@ -105,7 +105,7 @@ export default function Header1() {
             <div className="flex items-center shrink-0">
               <Link to="/" className="group relative">
                 <span className="text-2xl sm:text-3xl font-black italic tracking-tight uppercase text-[#1F3A4B] dark:text-[#FAFDEE] group-hover:text-emerald-600 dark:group-hover:text-[#C2F84F] transition-colors duration-300">
-                  HEALTH<span className="text-emerald-600 dark:text-[#C2F84F]">HUB</span>
+                  HEALT<span className="text-emerald-600 dark:text-[#C2F84F]">HUB</span>
                 </span>
               </Link>
             </div>
