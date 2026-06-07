@@ -5,16 +5,15 @@ const appointmentSchema = new mongoose.Schema(
     doctorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     patientId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     reason: { type: String, required: true },
-    appointmentDate: { type: Date },        // BUG FIX: was missing
-    scheduledTime: { type: String },        // e.g. "10:30 AM"
+    appointmentDate: { type: Date },        
+    scheduledTime: { type: String },        
     status: {
       type: String,
       enum: ["pending", "accepted", "rejected"],
       default: "pending",
     },
-    // Video call support (Issue 2)
-    meetLink: { type: String, default: null },     // Jitsi room URL
-    meetRoomId: { type: String, default: null },   // e.g. "HealthHub-abc123"
+    meetLink: { type: String, default: null },    
+    meetRoomId: { type: String, default: null },   
   },
   { timestamps: true }
 );

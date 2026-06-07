@@ -10,14 +10,12 @@ const PublicRoute = ({ children }) => {
   if (token) {
     try {
       const decoded = jwtDecode(token);
-      // Check for token expiry, though usually handled by backend auth middleware
-      const currentTime = Date.now() / 1000; // current time in seconds
+
+      const currentTime = Date.now() / 1000; 
       if (decoded.exp > currentTime) {
         isLoggedIn = true;
         role = decoded.role;
-        // Optionally, store role in localStorage if you use it elsewhere often,
-        // but deriving from token is more reliable for real-time checks.
-        // localStorage.setItem("role", role);
+
       } else {
         // Token expired
         console.log("Token expired.");

@@ -20,8 +20,7 @@ const upload = multer({
   fileFilter,
 }).single("file");
 
-// Wrap multer so its errors are forwarded as proper HTTP responses
-// instead of crashing or hanging the request
+
 exports.uploadMiddleware = (req, res, next) => {
   upload(req, res, (err) => {
     if (!err) return next();
@@ -32,9 +31,6 @@ exports.uploadMiddleware = (req, res, next) => {
   });
 };
 
-// Upload buffer directly to Cloudinary via upload_stream (no base64 conversion).
-// This is the correct approach for multer memoryStorage — avoids the ~33% size
-// overhead of base64 strings and works reliably for both images and PDFs.
 const uploadToCloudinary = (buffer, options) =>
   new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(options, (error, result) => {

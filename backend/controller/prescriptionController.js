@@ -1,5 +1,5 @@
 const Prescription = require("../models/prescription");
-
+const Appointment = require("../models/appointmentModel");
 // Doctor creates a prescription for a patient
 exports.createPrescription = async (req, res) => {
   try {

@@ -8,8 +8,6 @@ const { ACTIVE_STATUSES } = require("../models/bookingRequestModel");
 const MAX_ACTIVE_REQUESTS  = parseInt(process.env.MAX_ACTIVE_REQUESTS  || "5");
 const PAYMENT_WINDOW_HOURS = parseInt(process.env.PAYMENT_WINDOW_HOURS || "48");
 
-// ─── Statuses that block a new request to the same doctor ───────────────────
-// Includes PAID_CONFIRMED because the slot is live until the consultation ends.
 const BLOCKING_STATUSES = [
   "PENDING_DOCTOR_APPROVAL",
   "DOCTOR_ACCEPTED_AWAITING_PAYMENT",
@@ -57,7 +55,6 @@ function convertTo24h(timeStr) {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
 }
 
-// ─── CREATE BOOKING REQUEST ──────────────────────────────────────────────────
 exports.createBookingRequest = async (req, res) => {
   try {
     const { doctorId, reason } = req.body;
@@ -96,7 +93,6 @@ exports.createBookingRequest = async (req, res) => {
       });
     }
 
-    // ── Global active-slot cap ─────────────────────────────────────────────
     const activeCount = await BookingRequest.countDocuments({
       patientId,
       status: { $in: ACTIVE_STATUSES },
@@ -113,7 +109,6 @@ exports.createBookingRequest = async (req, res) => {
       });
     }
 
-    // ── Per-doctor duplicate check ─────────────────────────────────────────
     const existingRequests = await BookingRequest.find({
       patientId,
       doctorId,
@@ -210,7 +205,6 @@ exports.createBookingRequest = async (req, res) => {
   }
 };
 
-// ─── ACCEPT BOOKING REQUEST ──────────────────────────────────────────────────
 exports.acceptBookingRequest = async (req, res) => {
   try {
     const { id: requestId } = req.params;
@@ -335,7 +329,6 @@ exports.acceptBookingRequest = async (req, res) => {
   }
 };
 
-// ─── REJECT BOOKING REQUEST ──────────────────────────────────────────────────
 exports.rejectBookingRequest = async (req, res) => {
   try {
     const { id: requestId } = req.params;
@@ -385,7 +378,6 @@ exports.rejectBookingRequest = async (req, res) => {
   }
 };
 
-// ─── CANCEL BOOKING REQUEST (patient-initiated) ──────────────────────────────
 exports.cancelBookingRequest = async (req, res) => {
   try {
     const { id: requestId } = req.params;
@@ -445,14 +437,12 @@ exports.cancelBookingRequest = async (req, res) => {
   }
 };
 
-// ─── ABORT BOOKING REQUEST (doctor-initiated, after consultation window passes) ─
 exports.abortBookingRequest = async (req, res) => {
   try {
     const { id: requestId } = req.params;
     const doctorId          = req.user.id;
     const { abortReason }   = req.body;
 
-    // ── 1. Find the booking — must belong to this doctor and be PAID_CONFIRMED ─
     const bookingRequest = await BookingRequest.findOne({
       _id:      requestId,
       doctorId,
@@ -470,7 +460,6 @@ exports.abortBookingRequest = async (req, res) => {
       });
     }
 
-    // ── 2. Validate that the scheduled consultation window has already ended ──
     const scheduledDate = bookingRequest.proposedByDoctor?.scheduledDate;
     const durationMins  = bookingRequest.proposedByDoctor?.slotDurationMinutes || 30;
 
@@ -497,7 +486,6 @@ exports.abortBookingRequest = async (req, res) => {
       });
     }
 
-    // ── 3. Atomically update status to ABORTED_BY_DOCTOR ──────────────────
     bookingRequest.status      = "ABORTED_BY_DOCTOR";
     bookingRequest.abortedBy   = doctorId;
     bookingRequest.abortedAt   = new Date();
@@ -506,13 +494,11 @@ exports.abortBookingRequest = async (req, res) => {
       "Consultation window passed without completing the appointment.";
     await bookingRequest.save();
 
-    // ── 4. Release doctor schedule slot (ACTIVE → COMPLETED) ──────────────
     await DoctorSchedule.findOneAndUpdate(
       { bookingRequestId: bookingRequest._id },
       { status: "COMPLETED" }
     );
 
-    // ── 5. Send email notification to patient ─────────────────────────────
     if (bookingRequest.patientId?.email) {
       const scheduledDateStr = new Date(scheduledDate).toLocaleDateString("en-IN", {
         weekday: "short",
@@ -546,7 +532,6 @@ exports.abortBookingRequest = async (req, res) => {
       });
     }
 
-    // ── 6. Emit real-time socket event to patient ──────────────────────────
     const { getIO } = require("../socketManager");
     const io = getIO();
     if (io) {
@@ -576,7 +561,6 @@ exports.abortBookingRequest = async (req, res) => {
   }
 };
 
-// ─── GET MY BOOKING REQUESTS (Patient) ──────────────────────────────────────
 exports.getMyBookingRequests = async (req, res) => {
   try {
     const patientId = req.user.id;
@@ -610,7 +594,6 @@ exports.getMyBookingRequests = async (req, res) => {
   }
 };
 
-// ─── GET DOCTOR QUEUE ────────────────────────────────────────────────────────
 exports.getDoctorQueue = async (req, res) => {
   try {
     const doctorId = req.user.id;
@@ -632,7 +615,6 @@ exports.getDoctorQueue = async (req, res) => {
   }
 };
 
-// ─── GET SINGLE REQUEST ──────────────────────────────────────────────────────
 exports.getSingleRequest = async (req, res) => {
   try {
     const { id }  = req.params;

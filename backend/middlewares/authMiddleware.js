@@ -23,7 +23,6 @@ exports.auth = (req, res, next) => {  //this issue came when i tried to access t
         // Verify the token
         try {
             const decode = jwt.verify(token, process.env.JWT_SECRET);
-            console.log("Decoded JWT Payload:", decode); // Good for debugging
             req.user = decode; // Attach decoded payload to request object
         } catch (e) {
             return res.status(401).json({

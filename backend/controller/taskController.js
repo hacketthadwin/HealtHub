@@ -1,17 +1,12 @@
-const Task = require('../models/tasks'); // Ensure this path is correct
+const Task = require('../models/tasks');
 
 // Controller to create a new task for the authenticated user
 exports.createTask = async (req, res) => {
     try {
         const { name, completed, date } = req.body;
         
-        // Extract userId from the authenticated request payload.
-        // It's crucial that your JWT authentication middleware (`auth` in your case)
-        // successfully decodes the token and attaches the user's ID to `req.user.id`.
         const userId = req.user.id; 
 
-        // Validate if userId is present. If the auth middleware failed or the token
-        // didn't contain the ID, this prevents further issues.
         if (!userId) {
             return res.status(401).json({
                 success: false,
@@ -19,7 +14,6 @@ exports.createTask = async (req, res) => {
             });
         }
 
-        // Determine the task date. If not provided, use today's date in YYYY-MM-DD format.
         const taskDate = date || new Date().toISOString().split('T')[0];
 
         // --- Logic for 7-day task limit per user ---
@@ -126,9 +120,9 @@ exports.updateTaskCompletion = async (req, res) => {
         // Find and update the task. The key here is to find by both the task's _id
         // AND the authenticated user's userId, preventing users from updating others' tasks.
         const updated = await Task.findOneAndUpdate(
-            { _id: req.params.id, userId: userId }, // Find by task ID AND user ID
-            { completed }, // Update the 'completed' field
-            { new: true } // Return the updated document
+            { _id: req.params.id, userId: userId }, 
+            { completed }, 
+            { new: true } 
         );
         
         // If 'updated' is null, it means no document matched the criteria.

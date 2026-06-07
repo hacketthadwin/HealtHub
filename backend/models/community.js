@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// === Problem Schema ===
 const problemSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: String,
@@ -14,13 +13,13 @@ const problemSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-// Optional: Cascade delete all answers when a problem is removed
+
 problemSchema.pre('remove', async function (next) {
   await Answer.deleteMany({ problemId: this._id });
   next();
 });
 
-// === Answer Schema ===
+
 const answerSchema = new mongoose.Schema({
   problemId: { type: mongoose.Schema.Types.ObjectId, ref: 'Problem', required: true },
   content: { type: String, required: true },

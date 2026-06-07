@@ -2,7 +2,6 @@ const { Problem, Answer } = require('../models/community');
 
 // communityController.js
 exports.newProblem = async (req, res) => {
-  console.log('➡️ newProblem reached. body:', req.body);
   try {
     const problem = await Problem.create({
       title: req.body.title,
@@ -10,10 +9,10 @@ exports.newProblem = async (req, res) => {
       tags: req.body.tags,
       author: req.user.id
     });
-    console.log('✅ Created problem:', problem);
+    console.log('Created problem:', problem);
     return res.status(201).json(problem);
   } catch (err) {
-    console.error('❌ newProblem error:', err);
+    console.error('newProblem error:', err);
     return res.status(500).json({ error: err.message });
   }
 };
@@ -50,7 +49,6 @@ exports.answerProblem = async (req, res) => {
   }
 };
 
-// === VERIFY THIS CONTROLLER IS CORRECT ===
 exports.getAllProblems = async (req, res) => {
   try {
     const problems = await Problem.find()

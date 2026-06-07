@@ -3,10 +3,9 @@ const mongoose = require("mongoose");
 const messageSchema = new mongoose.Schema({
   roomId: { type: String, required: true, index: true },
   sender: { type: String, required: true },
-  receiver: { type: String },           // BUG FIX: was missing
+  receiver: { type: String },           
   message: { type: String, default: "" },
 
-  // File attachment support (Issue 5)
   fileUrl: { type: String, default: null },
   fileName: { type: String, default: null },
   fileType: { type: String, default: null },

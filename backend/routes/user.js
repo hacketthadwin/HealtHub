@@ -20,9 +20,9 @@ router.get('/patient', auth, isPatient, (req, res) => {
   res.status(200).json({ success: true, message: 'Patient route accessed successfully' });
 });
 
-router.post('/post-tasks', auth, createTask);         // Requires authentication
-router.get('/get-7days-tasks', auth, getTasksLast7Days); // REQUIRES AUTHENTICATION
-router.patch('/tasks/:id', auth, updateTaskCompletion); // Requires authentication
+router.post('/post-tasks', auth, createTask);        
+router.get('/get-7days-tasks', auth, getTasksLast7Days);
+router.patch('/tasks/:id', auth, updateTaskCompletion); 
 
 router.post('/community/problem', auth, newProblem);
 router.post('/community/answer/:problemId', auth, answerProblem);

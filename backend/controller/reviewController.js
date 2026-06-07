@@ -1,5 +1,5 @@
 const Review = require("../models/review");
-
+const Appointment = require("../models/appointmentModel");
 exports.createReview = async (req, res) => {
   try {
     const { appointmentId, doctorId, rating, comment } = req.body;
