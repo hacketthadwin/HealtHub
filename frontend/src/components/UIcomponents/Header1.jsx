@@ -7,7 +7,7 @@ const navItems = [
   { name: 'Features', scrollTo: 'features' },
   { name: 'FAQ',      scrollTo: 'faq' },
   { name: 'About Us', href: '/about' },
-  { name: 'Pricing',  href: '/pricing' },
+  // { name: 'Pricing',  href: '/pricing' },
   { name: 'Contact',  href: '/contact' },
 ];
 
