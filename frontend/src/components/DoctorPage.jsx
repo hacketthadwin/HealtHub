@@ -18,28 +18,103 @@ import { API_URL } from '../config/api';
 const socket = io(`${API_URL}`);
 
 
+// ─── Helper: convert "HH:MM" (24h) → "H:MM AM/PM" for display & API ─────────
+const rawTimeTo12h = (raw) => {
+  if (!raw) return '';
+  const [h, m] = raw.split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) return '';
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12  = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
+};
+
+// ─── Helper: convert "H:MM AM/PM" → "HH:MM" (24h) for the time input value ──
+const time12hToRaw = (ampmStr) => {
+  if (!ampmStr) return '';
+  const parts = ampmStr.trim().split(' ');
+  if (parts.length < 2) return '';
+  const [hStr, mStr] = parts[0].split(':');
+  let h = parseInt(hStr, 10);
+  const m = parseInt(mStr, 10);
+  const mod = parts[1].toUpperCase();
+  if (mod === 'PM' && h !== 12) h += 12;
+  if (mod === 'AM' && h === 12) h  = 0;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+};
+
 const AcceptModal = ({ request, onClose, onSubmit, loading }) => {
+  // form.scheduledTime always stores the 24h raw string used by the <input type="time">.
+  // form.scheduledTime12h stores the AM/PM string sent to the backend and shown to users.
   const [form, setForm] = useState({
     scheduledDate:       '',
-    scheduledTime:       '',
+    rawTime:             '',   // "HH:MM" — drives the time input value
+    scheduledTime:       '',   // "H:MM AM/PM" — sent to backend & displayed
     slotDurationMinutes: 30,
   });
 
   const today = new Date().toISOString().split('T')[0];
 
-  const handleChange = (field, value) =>
-    setForm((prev) => ({ ...prev, [field]: value }));
+  const handleDateChange = (value) =>
+    setForm((prev) => ({ ...prev, scheduledDate: value }));
+
+  // ISSUE 3 FIX: keep rawTime (24h) for the input and derive scheduledTime (12h)
+  // in a single state update so both are always in sync.
+  const handleTimeChange = (raw24h) => {
+    const ampm = rawTimeTo12h(raw24h);
+    setForm((prev) => ({
+      ...prev,
+      rawTime:       raw24h,
+      scheduledTime: ampm,
+    }));
+  };
 
   const handleSubmit = () => {
-    if (!form.scheduledDate || !form.scheduledTime) {
+    if (!form.scheduledDate || !form.rawTime) {
       toast.error('Please set both a date and a time.');
       return;
     }
-    onSubmit(request.id, form);
+    // Pass scheduledTime (AM/PM string) to the backend — it already handles that format.
+    onSubmit(request.id, {
+      scheduledDate:       form.scheduledDate,
+      scheduledTime:       form.scheduledTime,
+      slotDurationMinutes: form.slotDurationMinutes,
+    });
   };
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+      {/*
+        ISSUE 4 FIX: `color-scheme: light` forces the browser to render native
+        date/time picker icons (calendar & clock) in light mode regardless of the
+        OS dark-mode setting, making them always visible on the modal's light
+        background. The modal itself uses a light bg (#FAFDEE / #0d131b) so the
+        inputs need to declare their own colour scheme explicitly.
+      */}
+      <style>{`
+        .accept-modal-input[type="date"],
+        .accept-modal-input[type="time"] {
+          color-scheme: light;
+        }
+        .dark .accept-modal-input[type="date"],
+        .dark .accept-modal-input[type="time"] {
+          color-scheme: dark;
+          /* Override browser default to use brand colours */
+          color: #FAFDEE;
+        }
+        /* Webkit (Chrome/Safari/Edge) calendar & clock icon colour fix */
+        .accept-modal-input[type="date"]::-webkit-calendar-picker-indicator,
+        .accept-modal-input[type="time"]::-webkit-calendar-picker-indicator {
+          filter: invert(0.3) sepia(1) saturate(5) hue-rotate(60deg);
+          cursor: pointer;
+          opacity: 0.7;
+        }
+        .dark .accept-modal-input[type="date"]::-webkit-calendar-picker-indicator,
+        .dark .accept-modal-input[type="time"]::-webkit-calendar-picker-indicator {
+          filter: invert(1) brightness(1.4);
+          opacity: 0.85;
+        }
+      `}</style>
+
       <div className="w-full max-w-md bg-[#FAFDEE] dark:bg-[#0d131b] rounded-[2.5rem] p-8 shadow-2xl border border-[#1F3A4B]/10 dark:border-white/10 relative">
         <button
           onClick={onClose}
@@ -68,7 +143,7 @@ const AcceptModal = ({ request, onClose, onSubmit, loading }) => {
         </div>
 
         <div className="space-y-4">
-          {}
+          {/* Date picker */}
           <div>
             <label className="block text-[10px] font-black uppercase tracking-widest text-[#1F3A4B] dark:text-[#FAFDEE] mb-1.5">
               Date
@@ -77,40 +152,38 @@ const AcceptModal = ({ request, onClose, onSubmit, loading }) => {
               type="date"
               min={today}
               value={form.scheduledDate}
-              onChange={(e) => handleChange('scheduledDate', e.target.value)}
-              className="w-full p-3 rounded-2xl bg-[#1F3A4B]/5 dark:bg-white/5 text-[#1F3A4B] dark:text-white font-bold outline-none border-2 border-transparent focus:border-[#C2F84F] transition-all text-sm"
+              onChange={(e) => handleDateChange(e.target.value)}
+              className="accept-modal-input w-full p-3 rounded-2xl bg-[#1F3A4B]/5 dark:bg-white/5 text-[#1F3A4B] dark:text-white font-bold outline-none border-2 border-transparent focus:border-[#C2F84F] transition-all text-sm"
             />
           </div>
 
-          {}
+          {/* Time picker — ISSUE 3 FIX: value always bound to rawTime (24h format) */}
           <div>
             <label className="block text-[10px] font-black uppercase tracking-widest text-[#1F3A4B] dark:text-[#FAFDEE] mb-1.5">
               Time
             </label>
             <input
               type="time"
-              value={form.scheduledTime}
-              onChange={(e) => {
-
-                const [h, m]  = e.target.value.split(':').map(Number);
-                const ampm    = h >= 12 ? 'PM' : 'AM';
-                const h12     = h % 12 || 12;
-                handleChange('scheduledTime', `${h12}:${String(m).padStart(2, '0')} ${ampm}`);
-
-                handleChange('_rawTime', e.target.value);
-              }}
-              className="w-full p-3 rounded-2xl bg-[#1F3A4B]/5 dark:bg-white/5 text-[#1F3A4B] dark:text-white font-bold outline-none border-2 border-transparent focus:border-[#C2F84F] transition-all text-sm"
+              value={form.rawTime}
+              onChange={(e) => handleTimeChange(e.target.value)}
+              className="accept-modal-input w-full p-3 rounded-2xl bg-[#1F3A4B]/5 dark:bg-white/5 text-[#1F3A4B] dark:text-white font-bold outline-none border-2 border-transparent focus:border-[#C2F84F] transition-all text-sm"
             />
+            {/* Live preview of selected time in 12h format */}
+            {form.scheduledTime && (
+              <p className="mt-1.5 ml-1 text-[10px] font-black text-[#C2F84F] dark:text-[#C2F84F] uppercase tracking-widest">
+                Selected: {form.scheduledTime}
+              </p>
+            )}
           </div>
 
-          {}
+          {/* Duration */}
           <div>
             <label className="block text-[10px] font-black uppercase tracking-widest text-[#1F3A4B] dark:text-[#FAFDEE] mb-1.5">
               Duration
             </label>
             <select
               value={form.slotDurationMinutes}
-              onChange={(e) => handleChange('slotDurationMinutes', Number(e.target.value))}
+              onChange={(e) => setForm((prev) => ({ ...prev, slotDurationMinutes: Number(e.target.value) }))}
               className="w-full p-3 rounded-2xl bg-[#1F3A4B]/5 dark:bg-white/5 text-[#1F3A4B] dark:text-white font-bold outline-none border-2 border-transparent focus:border-[#C2F84F] transition-all text-sm cursor-pointer"
             >
               <option value={15}>15 minutes</option>
@@ -119,6 +192,13 @@ const AcceptModal = ({ request, onClose, onSubmit, loading }) => {
               <option value={60}>60 minutes</option>
             </select>
           </div>
+
+          {/* Slot summary */}
+          {form.scheduledDate && form.scheduledTime && (
+            <div className="bg-[#C2F84F]/10 dark:bg-[#C2F84F]/5 border border-[#C2F84F]/30 rounded-2xl p-3 text-[10px] font-black uppercase tracking-widest text-[#476407] dark:text-[#C2F84F]">
+              📅 {form.scheduledDate} · ⏰ {form.scheduledTime} · ⏱ {form.slotDurationMinutes} min
+            </div>
+          )}
         </div>
 
         <div className="flex gap-3 mt-8">

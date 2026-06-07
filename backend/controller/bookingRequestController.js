@@ -1,12 +1,20 @@
-const BookingRequest = require("../models/bookingRequestModel");
-const DoctorSchedule = require("../models/doctorScheduleModel");
-const User           = require("../models/userModel");
+const BookingRequest  = require("../models/bookingRequestModel");
+const DoctorSchedule  = require("../models/doctorScheduleModel");
+const AppointmentPayment = require("../models/appointmentPaymentModel");
+const User            = require("../models/userModel");
 
 const { ACTIVE_STATUSES } = require("../models/bookingRequestModel");
 
 const MAX_ACTIVE_REQUESTS  = parseInt(process.env.MAX_ACTIVE_REQUESTS  || "5");
 const PAYMENT_WINDOW_HOURS = parseInt(process.env.PAYMENT_WINDOW_HOURS || "48");
 
+// ─── Statuses that block a new request to the same doctor ───────────────────
+// Includes PAID_CONFIRMED because the slot is live until the consultation ends.
+const BLOCKING_STATUSES = [
+  "PENDING_DOCTOR_APPROVAL",
+  "DOCTOR_ACCEPTED_AWAITING_PAYMENT",
+  "PAID_CONFIRMED",
+];
 
 let resend = null;
 const getResend = () => {
@@ -28,7 +36,6 @@ const sendEmail = async ({ to, subject, html }) => {
   }
 };
 
-
 const emailBase = (content) => `
   <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
     <div style="background:#1F3A4B;padding:24px;border-radius:12px;text-align:center;">
@@ -41,7 +48,6 @@ const emailBase = (content) => `
   </div>
 `;
 
-
 function convertTo24h(timeStr) {
   const parts    = timeStr.trim().split(" ");
   const modifier = parts[1]?.toUpperCase();
@@ -51,7 +57,7 @@ function convertTo24h(timeStr) {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
 }
 
-
+// ─── CREATE BOOKING REQUEST ──────────────────────────────────────────────────
 exports.createBookingRequest = async (req, res) => {
   try {
     const { doctorId, reason } = req.body;
@@ -63,7 +69,6 @@ exports.createBookingRequest = async (req, res) => {
         message: "doctorId and reason are required.",
       });
     }
-
 
     const doctor = await User.findOne({
       _id:  doctorId,
@@ -91,8 +96,7 @@ exports.createBookingRequest = async (req, res) => {
       });
     }
 
-
-
+    // ── Global active-slot cap ─────────────────────────────────────────────
     const activeCount = await BookingRequest.countDocuments({
       patientId,
       status: { $in: ACTIVE_STATUSES },
@@ -109,21 +113,65 @@ exports.createBookingRequest = async (req, res) => {
       });
     }
 
-
-    const duplicate = await BookingRequest.findOne({
+    // ── ISSUE 1 FIX: Per-doctor duplicate check ────────────────────────────
+    // Block if any existing request with this doctor is in a blocking status
+    // AND (for PAID_CONFIRMED) the slot has not yet ended.
+    const existingRequests = await BookingRequest.find({
       patientId,
       doctorId,
-      status: { $in: ACTIVE_STATUSES },
+      status: { $in: BLOCKING_STATUSES },
     });
 
-    if (duplicate) {
-      return res.status(409).json({
-        success: false,
-        message: "You already have an active request with this doctor.",
-        existingRequestId: duplicate._id,
-      });
-    }
+    for (const existing of existingRequests) {
+      // For terminal-pending states: always block
+      if (
+        existing.status === "PENDING_DOCTOR_APPROVAL" ||
+        existing.status === "DOCTOR_ACCEPTED_AWAITING_PAYMENT"
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "You already have an active request with this doctor. " +
+            "Please wait for the doctor to respond or cancel your existing request.",
+          existingRequestId: existing._id,
+          existingStatus: existing.status,
+        });
+      }
 
+      // For PAID_CONFIRMED: block until the consultation slot has ended
+      if (existing.status === "PAID_CONFIRMED") {
+        const scheduledDate = existing.proposedByDoctor?.scheduledDate;
+        const durationMins  = existing.proposedByDoctor?.slotDurationMinutes || 30;
+
+        if (scheduledDate) {
+          const slotEnd = new Date(
+            new Date(scheduledDate).getTime() + durationMins * 60 * 1000
+          );
+          if (new Date() < slotEnd) {
+            return res.status(409).json({
+              success: false,
+              message:
+                "You already have a confirmed appointment with this doctor that has not ended yet. " +
+                "Please wait until your current consultation is complete before booking again.",
+              existingRequestId: existing._id,
+              existingStatus: existing.status,
+              slotEndsAt: slotEnd.toISOString(),
+            });
+          }
+          // Slot has already ended — allow a new request (fall through)
+        } else {
+          // No scheduled date means consultation is pending scheduling — still block
+          return res.status(409).json({
+            success: false,
+            message:
+              "You have a paid confirmed appointment with this doctor. " +
+              "Please complete your current consultation before booking again.",
+            existingRequestId: existing._id,
+            existingStatus: existing.status,
+          });
+        }
+      }
+    }
 
     const newRequest = await BookingRequest.create({
       patientId,
@@ -132,7 +180,6 @@ exports.createBookingRequest = async (req, res) => {
       status: "PENDING_DOCTOR_APPROVAL",
       consultingFeePaise: doctor.consultingFee,
     });
-
 
     const [patient, doctorDoc] = await Promise.all([
       User.findById(patientId).select("name"),
@@ -169,7 +216,7 @@ exports.createBookingRequest = async (req, res) => {
   }
 };
 
-
+// ─── ACCEPT BOOKING REQUEST ──────────────────────────────────────────────────
 exports.acceptBookingRequest = async (req, res) => {
   try {
     const { id: requestId } = req.params;
@@ -182,7 +229,6 @@ exports.acceptBookingRequest = async (req, res) => {
         message: "Doctor must provide scheduledDate (YYYY-MM-DD) and scheduledTime (e.g. '10:30 AM') when accepting.",
       });
     }
-
 
     let proposedStart;
     try {
@@ -198,9 +244,8 @@ exports.acceptBookingRequest = async (req, res) => {
       });
     }
 
-    const duration     = Math.max(15, Math.min(120, Number(slotDurationMinutes)));
-    const proposedEnd  = new Date(proposedStart.getTime() + duration * 60 * 1000);
-
+    const duration    = Math.max(15, Math.min(120, Number(slotDurationMinutes)));
+    const proposedEnd = new Date(proposedStart.getTime() + duration * 60 * 1000);
 
     const bookingRequest = await BookingRequest.findOne({
       _id:      requestId,
@@ -214,8 +259,6 @@ exports.acceptBookingRequest = async (req, res) => {
         message: "Request not found or not in an acceptable state.",
       });
     }
-
-
 
     const conflict = await DoctorSchedule.findOne({
       doctorId,
@@ -235,18 +278,16 @@ exports.acceptBookingRequest = async (req, res) => {
       });
     }
 
-
     const paymentDeadline = new Date(Date.now() + PAYMENT_WINDOW_HOURS * 60 * 60 * 1000);
 
-    bookingRequest.status             = "DOCTOR_ACCEPTED_AWAITING_PAYMENT";
-    bookingRequest.proposedByDoctor   = {
+    bookingRequest.status           = "DOCTOR_ACCEPTED_AWAITING_PAYMENT";
+    bookingRequest.proposedByDoctor = {
       scheduledDate:       proposedStart,
       scheduledTime,
       slotDurationMinutes: duration,
     };
     bookingRequest.paymentDeadline = paymentDeadline;
     await bookingRequest.save();
-
 
     await DoctorSchedule.create({
       doctorId,
@@ -257,7 +298,6 @@ exports.acceptBookingRequest = async (req, res) => {
       slotEnd:             proposedEnd,
       status:              "RESERVED",
     });
-
 
     const populated = await bookingRequest.populate([
       { path: "patientId", select: "name email" },
@@ -301,7 +341,7 @@ exports.acceptBookingRequest = async (req, res) => {
   }
 };
 
-
+// ─── REJECT BOOKING REQUEST ──────────────────────────────────────────────────
 exports.rejectBookingRequest = async (req, res) => {
   try {
     const { id: requestId } = req.params;
@@ -351,15 +391,13 @@ exports.rejectBookingRequest = async (req, res) => {
   }
 };
 
-
+// ─── CANCEL BOOKING REQUEST — ISSUE 2 FIX: Hard delete instead of soft cancel ─
 exports.cancelBookingRequest = async (req, res) => {
   try {
     const { id: requestId } = req.params;
-    const { cancellationReason } = req.body;
     const patientId = req.user.id;
 
-
-
+    // Only cancellable if not yet paid
     const bookingRequest = await BookingRequest.findOne({
       _id:      requestId,
       patientId,
@@ -375,19 +413,14 @@ exports.cancelBookingRequest = async (req, res) => {
 
     const wasAccepted = bookingRequest.status === "DOCTOR_ACCEPTED_AWAITING_PAYMENT";
 
-    bookingRequest.status             = "PATIENT_CANCELLED";
-    bookingRequest.cancellationReason = cancellationReason?.trim() || "Patient cancelled.";
-    await bookingRequest.save();
-
-
+    // ── Release the doctor's schedule slot if one was reserved ──────────────
     if (wasAccepted) {
-      await DoctorSchedule.findOneAndUpdate(
-        { bookingRequestId: bookingRequest._id, status: "RESERVED" },
-        { status: "RELEASED" }
-      );
+      await DoctorSchedule.deleteOne({ bookingRequestId: bookingRequest._id });
+    }
 
+    // ── Notify the doctor only if they had already accepted ─────────────────
+    if (wasAccepted) {
       const populated = await bookingRequest.populate("doctorId", "name email");
-
       await sendEmail({
         to:      populated.doctorId.email,
         subject: "Patient Cancelled Appointment — HealthHub",
@@ -396,19 +429,22 @@ exports.cancelBookingRequest = async (req, res) => {
           <p>A patient has cancelled their appointment after you accepted it.</p>
           <div style="background:#FAFDEE;border-left:4px solid #C2F84F;padding:16px;border-radius:4px;margin:20px 0;">
             <strong>Was Scheduled:</strong> ${bookingRequest.proposedByDoctor?.scheduledTime} on ${bookingRequest.proposedByDoctor?.scheduledDate?.toLocaleDateString()}<br>
-            <strong>Cancellation Reason:</strong> ${bookingRequest.cancellationReason}
+            <strong>Reason:</strong> Patient chose to cancel.
           </div>
           <p>Your time slot has been freed and is available for other patients.</p>
         `),
       });
     }
 
+    // ── Hard-delete the BookingRequest — as if it was never created ─────────
+    await BookingRequest.deleteOne({ _id: requestId });
+
     return res.status(200).json({
       success: true,
-      message: "Booking request cancelled. Your active request slot has been freed.",
+      message: "Booking request cancelled and removed successfully.",
       data: {
-        requestId:    bookingRequest._id,
-        status:       bookingRequest.status,
+        requestId,
+        deleted:      true,
         slotReleased: wasAccepted,
       },
     });
@@ -418,12 +454,17 @@ exports.cancelBookingRequest = async (req, res) => {
   }
 };
 
-
+// ─── GET MY BOOKING REQUESTS (Patient) ──────────────────────────────────────
 exports.getMyBookingRequests = async (req, res) => {
   try {
     const patientId = req.user.id;
 
-    const requests = await BookingRequest.find({ patientId })
+    // Exclude cancelled records — after cancellation they are deleted,
+    // but defensive-exclude any lingering soft-cancelled ones.
+    const requests = await BookingRequest.find({
+      patientId,
+      status: { $nin: ["PATIENT_CANCELLED"] },
+    })
       .populate(
         "doctorId",
         "name specialization profilePicture consultingFee availability"
@@ -449,12 +490,16 @@ exports.getMyBookingRequests = async (req, res) => {
   }
 };
 
-
+// ─── GET DOCTOR QUEUE ────────────────────────────────────────────────────────
 exports.getDoctorQueue = async (req, res) => {
   try {
     const doctorId = req.user.id;
 
-    const requests = await BookingRequest.find({ doctorId })
+    // Exclude hard-deleted (already gone) and soft-cancelled records from doctor view
+    const requests = await BookingRequest.find({
+      doctorId,
+      status: { $nin: ["PATIENT_CANCELLED"] },
+    })
       .populate("patientId", "name email profilePicture")
       .sort({ createdAt: -1 });
 
@@ -468,11 +513,11 @@ exports.getDoctorQueue = async (req, res) => {
   }
 };
 
-
+// ─── GET SINGLE REQUEST ──────────────────────────────────────────────────────
 exports.getSingleRequest = async (req, res) => {
   try {
-    const { id }   = req.params;
-    const userId   = req.user.id;
+    const { id }  = req.params;
+    const userId  = req.user.id;
 
     const request = await BookingRequest.findOne({
       _id: id,

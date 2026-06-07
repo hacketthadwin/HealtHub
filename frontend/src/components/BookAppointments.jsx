@@ -33,6 +33,14 @@ const PageWrapper = ({ children, isCenter = false, onBack }) => (
   </div>
 );
 
+// BLOCKING_STATUSES mirrors the backend logic — frontend pre-flight check only.
+// Backend is always the authoritative source; this just prevents an obvious UI mistake.
+const BLOCKING_STATUSES = new Set([
+  'PENDING_DOCTOR_APPROVAL',
+  'DOCTOR_ACCEPTED_AWAITING_PAYMENT',
+  'PAID_CONFIRMED',
+]);
+
 const BookAppointments = () => {
   const navigate          = useNavigate();
   const [doctorsList,   setDoctorsList]   = useState([]);
@@ -43,9 +51,10 @@ const BookAppointments = () => {
 
   const [activeCount,   setActiveCount]   = useState(0);
   const [maxAllowed,    setMaxAllowed]    = useState(5);
+  // ISSUE 1 FIX: track which doctorIds already have an active/confirmed request
+  const [blockedDoctors, setBlockedDoctors] = useState(new Set());
 
   const goBack = useCallback(() => navigate('/patient'), [navigate]);
-
 
   const fetchDoctors = useCallback(async () => {
     try {
@@ -67,10 +76,30 @@ const BookAppointments = () => {
       if (!Array.isArray(doctors)) throw new Error('Unexpected response format.');
       setDoctorsList(doctors);
 
-
       const meta = slotsRes.data.meta || {};
       setActiveCount(meta.activeCount ?? 0);
       setMaxAllowed(meta.maxAllowed ?? 5);
+
+      // Build the set of blocked doctorIds from existing requests
+      const blocked = new Set();
+      (slotsRes.data.data || []).forEach((r) => {
+        const doctorId = r.doctorId?._id || r.doctorId;
+        if (!doctorId || !BLOCKING_STATUSES.has(r.status)) return;
+
+        // For PAID_CONFIRMED, only block while the slot is still active
+        if (r.status === 'PAID_CONFIRMED') {
+          const scheduledDate = r.proposedByDoctor?.scheduledDate;
+          const durationMins  = r.proposedByDoctor?.slotDurationMinutes || 30;
+          if (scheduledDate) {
+            const slotEnd = new Date(
+              new Date(scheduledDate).getTime() + durationMins * 60 * 1000
+            );
+            if (new Date() >= slotEnd) return; // slot has ended — allow re-booking
+          }
+        }
+        blocked.add(String(doctorId));
+      });
+      setBlockedDoctors(blocked);
 
       setError(null);
       setLoading(false);
@@ -94,28 +123,33 @@ const BookAppointments = () => {
     if (!doctor._id) { toast.error('Invalid selection'); return; }
     if (!reason)     { toast.error('Please describe your reason for consultation'); return; }
 
-
     if (activeCount >= maxAllowed) {
       toast.error(`You've used all ${maxAllowed} active request slots. Cancel or wait for a response first.`);
+      return;
+    }
+
+    // ISSUE 1 FIX: frontend pre-flight check — backend will enforce this too
+    if (blockedDoctors.has(String(doctor._id))) {
+      toast.error(`You already have an active or confirmed appointment with Dr. ${doctor.name}. Please complete or cancel it before sending a new request.`);
       return;
     }
 
     try {
       await axios.post(
         `${API_URL}/api/v1/booking-requests`,
-
         { doctorId: doctor._id, reason },
         { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
       );
       toast.success(`Request sent to Dr. ${doctor.name}! They'll propose a time if they accept.`);
       setReasons((prev) => ({ ...prev, [doctor._id]: '' }));
-
       setActiveCount((prev) => Math.min(prev + 1, maxAllowed));
+      // Immediately mark this doctor as blocked in UI until next full refresh
+      setBlockedDoctors((prev) => new Set([...prev, String(doctor._id)]));
     } catch (err) {
       const msg = err?.response?.data?.message || 'Booking request failed';
       toast.error(msg);
     }
-  }, [reasons, activeCount, maxAllowed]);
+  }, [reasons, activeCount, maxAllowed, blockedDoctors]);
 
   const filteredDoctors = filterSpec === 'All'
     ? doctorsList
@@ -221,6 +255,7 @@ const BookAppointments = () => {
               onBook={handleBook}
               slotsExhausted={activeCount >= maxAllowed}
               noFee={!doctor.consultingFee || doctor.consultingFee === 0}
+              isBlocked={blockedDoctors.has(String(doctor._id))}
             />
           ))
         )}
@@ -230,8 +265,18 @@ const BookAppointments = () => {
 };
 
 const DoctorCard = React.memo(({
-  doctor, reason, onReasonChange, onBook, slotsExhausted, noFee,
-}) => (
+  doctor, reason, onReasonChange, onBook, slotsExhausted, noFee, isBlocked,
+}) => {
+  const isDisabled = slotsExhausted || noFee || isBlocked;
+  const buttonLabel = noFee
+    ? 'Awaiting Fee Setup'
+    : isBlocked
+    ? 'Already Booked'
+    : slotsExhausted
+    ? 'Slots Full'
+    : 'Request Consultation';
+
+  return (
   <div className="bg-white dark:bg-white/5 backdrop-blur-xl rounded-[2rem] sm:rounded-[4rem] p-6 sm:p-10 border-2 border-[#1F3A4B]/5 dark:border-white/5 shadow-3xl hover:border-[#C2F84F] transition-all group overflow-hidden relative">
     <Stethoscope
       className="absolute right-[-10px] top-[-10px] opacity-[0.03] dark:opacity-[0.07] transition-all group-hover:rotate-12 hidden md:block"
@@ -273,7 +318,6 @@ const DoctorCard = React.memo(({
               {doctor.availability}
             </span>
           )}
-          {}
           {doctor.consultingFee > 0 ? (
             <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest py-1 px-3 rounded-full flex items-center gap-1 bg-[#C2F84F]/20 text-[#476407] border border-[#C2F84F]/40">
               <IndianRupee size={10} />
@@ -291,6 +335,12 @@ const DoctorCard = React.memo(({
               Fee Unconfirmed
             </span>
           )}
+          {isBlocked && (
+            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest py-1 px-3 rounded-full flex items-center gap-1 bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-400 border border-sky-300">
+              <CheckCircle size={10} />
+              Active Request
+            </span>
+          )}
         </div>
 
         {doctor.bio && (
@@ -300,7 +350,6 @@ const DoctorCard = React.memo(({
         )}
       </div>
 
-      {}
       <div className="flex-1 space-y-3 sm:space-y-4">
         <p className="text-[9px] sm:text-[10px] font-black uppercase text-[#1F3A4B] dark:text-[#FAFDEE] tracking-widest leading-none">
           Reason for Consultation
@@ -311,11 +360,16 @@ const DoctorCard = React.memo(({
           placeholder="Briefly describe your symptoms or reason..."
           value={reason}
           onChange={(e) => onReasonChange(doctor._id, e.target.value)}
+          disabled={isBlocked}
         />
 
         {noFee ? (
           <p className="text-[9px] font-bold text-amber-600 italic px-1">
             This doctor has not set their consulting fee yet. Booking will be available once they do.
+          </p>
+        ) : isBlocked ? (
+          <p className="text-[9px] font-bold text-sky-600 dark:text-sky-400 italic px-1">
+            You have an active or confirmed appointment with this doctor. Complete or cancel it before booking again.
           </p>
         ) : (
           <p className="text-[9px] font-bold text-[#1F3A4B]/50 dark:text-[#FAFDEE]/50 italic px-1">
@@ -329,15 +383,20 @@ const DoctorCard = React.memo(({
       <div className="lg:w-fit w-full flex justify-end">
         <button
           onClick={() => onBook(doctor)}
-          disabled={slotsExhausted || noFee}
-          className="w-full lg:w-auto group flex items-center justify-center gap-3 px-8 sm:px-10 py-4 sm:py-5 bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] font-black italic rounded-[1.5rem] sm:rounded-[2.5rem] hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-[#1F3A4B]/30 leading-none text-sm sm:text-base tracking-wide disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
+          disabled={isDisabled}
+          className={`w-full lg:w-auto group flex items-center justify-center gap-3 px-8 sm:px-10 py-4 sm:py-5 font-black italic rounded-[1.5rem] sm:rounded-[2.5rem] hover:scale-105 active:scale-95 transition-all shadow-2xl leading-none text-sm sm:text-base tracking-wide disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100 ${
+            isBlocked
+              ? 'bg-sky-700 dark:bg-sky-600 text-white'
+              : 'bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] shadow-[#1F3A4B]/30'
+          }`}
         >
           <Send size={18} className="transition-transform group-hover:-translate-y-1 group-hover:translate-x-1" />
-          {noFee ? 'Awaiting Fee Setup' : slotsExhausted ? 'Slots Full' : 'Request Consultation'}
+          {buttonLabel}
         </button>
       </div>
     </div>
   </div>
-));
+  );
+});
 
 export default BookAppointments;
