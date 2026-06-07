@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 
 import DailyTaskCompletionChart from './othercomps/DailyTaskCompletionChart';
-import DailyTaskLog             from './othercomps/DailyTaskLog';
+import DailyTaskLog         from './othercomps/DailyTaskLog';
 import CurrentAppointments      from './othercomps/CurrentAppointments';
 import AIChatButton             from './othercomps/AIChatButton';
 import HealthVideos             from './othercomps/HealthVideos';
@@ -277,24 +277,26 @@ const PatientPage = () => {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-white/5 rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-12 border border-[#1F3A4B]/10 shadow-3xl overflow-hidden relative">
-            <div className="relative z-10">
-              <div className="flex justify-between items-center mb-6 md:mb-10">
-                <h2 className="text-2xl md:text-4xl font-black tracking-tighter italic text-[#1F3A4B] dark:text-[#FAFDEE] uppercase">
+          {/* ── FIXED MY CONSULTATIONS TAB CONTAINER ── */}
+          <div className="bg-white dark:bg-white/5 rounded-[1.5rem] sm:rounded-[2.5rem] md:rounded-[4rem] p-4 sm:p-6 md:p-12 border border-[#1F3A4B]/10 shadow-3xl overflow-hidden relative">
+            <div className="relative z-10 w-full">
+              <div className="flex justify-between items-center gap-2 mb-6 md:mb-10">
+                <h2 className="text-xl sm:text-2xl md:text-4xl font-black tracking-tighter italic text-[#1F3A4B] dark:text-[#FAFDEE] uppercase break-words max-w-[70%]">
                   My Consultations
                 </h2>
                 <Link
                   to="/book-appointment"
-                  className="h-10 w-10 md:h-14 md:w-14 bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] rounded-full flex items-center justify-center hover:scale-110 transition-all shadow-xl"
+                  className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] rounded-full flex items-center justify-center hover:scale-110 transition-all shadow-xl shrink-0"
                   title="Book new consultation"
                 >
-                  <Plus size={24} />
+                  <Plus size={20} className="sm:size-6" />
                 </Link>
               </div>
 
-              {/* Pass refreshTrigger so CurrentAppointments re-fetches when an
-                  appointment is aborted in real-time via socket */}
-              <CurrentAppointments refreshTrigger={appointmentRefreshKey} />
+              {/* Responsive wrapper to prevent inner child contents from bursting out */}
+              <div className="w-full overflow-x-auto min-w-0">
+                <CurrentAppointments refreshTrigger={appointmentRefreshKey} />
+              </div>
             </div>
           </div>
         </div>
@@ -432,7 +434,7 @@ const PatientPage = () => {
 
                 <form
                   onSubmit={handleSendMessage}
-                  className="mt-4 bg-[#1F3A4B]/5 dark:bg-white/5 p-1 rounded-full border border-[#1F3A4B]/20 flex items-center"
+                  className="mt-4 bg-[#1F3A4B]/5 p-1 rounded-full border border-[#1F3A4B]/20 flex items-center"
                 >
                   <button
                     type="button"
