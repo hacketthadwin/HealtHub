@@ -1,12 +1,13 @@
 const mongoose = require("mongoose");
 
 const BOOKING_STATES = [
-  "PENDING_DOCTOR_APPROVAL",           
-  "DOCTOR_ACCEPTED_AWAITING_PAYMENT",  
-  "PAID_CONFIRMED",                    
-  "DOCTOR_REJECTED",                   
-  "PATIENT_CANCELLED",                 
-  "PAYMENT_EXPIRED",                   
+  "PENDING_DOCTOR_APPROVAL",
+  "DOCTOR_ACCEPTED_AWAITING_PAYMENT",
+  "PAID_CONFIRMED",
+  "DOCTOR_REJECTED",
+  "PATIENT_CANCELLED",
+  "PAYMENT_EXPIRED",
+  "ABORTED_BY_DOCTOR",          // ← NEW: doctor marks expired after consultation window passes
 ];
 
 const ACTIVE_STATUSES = [
@@ -16,7 +17,6 @@ const ACTIVE_STATUSES = [
 
 const bookingRequestSchema = new mongoose.Schema(
   {
-
     patientId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -50,7 +50,7 @@ const bookingRequestSchema = new mongoose.Schema(
 
     proposedByDoctor: {
       scheduledDate:       { type: Date,   default: null },
-      scheduledTime:       { type: String, default: null }, 
+      scheduledTime:       { type: String, default: null },
       slotDurationMinutes: { type: Number, default: 30 },
     },
 
@@ -69,6 +69,15 @@ const bookingRequestSchema = new mongoose.Schema(
 
     rejectionReason:    { type: String, default: null },
     cancellationReason: { type: String, default: null },
+
+    // ── Abort / expire fields (populated when doctor marks appointment expired) ──
+    abortedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    abortedAt:   { type: Date,   default: null },
+    abortReason: { type: String, default: null },
   },
   { timestamps: true }
 );
@@ -89,7 +98,6 @@ bookingRequestSchema.index(
 );
 
 const BookingRequest = mongoose.model("BookingRequest", bookingRequestSchema);
-
 
 BookingRequest.BOOKING_STATES  = BOOKING_STATES;
 BookingRequest.ACTIVE_STATUSES = ACTIVE_STATUSES;

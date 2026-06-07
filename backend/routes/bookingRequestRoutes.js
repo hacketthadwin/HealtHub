@@ -8,6 +8,7 @@ const {
   cancelBookingRequest,
   acceptBookingRequest,
   rejectBookingRequest,
+  abortBookingRequest,      
   getDoctorQueue,
   getSingleRequest,
 } = require("../controller/bookingRequestController");
@@ -22,23 +23,29 @@ const {
 } = require("../controller/doctorController");
 
 
+// ─── Doctor-only routes ──────────────────────────────────────────────────────
 router.get(   "/doctor/queue",          auth, isDoctor,  getDoctorQueue);
 router.patch( "/doctor/consulting-fee", auth, isDoctor,  updateConsultingFee);
 
 
+// ─── Patient-only routes ─────────────────────────────────────────────────────
 router.post(  "/",               auth, isPatient, createBookingRequest);
 router.get(   "/my-requests",    auth, isPatient, getMyBookingRequests);
 
 
+// ─── Mixed action routes ─────────────────────────────────────────────────────
 router.patch( "/:id/cancel",           auth, isPatient, cancelBookingRequest);
 router.post(  "/:id/initiate-payment", auth, isPatient, initiatePayment);
 router.post(  "/:id/verify-payment",   auth, isPatient, verifyPayment);
 
+router.patch( "/:id/accept", auth, isDoctor,  acceptBookingRequest);
+router.patch( "/:id/reject", auth, isDoctor,  rejectBookingRequest);
 
-router.patch( "/:id/accept", auth, isDoctor, acceptBookingRequest);
-router.patch( "/:id/reject", auth, isDoctor, rejectBookingRequest);
+// NEW: Doctor marks a PAID_CONFIRMED appointment as expired after consultation window passes
+router.patch( "/:id/abort",  auth, isDoctor,  abortBookingRequest);
 
 
+// ─── Shared ──────────────────────────────────────────────────────────────────
 router.get(   "/:id",        auth, getSingleRequest);
 
 module.exports = router;

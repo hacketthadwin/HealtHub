@@ -26,13 +26,12 @@ const PatientPage = () => {
   const [userId,      setUserId]      = useState(null);
   const [userName,    setUserName]    = useState('User');
 
-
-
-
-
-
   const [activeCount, setActiveCount] = useState(0);
   const [maxAllowed,  setMaxAllowed]  = useState(5);
+
+  // ── appointmentRefreshKey increments when the doctor aborts → triggers
+  //    CurrentAppointments to re-fetch without its own socket connection ──
+  const [appointmentRefreshKey, setAppointmentRefreshKey] = useState(0);
 
   const [refreshChartKey, setRefreshChartKey]   = useState(0);
   const [chatView,        setChatView]           = useState('closed');
@@ -54,7 +53,6 @@ const PatientPage = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-
       const seenDoctors = new Set();
       const chatDoctors = (data.data || [])
         .filter((r) => r.status === 'PAID_CONFIRMED')
@@ -63,17 +61,15 @@ const PatientPage = () => {
           if (!doctorId || seenDoctors.has(doctorId)) return acc;
           seenDoctors.add(doctorId);
           acc.push({
-            id:      doctorId,
-            name:    r.doctorId?.name || 'Unknown Doctor',
+            id:       doctorId,
+            name:     r.doctorId?.name || 'Unknown Doctor',
             meetLink: r.meetLink || null,
-
-            roomId:  [currentUserId, doctorId].sort().join('_'),
+            roomId:   [currentUserId, doctorId].sort().join('_'),
           });
           return acc;
         }, []);
 
       setDoctors(chatDoctors);
-
 
       const meta = data.meta || {};
       setActiveCount(meta.activeCount ?? 0);
@@ -91,7 +87,6 @@ const PatientPage = () => {
       try {
         const decoded = jwtDecode(token);
         setUserName(decoded.name || 'User');
-
         setUserId(decoded.id);
         fetchDoctors(token, decoded.id);
       } catch {
@@ -101,6 +96,32 @@ const PatientPage = () => {
       navigate('/login');
     }
   }, [navigate, fetchDoctors]);
+
+  // ── Join personal notification room so the backend can push events ──────
+  useEffect(() => {
+    if (!userId) return;
+    socket.emit('joinUserRoom', userId);
+  }, [userId]);
+
+  // ── Listen for real-time abort / expiry events from the backend ─────────
+  useEffect(() => {
+    if (!userId) return;
+
+    const handleAppointmentAborted = () => {
+      // Increment key → CurrentAppointments re-fetches on its own
+      setAppointmentRefreshKey((prev) => prev + 1);
+
+      // Also refresh the doctor chat list (aborted = no longer PAID_CONFIRMED)
+      const token = localStorage.getItem('userToken');
+      if (token) fetchDoctors(token, userId);
+    };
+
+    socket.on('appointment_aborted', handleAppointmentAborted);
+
+    return () => {
+      socket.off('appointment_aborted', handleAppointmentAborted);
+    };
+  }, [userId, fetchDoctors]);
 
 
   useEffect(() => {
@@ -208,12 +229,10 @@ const PatientPage = () => {
     <div className="min-h-screen bg-[#FAFDEE] dark:bg-[#0a111a] transition-all duration-500 text-[#1F3A4B] dark:text-[#FAFDEE] font-sans overflow-x-hidden">
       <Header1 />
 
-
       <div className="fixed inset-0 pointer-events-none opacity-40 dark:opacity-20">
         <div className="absolute top-[-5%] left-[-5%] w-[45%] h-[45%] bg-[#C2F84F] rounded-full blur-[140px] dark:blur-[120px]" />
         <div className="absolute bottom-[-5%] right-[-5%] w-[35%] h-[35%] bg-cyan-400 rounded-full blur-[140px] dark:blur-[100px]" />
       </div>
-
 
       <header className="relative z-10 px-4 md:px-10 pt-4 md:pt-6 pb-2 flex items-center gap-4">
         <div className="p-1 rounded-full bg-gradient-to-tr from-[#1F3A4B] to-[#C2F84F] shrink-0">
@@ -222,7 +241,6 @@ const PatientPage = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
-
           <span className="px-3 py-1 bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] font-black text-[8px] md:text-[10px] rounded-full uppercase tracking-widest flex items-center gap-1.5">
             <Layers size={10} />
             {activeCount} / {maxAllowed} Requests Active
@@ -234,7 +252,6 @@ const PatientPage = () => {
       <main className="relative z-10 max-w-[1700px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 px-4 md:px-10 pb-24">
         <div className="lg:col-span-8 space-y-6 md:space-y-10">
 
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8">
             <div className="p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] bg-[#1F3A4B] text-[#FAFDEE] shadow-2xl relative overflow-hidden group">
               <Stethoscope className="absolute right-[-10px] bottom-[-10px] opacity-10 scale-150" size={100} />
@@ -244,15 +261,12 @@ const PatientPage = () => {
 
             <div className="p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] bg-white dark:bg-white/5 border-2 border-[#1F3A4B]/10 dark:border-white/10 shadow-xl relative group">
               <Users size={30} className="text-[#1F3A4B] dark:text-[#C2F84F] mb-4" />
-              <p className="text-[10px] font-black uppercase opacity-40 text-[#1F3A4B] dark:text-[#FAFDEE] tracking-widest">
-                My Doctors
-              </p>
+              <p className="text-[10px] font-black uppercase opacity-40 text-[#1F3A4B] dark:text-[#FAFDEE] tracking-widest">My Doctors</p>
               <h3 className="text-4xl md:text-6xl font-black italic uppercase leading-none mt-2">
                 {doctors.length}
               </h3>
             </div>
           </div>
-
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             <div className="bg-white dark:bg-white/5 rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-8 border border-[#1F3A4B]/10 shadow-2xl">
@@ -262,7 +276,6 @@ const PatientPage = () => {
               <DailyTaskLog onTaskUpdate={triggerChartRefresh} />
             </div>
           </div>
-
 
           <div className="bg-white dark:bg-white/5 rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-12 border border-[#1F3A4B]/10 shadow-3xl overflow-hidden relative">
             <div className="relative z-10">
@@ -279,11 +292,12 @@ const PatientPage = () => {
                 </Link>
               </div>
 
-              <CurrentAppointments />
+              {/* Pass refreshTrigger so CurrentAppointments re-fetches when an
+                  appointment is aborted in real-time via socket */}
+              <CurrentAppointments refreshTrigger={appointmentRefreshKey} />
             </div>
           </div>
         </div>
-
 
         <div className="lg:col-span-4 space-y-6 md:space-y-8">
           <Link
@@ -296,7 +310,6 @@ const PatientPage = () => {
             </div>
             <ChevronRight size={24} />
           </Link>
-
 
           <div
             className="p-8 md:p-12 rounded-[2.5rem] md:rounded-[4rem] bg-white dark:bg-white/5 border border-[#1F3A4B]/10 flex flex-col items-center justify-center text-center gap-6 shadow-2xl cursor-pointer hover:border-[#C2F84F] border-2 border-transparent transition-all"
@@ -321,7 +334,7 @@ const PatientPage = () => {
         </div>
       </main>
 
-      {}
+      {/* ── Chat panel ── */}
       <div
         className={`fixed top-0 right-0 h-full w-full sm:w-[480px] md:w-[540px] z-[100] transition-all duration-500 will-change-transform ${
           chatView === 'closed' ? 'translate-x-full invisible' : 'translate-x-0 visible'
@@ -329,7 +342,6 @@ const PatientPage = () => {
       >
         <div className="absolute inset-0 bg-white dark:bg-[#0d131b] border-l-4 border-[#1F3A4B] shadow-2xl backdrop-blur-2xl" />
         <div className="h-full w-full p-6 md:p-8 flex flex-col relative z-10 text-[#1F3A4B] dark:text-[#FAFDEE]">
-          {}
           <div className="flex justify-between items-center mb-6 md:mb-10">
             <div className="flex items-center gap-4">
               <span className="p-2 md:p-3 bg-[#1F3A4B] dark:bg-[#C2F84F] text-[#C2F84F] dark:text-[#1F3A4B] rounded-2xl">

@@ -9,6 +9,9 @@ const http     = require("http");
 const { Server } = require("socket.io");
 const server   = http.createServer(app);
 
+// ─── Socket manager (must be required before any controller that uses getIO) ─
+const socketManager = require("./socketManager");
+
 console.log("Loaded DB URL:", process.env.DATABASE_URL);
 
 const corsOptions = {
@@ -67,9 +70,23 @@ const io = new Server(server, {
   },
 });
 
+// ─── Publish io to socketManager so controllers can emit events ──────────────
+socketManager.setIO(io);
+
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
+  // ── Personal notification room ─────────────────────────────────────────────
+  // Both doctors and patients join their own personal room on mount so the
+  // backend can target them with one-off events (e.g. appointment_aborted).
+  socket.on("joinUserRoom", (userId) => {
+    if (!userId) return;
+    const roomName = `user:${userId}`;
+    socket.join(roomName);
+    console.log(`User ${userId} joined personal room: ${roomName}`);
+  });
+
+  // ── Chat room ─────────────────────────────────────────────────────────────
   socket.on("joinRoom", async ({ roomId, userId, role }) => {
     socket.join(roomId);
     console.log(`${role} ${userId} joined room: ${roomId}`);
@@ -163,8 +180,8 @@ app.get("/", (req, res) => {
 
 
 const expireStalePayments = require("./jobs/expireStalePayments");
-expireStalePayments();                             
-setInterval(expireStalePayments, 30 * 60 * 1000); 
+expireStalePayments();
+setInterval(expireStalePayments, 30 * 60 * 1000);
 
 
 server.listen(5000, () => {

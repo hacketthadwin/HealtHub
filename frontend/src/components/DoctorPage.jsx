@@ -10,15 +10,15 @@ import { io } from 'socket.io-client';
 import {
   MessageSquare, Users, Send, ChevronRight, X, Stethoscope,
   Clock, UserCheck, ArrowLeft, Heart, Paperclip, FileText,
-  Video, IndianRupee, CalendarCheck, CheckCircle, TriangleAlert
+  Video, IndianRupee, CalendarCheck, CheckCircle, TriangleAlert,
+  Ban,
 } from 'lucide-react';
 import Header1 from './UIcomponents/Header1';
 import { API_URL } from '../config/api';
 
 const socket = io(`${API_URL}`);
 
-
-// ─── Helper: convert "HH:MM" (24h) → "H:MM AM/PM" for display & API ─────────
+// ─── Helper: convert "HH:MM" (24h) → "H:MM AM/PM" ────────────────────────
 const rawTimeTo12h = (raw) => {
   if (!raw) return '';
   const [h, m] = raw.split(':').map(Number);
@@ -28,15 +28,87 @@ const rawTimeTo12h = (raw) => {
   return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
 };
 
-// ─── Helper: convert "H:MM AM/PM" → "HH:MM" (24h) for the time input value ──
+// ─── Helper: has the booking's consultation window already ended? ──────────
+const isAbortEligible = (booking) => {
+  if (!booking?.scheduledDate) return false;
+  const slotEnd = new Date(
+    new Date(booking.scheduledDate).getTime() +
+    (booking.slotDurationMinutes || 30) * 60 * 1000
+  );
+  return new Date() > slotEnd;
+};
 
+// ─── Abort Confirmation Modal ──────────────────────────────────────────────
+const AbortConfirmModal = ({ booking, onClose, onConfirm, loading }) => (
+  <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+    <div className="w-full max-w-md bg-[#FAFDEE] dark:bg-[#0d131b] rounded-[2.5rem] p-8 shadow-2xl border border-[#1F3A4B]/10 dark:border-white/10 relative">
+      <button
+        onClick={onClose}
+        className="absolute top-5 right-5 p-2 rounded-full hover:bg-rose-100 dark:hover:bg-rose-900/30 text-[#1F3A4B] dark:text-white transition-all"
+      >
+        <X size={20} />
+      </button>
+
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 rounded-xl bg-rose-500/10 text-rose-500">
+          <TriangleAlert size={20} />
+        </div>
+        <div>
+          <h3 className="text-lg font-black italic uppercase text-[#1F3A4B] dark:text-[#FAFDEE] leading-none">
+            Mark as Expired
+          </h3>
+          <p className="text-[10px] font-bold text-[#1F3A4B]/50 dark:text-white/40 uppercase tracking-widest mt-0.5">
+            Patient: {booking?.patient}
+          </p>
+        </div>
+      </div>
+
+      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-400/40 rounded-2xl p-4 mb-6">
+        <p className="text-sm font-bold text-amber-800 dark:text-amber-300">
+          Appointment time has already passed. Do you want to mark this appointment as expired?
+        </p>
+        <p className="text-[10px] text-amber-700 dark:text-amber-400 mt-2 font-medium">
+          The patient will be notified by email. This appointment will move to consultation history.
+        </p>
+      </div>
+
+      {booking?.scheduledDate && (
+        <div className="bg-[#1F3A4B]/5 dark:bg-white/5 rounded-2xl p-3 mb-6 text-[10px] font-black uppercase tracking-widest text-[#1F3A4B]/60 dark:text-white/50">
+          📅 {new Date(booking.scheduledDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
+          &nbsp;·&nbsp;⏰ {booking.scheduledTime || 'N/A'}
+        </div>
+      )}
+
+      <div className="flex gap-3">
+        <button
+          onClick={onClose}
+          className="flex-1 py-3 rounded-2xl border-2 border-[#1F3A4B]/20 dark:border-white/20 text-[#1F3A4B] dark:text-white font-black text-sm uppercase tracking-widest hover:border-rose-400 hover:text-rose-500 transition-all"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={onConfirm}
+          disabled={loading}
+          className="flex-1 py-3 rounded-2xl bg-rose-500 text-white font-black text-sm uppercase tracking-widest hover:scale-105 transition-all shadow-xl disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {loading ? (
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <Ban size={16} />
+          )}
+          {loading ? 'Marking...' : 'Mark Expired'}
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+// ─── Accept Scheduling Modal ───────────────────────────────────────────────
 const AcceptModal = ({ request, onClose, onSubmit, loading }) => {
-  // form.scheduledTime always stores the 24h raw string used by the <input type="time">.
-  // form.scheduledTime12h stores the AM/PM string sent to the backend and shown to users.
   const [form, setForm] = useState({
     scheduledDate:       '',
-    rawTime:             '',   // "HH:MM" — drives the time input value
-    scheduledTime:       '',   // "H:MM AM/PM" — sent to backend & displayed
+    rawTime:             '',
+    scheduledTime:       '',
     slotDurationMinutes: 30,
   });
 
@@ -45,8 +117,6 @@ const AcceptModal = ({ request, onClose, onSubmit, loading }) => {
   const handleDateChange = (value) =>
     setForm((prev) => ({ ...prev, scheduledDate: value }));
 
-  // ISSUE 3 FIX: keep rawTime (24h) for the input and derive scheduledTime (12h)
-  // in a single state update so both are always in sync.
   const handleTimeChange = (raw24h) => {
     const ampm = rawTimeTo12h(raw24h);
     setForm((prev) => ({
@@ -61,7 +131,6 @@ const AcceptModal = ({ request, onClose, onSubmit, loading }) => {
       toast.error('Please set both a date and a time.');
       return;
     }
-    // Pass scheduledTime (AM/PM string) to the backend — it already handles that format.
     onSubmit(request.id, {
       scheduledDate:       form.scheduledDate,
       scheduledTime:       form.scheduledTime,
@@ -71,35 +140,19 @@ const AcceptModal = ({ request, onClose, onSubmit, loading }) => {
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-      {/*
-        ISSUE 4 FIX: `color-scheme: light` forces the browser to render native
-        date/time picker icons (calendar & clock) in light mode regardless of the
-        OS dark-mode setting, making them always visible on the modal's light
-        background. The modal itself uses a light bg (#FAFDEE / #0d131b) so the
-        inputs need to declare their own colour scheme explicitly.
-      */}
       <style>{`
         .accept-modal-input[type="date"],
-        .accept-modal-input[type="time"] {
-          color-scheme: light;
-        }
+        .accept-modal-input[type="time"] { color-scheme: light; }
         .dark .accept-modal-input[type="date"],
-        .dark .accept-modal-input[type="time"] {
-          color-scheme: dark;
-          /* Override browser default to use brand colours */
-          color: #FAFDEE;
-        }
-        /* Webkit (Chrome/Safari/Edge) calendar & clock icon colour fix */
+        .dark .accept-modal-input[type="time"] { color-scheme: dark; color: #FAFDEE; }
         .accept-modal-input[type="date"]::-webkit-calendar-picker-indicator,
         .accept-modal-input[type="time"]::-webkit-calendar-picker-indicator {
           filter: invert(0.3) sepia(1) saturate(5) hue-rotate(60deg);
-          cursor: pointer;
-          opacity: 0.7;
+          cursor: pointer; opacity: 0.7;
         }
         .dark .accept-modal-input[type="date"]::-webkit-calendar-picker-indicator,
         .dark .accept-modal-input[type="time"]::-webkit-calendar-picker-indicator {
-          filter: invert(1) brightness(1.4);
-          opacity: 0.85;
+          filter: invert(1) brightness(1.4); opacity: 0.85;
         }
       `}</style>
 
@@ -131,7 +184,6 @@ const AcceptModal = ({ request, onClose, onSubmit, loading }) => {
         </div>
 
         <div className="space-y-4">
-          {/* Date picker */}
           <div>
             <label className="block text-[10px] font-black uppercase tracking-widest text-[#1F3A4B] dark:text-[#FAFDEE] mb-1.5">
               Date
@@ -145,7 +197,6 @@ const AcceptModal = ({ request, onClose, onSubmit, loading }) => {
             />
           </div>
 
-          {/* Time picker — ISSUE 3 FIX: value always bound to rawTime (24h format) */}
           <div>
             <label className="block text-[10px] font-black uppercase tracking-widest text-[#1F3A4B] dark:text-[#FAFDEE] mb-1.5">
               Time
@@ -156,15 +207,13 @@ const AcceptModal = ({ request, onClose, onSubmit, loading }) => {
               onChange={(e) => handleTimeChange(e.target.value)}
               className="accept-modal-input w-full p-3 rounded-2xl bg-[#1F3A4B]/5 dark:bg-white/5 text-[#1F3A4B] dark:text-white font-bold outline-none border-2 border-transparent focus:border-[#C2F84F] transition-all text-sm"
             />
-            {/* Live preview of selected time in 12h format */}
             {form.scheduledTime && (
-              <p className="mt-1.5 ml-1 text-[10px] font-black text-[#C2F84F] dark:text-[#C2F84F] uppercase tracking-widest">
+              <p className="mt-1.5 ml-1 text-[10px] font-black text-[#C2F84F] uppercase tracking-widest">
                 Selected: {form.scheduledTime}
               </p>
             )}
           </div>
 
-          {/* Duration */}
           <div>
             <label className="block text-[10px] font-black uppercase tracking-widest text-[#1F3A4B] dark:text-[#FAFDEE] mb-1.5">
               Duration
@@ -181,7 +230,6 @@ const AcceptModal = ({ request, onClose, onSubmit, loading }) => {
             </select>
           </div>
 
-          {/* Slot summary */}
           {form.scheduledDate && form.scheduledTime && (
             <div className="bg-[#C2F84F]/10 dark:bg-[#C2F84F]/5 border border-[#C2F84F]/30 rounded-2xl p-3 text-[10px] font-black uppercase tracking-widest text-[#476407] dark:text-[#C2F84F]">
               📅 {form.scheduledDate} · ⏰ {form.scheduledTime} · ⏱ {form.slotDurationMinutes} min
@@ -223,9 +271,10 @@ const DoctorPage = () => {
   const [updatingFee,            setUpdatingFee]            = useState(false);
   const feePanelRef = useRef(null);
 
-  const [patients,         setPatients]         = useState([]);
-  const [pendingRequests,  setPendingRequests]  = useState([]);
+  const [patients,           setPatients]           = useState([]);
+  const [pendingRequests,    setPendingRequests]     = useState([]);
   const [todaysAppointments, setTodaysAppointments] = useState([]);
+  const [pastDueBookings,    setPastDueBookings]     = useState([]);
 
   const [chatOpen,      setChatOpen]      = useState(false);
   const [chatPatient,   setChatPatient]   = useState(null);
@@ -238,6 +287,10 @@ const DoctorPage = () => {
 
   const [acceptModal,   setAcceptModal]   = useState({ open: false, request: null });
   const [acceptLoading, setAcceptLoading] = useState(false);
+
+  // ── Abort state ──────────────────────────────────────────────────────────
+  const [abortModal,   setAbortModal]   = useState({ open: false, booking: null });
+  const [abortLoading, setAbortLoading] = useState(false);
 
   const scrollToBottom = () => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   useEffect(() => { scrollToBottom(); }, [messages]);
@@ -255,9 +308,7 @@ const DoctorPage = () => {
         }
         setConsultingFeeConfirmed(data.data.consultingFeeConfirmed ?? false);
       }
-    } catch {
-
-    }
+    } catch { /* silent */ }
   }, []);
 
 
@@ -282,8 +333,9 @@ const DoctorPage = () => {
       );
 
       const all = data.data || [];
+      const now = new Date();
 
-
+      // ── Pending requests ────────────────────────────────────────────────
       const pending = all
         .filter((r) => r.status === 'PENDING_DOCTOR_APPROVAL')
         .map((r) => ({
@@ -294,7 +346,7 @@ const DoctorPage = () => {
           originalReq: r,
         }));
 
-
+      // ── Confirmed patients (deduped for chat sidebar) ───────────────────
       const seenPatients = new Set();
       const confirmed = all
         .filter((r) => r.status === 'PAID_CONFIRMED')
@@ -303,20 +355,20 @@ const DoctorPage = () => {
           if (!key || seenPatients.has(key)) return acc;
           seenPatients.add(key);
           acc.push({
-            id:           r.patientId._id,
-            name:         r.patientId.name || 'Unknown Patient',
-            symptoms:     r.reason,
-            status:       r.status,
-            meetLink:     r.meetLink || null,
-            requestId:    r._id,
+            id:            r.patientId._id,
+            name:          r.patientId.name || 'Unknown Patient',
+            symptoms:      r.reason,
+            status:        r.status,
+            meetLink:      r.meetLink || null,
+            requestId:     r._id,
             scheduledTime: r.proposedByDoctor?.scheduledTime || null,
             scheduledDate: r.proposedByDoctor?.scheduledDate || null,
           });
           return acc;
         }, []);
 
-
-      const todayStr = new Date().toDateString();
+      // ── Today's schedule (full details for abort eligibility) ───────────
+      const todayStr = now.toDateString();
       const todays = all
         .filter((r) => {
           if (r.status !== 'PAID_CONFIRMED') return false;
@@ -324,15 +376,39 @@ const DoctorPage = () => {
           return new Date(r.proposedByDoctor.scheduledDate).toDateString() === todayStr;
         })
         .map((r) => ({
-          id:       r._id,
-          patient:  r.patientId?.name || 'Unknown Patient',
-          time:     r.proposedByDoctor?.scheduledTime || 'TBD',
-          meetLink: r.meetLink || null,
+          id:                  r._id,
+          patient:             r.patientId?.name || 'Unknown Patient',
+          time:                r.proposedByDoctor?.scheduledTime || 'TBD',
+          meetLink:            r.meetLink || null,
+          scheduledDate:       r.proposedByDoctor?.scheduledDate || null,
+          slotDurationMinutes: r.proposedByDoctor?.slotDurationMinutes || 30,
+        }));
+
+      // ── Past due: PAID_CONFIRMED + not today + slotEnd already passed ───
+      const pastDue = all
+        .filter((r) => {
+          if (r.status !== 'PAID_CONFIRMED') return false;
+          if (!r.proposedByDoctor?.scheduledDate) return false;
+          const scheduledDate = new Date(r.proposedByDoctor.scheduledDate);
+          if (scheduledDate.toDateString() === todayStr) return false; // handled above
+          const durationMins = r.proposedByDoctor?.slotDurationMinutes || 30;
+          const slotEnd = new Date(scheduledDate.getTime() + durationMins * 60 * 1000);
+          return now > slotEnd;
+        })
+        .map((r) => ({
+          id:                  r._id,
+          patient:             r.patientId?.name || 'Unknown Patient',
+          reason:              r.reason,
+          scheduledTime:       r.proposedByDoctor?.scheduledTime || 'TBD',
+          scheduledDate:       r.proposedByDoctor?.scheduledDate || null,
+          slotDurationMinutes: r.proposedByDoctor?.slotDurationMinutes || 30,
+          meetLink:            r.meetLink || null,
         }));
 
       setPendingRequests(pending);
       setPatients(confirmed);
       setTodaysAppointments(todays);
+      setPastDueBookings(pastDue);
     } catch (err) {
       toast.error('Error loading appointments');
       if (err.response?.status === 401) { localStorage.clear(); navigate('/login'); }
@@ -340,6 +416,12 @@ const DoctorPage = () => {
   }, [navigate, fetchProfile]);
 
   useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
+
+  // ── Join personal notification room (for abort events emitted TO this doctor) ─
+  useEffect(() => {
+    if (!userId) return;
+    socket.emit('joinUserRoom', userId);
+  }, [userId]);
 
 
   useEffect(() => {
@@ -428,6 +510,34 @@ const DoctorPage = () => {
     }
   };
 
+  // ── Abort handlers ────────────────────────────────────────────────────────
+  const handleAbortOpen = (booking) => {
+    setAbortModal({ open: true, booking });
+  };
+
+  const handleAbortConfirm = async () => {
+    const token   = localStorage.getItem('userToken');
+    const booking = abortModal.booking;
+    if (!booking) return;
+
+    setAbortLoading(true);
+    try {
+      await axios.patch(
+        `${API_URL}/api/v1/booking-requests/${booking.id}/abort`,
+        { abortReason: 'Consultation window passed — marked expired by doctor.' },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Appointment marked as expired. Patient has been notified.');
+      setAbortModal({ open: false, booking: null });
+      fetchAppointments();
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Failed to mark appointment as expired.';
+      toast.error(msg);
+    } finally {
+      setAbortLoading(false);
+    }
+  };
+
 
   const handleFeeUpdate = async () => {
     const fee = parseFloat(feeInput);
@@ -502,7 +612,7 @@ const DoctorPage = () => {
       <ToastContainer autoClose={2500} />
       <Header1 />
 
-
+      {/* ── Accept modal ── */}
       {acceptModal.open && (
         <AcceptModal
           request={acceptModal.request}
@@ -512,13 +622,23 @@ const DoctorPage = () => {
         />
       )}
 
+      {/* ── Abort confirmation modal ── */}
+      {abortModal.open && (
+        <AbortConfirmModal
+          booking={abortModal.booking}
+          onClose={() => !abortLoading && setAbortModal({ open: false, booking: null })}
+          onConfirm={handleAbortConfirm}
+          loading={abortLoading}
+        />
+      )}
 
+      {/* ── Ambient blobs ── */}
       <div className="fixed inset-0 pointer-events-none opacity-40 dark:opacity-20 z-0">
         <div className="absolute top-[-5%] left-[-5%] w-[45%] h-[45%] bg-[#C2F84F] rounded-full blur-[140px]" />
         <div className="absolute bottom-[-5%] right-[-5%] w-[35%] h-[35%] bg-cyan-400 rounded-full blur-[140px]" />
       </div>
 
-
+      {/* ── Page header ── */}
       <header className="relative z-10 px-4 md:px-10 pt-4 md:pt-6 pb-2 flex items-center gap-4">
         <div className="p-1 rounded-full bg-gradient-to-tr from-[#1F3A4B] to-[#C2F84F] shrink-0">
           <div className="h-14 w-14 md:h-16 md:w-16 rounded-full bg-white dark:bg-[#1F3A4B] flex items-center justify-center">
@@ -526,7 +646,6 @@ const DoctorPage = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
-
           <span className="px-3 py-1 bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] font-black text-[8px] md:text-[10px] rounded-full uppercase tracking-widest flex items-center gap-1">
             <IndianRupee size={10} />
             {consultingFee ? `₹${consultingFee}/session` : 'Fee Not Set'}
@@ -537,8 +656,8 @@ const DoctorPage = () => {
 
       <main className="relative z-10 max-w-[1700px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 px-4 md:px-10 pb-24">
         <div className="lg:col-span-8 space-y-6 md:space-y-10">
-          {}
 
+          {/* ── Fee-not-confirmed banner ── */}
           {!consultingFeeConfirmed && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-400 rounded-[2rem] shadow-md">
               <TriangleAlert className="text-amber-500 shrink-0 mt-0.5" size={22} />
@@ -560,6 +679,8 @@ const DoctorPage = () => {
               </button>
             </div>
           )}
+
+          {/* ── Stats cards ── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8">
             <div className="p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] bg-[#1F3A4B] text-[#FAFDEE] shadow-2xl relative overflow-hidden group">
               <UserCheck className="absolute right-[-10px] bottom-[-10px] opacity-10 scale-150" size={100} />
@@ -573,7 +694,7 @@ const DoctorPage = () => {
             </div>
           </div>
 
-          {}
+          {/* ── Calendar + Today's Schedule ── */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
             <div className="bg-white dark:bg-white/5 backdrop-blur-xl rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-8 border-2 border-[#1F3A4B]/10 dark:border-white/20 shadow-2xl">
               <h2 className="text-2xl md:text-3xl font-black italic tracking-tighter mb-6 uppercase text-[#1F3A4B] dark:text-[#FAFDEE]">Calendar</h2>
@@ -591,41 +712,102 @@ const DoctorPage = () => {
               <Calendar onChange={setCalendarDate} value={calendarDate} />
             </div>
 
+            {/* Today's Schedule — includes abort button for eligible appointments */}
             <div className="bg-white dark:bg-white/5 backdrop-blur-xl rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-10 border-2 border-[#1F3A4B]/10 dark:border-white/20 shadow-2xl min-h-[380px]">
               <h2 className="text-2xl md:text-3xl font-black italic tracking-tighter mb-6 uppercase text-[#1F3A4B] dark:text-[#FAFDEE]">Today's Schedule</h2>
               <div className="space-y-4">
                 {todaysAppointments.length === 0 ? (
                   <p className="text-center py-16 opacity-40 italic font-medium text-sm uppercase tracking-wider">No appointments today</p>
                 ) : (
-                  todaysAppointments.map((app) => (
-                    <div key={app.id} className="p-5 rounded-2xl bg-[#1F3A4B]/5 dark:bg-white/5 border border-[#1F3A4B]/10 flex flex-col gap-3">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-bold italic text-base uppercase text-[#1F3A4B] dark:text-[#FAFDEE]">{app.patient}</p>
-                          <p className="text-xs opacity-60 font-medium tracking-wide uppercase mt-0.5">{app.time}</p>
+                  todaysAppointments.map((app) => {
+                    const eligible = isAbortEligible(app);
+                    return (
+                      <div key={app.id} className={`p-5 rounded-2xl border flex flex-col gap-3 transition-all ${eligible ? 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-800/40' : 'bg-[#1F3A4B]/5 dark:bg-white/5 border-[#1F3A4B]/10'}`}>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-bold italic text-base uppercase text-[#1F3A4B] dark:text-[#FAFDEE]">{app.patient}</p>
+                            <p className="text-xs opacity-60 font-medium tracking-wide uppercase mt-0.5">{app.time}</p>
+                          </div>
+                          {eligible ? (
+                            <span className="flex items-center gap-1 text-[9px] font-black uppercase px-2 py-1 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600">
+                              <Clock size={10} /> Window Passed
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-[9px] font-black uppercase px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700">
+                              <CheckCircle size={10} /> Paid
+                            </span>
+                          )}
                         </div>
-                        <span className="flex items-center gap-1 text-[9px] font-black uppercase px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700">
-                          <CheckCircle size={10} /> Paid
-                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {app.meetLink && !eligible && (
+                            <a
+                              href={app.meetLink}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-2 px-4 py-2 bg-[#C2F84F] text-[#1F3A4B] rounded-full font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all w-fit shadow-md"
+                            >
+                              <Video size={12} /> Start Call
+                            </a>
+                          )}
+                          {eligible && (
+                            <button
+                              onClick={() => handleAbortOpen(app)}
+                              className="flex items-center gap-2 px-4 py-2 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all"
+                            >
+                              <Ban size={12} /> Mark as Expired
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      {app.meetLink && (
-                        <a
-                          href={app.meetLink}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center gap-2 px-4 py-2 bg-[#C2F84F] text-[#1F3A4B] rounded-full font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all w-fit shadow-md"
-                        >
-                          <Video size={12} /> Start Call
-                        </a>
-                      )}
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
           </div>
 
-          {}
+          {/* ── Past Due Appointments — requires action ── */}
+          {pastDueBookings.length > 0 && (
+            <div className="bg-white dark:bg-white/5 rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-10 border-2 border-rose-500/20 shadow-xl">
+              <h2 className="text-2xl md:text-3xl font-black italic mb-2 flex items-center gap-3 uppercase tracking-tighter text-rose-600 dark:text-rose-400">
+                <TriangleAlert size={28} className="shrink-0" />
+                Appointments Requiring Action
+              </h2>
+              <p className="text-[10px] text-rose-600/70 dark:text-rose-400/60 font-bold uppercase tracking-widest mb-6">
+                These confirmed appointments have passed their scheduled consultation window
+              </p>
+              <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1 scrollbar-hide">
+                {pastDueBookings.map((booking) => (
+                  <div
+                    key={booking.id}
+                    className="p-5 rounded-2xl bg-rose-50/60 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-800/40 flex flex-col sm:flex-row justify-between sm:items-center gap-3 transition-all hover:border-rose-400"
+                  >
+                    <div>
+                      <p className="font-black italic uppercase text-[#1F3A4B] dark:text-[#FAFDEE] text-base">{booking.patient}</p>
+                      <p className="text-[10px] opacity-60 font-medium tracking-wide uppercase mt-0.5">
+                        {new Date(booking.scheduledDate).toLocaleDateString('en-IN', {
+                          weekday: 'short', month: 'short', day: 'numeric',
+                        })} · {booking.scheduledTime}
+                      </p>
+                      {booking.reason && (
+                        <p className="text-[10px] text-[#1F3A4B]/50 dark:text-white/40 font-medium italic mt-1 max-w-xs truncate">
+                          {booking.reason}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => handleAbortOpen(booking)}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all shrink-0"
+                    >
+                      <Ban size={12} /> Mark as Expired
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Pending Requests ── */}
           <div className="bg-white dark:bg-white/5 rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-12 border-2 border-[#1F3A4B]/10 shadow-3xl">
             <h2 className="text-2xl md:text-4xl font-black italic mb-8 flex items-center gap-4 uppercase tracking-tighter text-[#1F3A4B] dark:text-[#FAFDEE]">
               <Clock size={32} className="text-[#C2F84F] dark:text-[#1F3A4B] bg-[#1F3A4B] dark:bg-[#C2F84F] p-1.5 rounded-xl shrink-0" />
@@ -638,7 +820,6 @@ const DoctorPage = () => {
                 pendingRequests.map((req) => (
                   <div key={req.id} className="p-6 md:p-8 rounded-[2rem] md:rounded-[3rem] bg-[#1F3A4B]/5 dark:bg-white/5 border border-transparent hover:border-[#C2F84F] flex flex-col md:flex-row justify-between md:items-center gap-4 transition-all shadow-md">
                     <div>
-                      {}
                       <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-[#C2F84F]/20 text-[#476407] mb-2">
                         <IndianRupee size={9} />₹{req.feeRupees} consultation
                       </span>
@@ -648,7 +829,6 @@ const DoctorPage = () => {
                       </p>
                     </div>
                     <div className="flex gap-3 shrink-0">
-                      {}
                       <button
                         onClick={() => handleAcceptOpen(req)}
                         className="px-6 py-3 bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] font-bold rounded-xl md:rounded-2xl text-xs uppercase tracking-wider hover:scale-105 transition-all shadow-md"
@@ -669,7 +849,7 @@ const DoctorPage = () => {
           </div>
         </div>
 
-        {}
+        {/* ── Right sidebar ── */}
         <div className="lg:col-span-4 space-y-6 md:space-y-8">
           <button
             onClick={() => navigate('/community-support')}
@@ -682,8 +862,8 @@ const DoctorPage = () => {
             <ChevronRight size={24} />
           </button>
 
-          {}
-          <div ref={feePanelRef} className="bg-white dark:bg-white/5 rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-8 border-2 border-amber-400/40 shadow-3xl transition-all" style={!consultingFeeConfirmed ? {borderColor: 'rgb(251 191 36 / 0.6)'} : {}}>
+          {/* Fee panel */}
+          <div ref={feePanelRef} className="bg-white dark:bg-white/5 rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-8 border-2 border-amber-400/40 shadow-3xl transition-all" style={!consultingFeeConfirmed ? { borderColor: 'rgb(251 191 36 / 0.6)' } : {}}>
             <h2 className="text-lg md:text-xl font-black italic uppercase mb-4 text-[#1F3A4B] dark:text-[#FAFDEE] flex items-center gap-2">
               <IndianRupee size={18} className="text-[#C2F84F]" />
               My Consulting Fee
@@ -696,9 +876,7 @@ const DoctorPage = () => {
               <div className="relative flex-1">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1F3A4B]/40 font-black text-sm">₹</span>
                 <input
-                  type="number"
-                  min="1"
-                  max="50000"
+                  type="number" min="1" max="50000"
                   value={feeInput}
                   onChange={(e) => setFeeInput(e.target.value)}
                   className="w-full pl-7 pr-3 py-3 rounded-2xl bg-[#1F3A4B]/5 dark:bg-white/5 text-[#1F3A4B] dark:text-white font-bold outline-none border-2 border-transparent focus:border-[#C2F84F] transition-all text-sm"
@@ -715,7 +893,7 @@ const DoctorPage = () => {
             </div>
           </div>
 
-          {}
+          {/* My Patients (chat list — deduped) */}
           <div className="bg-white dark:bg-white/5 rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-10 border-2 border-[#1F3A4B]/10 shadow-3xl backdrop-blur-md relative overflow-hidden">
             <h2 className="text-xl md:text-2xl font-black italic uppercase mb-6 text-[#1F3A4B] dark:text-[#FAFDEE]">My Patients</h2>
             <div className="block lg:hidden">
@@ -761,7 +939,7 @@ const DoctorPage = () => {
         </div>
       </main>
 
-      {}
+      {/* ── Mobile patient list overlay ── */}
       <div className={`fixed inset-0 z-[120] bg-[#FAFDEE] dark:bg-[#0a111a] transition-all duration-500 lg:hidden ${showPatientList ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="p-6 h-full flex flex-col pt-24 relative">
           <button onClick={() => setShowPatientList(false)} className="absolute top-6 left-6 z-20 group flex items-center gap-2.5 px-4 py-2 rounded-xl border border-[#1F3A4B]/20 dark:border-white/10 bg-white/50 dark:bg-[#1F3A4B]/20 backdrop-blur-md text-[#1F3A4B] dark:text-[#FAFDEE] font-bold text-xs tracking-widest">
@@ -785,7 +963,7 @@ const DoctorPage = () => {
         </div>
       </div>
 
-      {}
+      {/* ── Chat panel ── */}
       <div className={`fixed top-0 right-0 h-full w-full sm:w-[480px] md:w-[540px] z-[150] transition-all duration-500 ${chatOpen ? 'translate-x-0 visible' : 'translate-x-full invisible'}`}>
         <div className="absolute inset-0 bg-white dark:bg-[#0d131b] border-l-4 border-[#1F3A4B] shadow-2xl" />
         <div className="h-full p-6 md:p-8 flex flex-col relative z-10 text-[#1F3A4B] dark:text-[#FAFDEE]">

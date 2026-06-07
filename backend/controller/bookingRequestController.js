@@ -113,9 +113,7 @@ exports.createBookingRequest = async (req, res) => {
       });
     }
 
-    // ── ISSUE 1 FIX: Per-doctor duplicate check ────────────────────────────
-    // Block if any existing request with this doctor is in a blocking status
-    // AND (for PAID_CONFIRMED) the slot has not yet ended.
+    // ── Per-doctor duplicate check ─────────────────────────────────────────
     const existingRequests = await BookingRequest.find({
       patientId,
       doctorId,
@@ -123,7 +121,6 @@ exports.createBookingRequest = async (req, res) => {
     });
 
     for (const existing of existingRequests) {
-      // For terminal-pending states: always block
       if (
         existing.status === "PENDING_DOCTOR_APPROVAL" ||
         existing.status === "DOCTOR_ACCEPTED_AWAITING_PAYMENT"
@@ -138,7 +135,6 @@ exports.createBookingRequest = async (req, res) => {
         });
       }
 
-      // For PAID_CONFIRMED: block until the consultation slot has ended
       if (existing.status === "PAID_CONFIRMED") {
         const scheduledDate = existing.proposedByDoctor?.scheduledDate;
         const durationMins  = existing.proposedByDoctor?.slotDurationMinutes || 30;
@@ -158,9 +154,7 @@ exports.createBookingRequest = async (req, res) => {
               slotEndsAt: slotEnd.toISOString(),
             });
           }
-          // Slot has already ended — allow a new request (fall through)
         } else {
-          // No scheduled date means consultation is pending scheduling — still block
           return res.status(409).json({
             success: false,
             message:
@@ -391,7 +385,7 @@ exports.rejectBookingRequest = async (req, res) => {
   }
 };
 
-// ─── CANCEL BOOKING REQUEST — ISSUE 2 FIX: Hard delete instead of soft cancel ─
+// ─── CANCEL BOOKING REQUEST (patient-initiated) ──────────────────────────────
 exports.cancelBookingRequest = async (req, res) => {
   try {
     const { id: requestId } = req.params;
@@ -413,12 +407,10 @@ exports.cancelBookingRequest = async (req, res) => {
 
     const wasAccepted = bookingRequest.status === "DOCTOR_ACCEPTED_AWAITING_PAYMENT";
 
-    // ── Release the doctor's schedule slot if one was reserved ──────────────
     if (wasAccepted) {
       await DoctorSchedule.deleteOne({ bookingRequestId: bookingRequest._id });
     }
 
-    // ── Notify the doctor only if they had already accepted ─────────────────
     if (wasAccepted) {
       const populated = await bookingRequest.populate("doctorId", "name email");
       await sendEmail({
@@ -436,7 +428,6 @@ exports.cancelBookingRequest = async (req, res) => {
       });
     }
 
-    // ── Hard-delete the BookingRequest — as if it was never created ─────────
     await BookingRequest.deleteOne({ _id: requestId });
 
     return res.status(200).json({
@@ -454,13 +445,142 @@ exports.cancelBookingRequest = async (req, res) => {
   }
 };
 
+// ─── ABORT BOOKING REQUEST (doctor-initiated, after consultation window passes) ─
+exports.abortBookingRequest = async (req, res) => {
+  try {
+    const { id: requestId } = req.params;
+    const doctorId          = req.user.id;
+    const { abortReason }   = req.body;
+
+    // ── 1. Find the booking — must belong to this doctor and be PAID_CONFIRMED ─
+    const bookingRequest = await BookingRequest.findOne({
+      _id:      requestId,
+      doctorId,
+      status:   "PAID_CONFIRMED",
+    })
+      .populate("patientId", "name email _id")
+      .populate("doctorId",  "name");
+
+    if (!bookingRequest) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Appointment not found. It may not belong to you, may already be aborted, " +
+          "or may not be in an active (PAID_CONFIRMED) state.",
+      });
+    }
+
+    // ── 2. Validate that the scheduled consultation window has already ended ──
+    const scheduledDate = bookingRequest.proposedByDoctor?.scheduledDate;
+    const durationMins  = bookingRequest.proposedByDoctor?.slotDurationMinutes || 30;
+
+    if (!scheduledDate) {
+      return res.status(400).json({
+        success: false,
+        message: "This appointment has no scheduled time. Cannot determine if the window has passed.",
+      });
+    }
+
+    const slotEnd = new Date(
+      new Date(scheduledDate).getTime() + durationMins * 60 * 1000
+    );
+
+    if (new Date() < slotEnd) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "The consultation window has not yet ended. " +
+          "You can only mark an appointment as expired after the scheduled end time.",
+        slotEndsAt:    slotEnd.toISOString(),
+        currentTime:   new Date().toISOString(),
+        minutesRemaining: Math.ceil((slotEnd - new Date()) / 60000),
+      });
+    }
+
+    // ── 3. Atomically update status to ABORTED_BY_DOCTOR ──────────────────
+    bookingRequest.status      = "ABORTED_BY_DOCTOR";
+    bookingRequest.abortedBy   = doctorId;
+    bookingRequest.abortedAt   = new Date();
+    bookingRequest.abortReason =
+      abortReason?.trim() ||
+      "Consultation window passed without completing the appointment.";
+    await bookingRequest.save();
+
+    // ── 4. Release doctor schedule slot (ACTIVE → COMPLETED) ──────────────
+    await DoctorSchedule.findOneAndUpdate(
+      { bookingRequestId: bookingRequest._id },
+      { status: "COMPLETED" }
+    );
+
+    // ── 5. Send email notification to patient ─────────────────────────────
+    if (bookingRequest.patientId?.email) {
+      const scheduledDateStr = new Date(scheduledDate).toLocaleDateString("en-IN", {
+        weekday: "short",
+        month:   "long",
+        day:     "numeric",
+        year:    "numeric",
+      });
+
+      await sendEmail({
+        to:      bookingRequest.patientId.email,
+        subject: "Appointment Expired — HealthHub",
+        html: emailBase(`
+          <h2 style="color:#1F3A4B;">Hi ${bookingRequest.patientId.name},</h2>
+          <p>
+            Your scheduled appointment with
+            <strong>Dr. ${bookingRequest.doctorId?.name || "your doctor"}</strong>
+            has been marked as <strong style="color:#dc2626;">expired</strong>
+            because the consultation window has already passed.
+          </p>
+          <div style="background:#FAFDEE;border-left:4px solid #C2F84F;padding:16px;border-radius:4px;margin:20px 0;">
+            <strong>Original Scheduled Date:</strong> ${scheduledDateStr}<br>
+            <strong>Time:</strong> ${bookingRequest.proposedByDoctor?.scheduledTime || "N/A"}<br>
+            <strong>Reason for visit:</strong> ${bookingRequest.reason}
+          </div>
+          <p>
+            If you still need a consultation, please
+            <strong>book a new appointment</strong> at your convenience.
+            Your medical history and previous records are safely stored in your account.
+          </p>
+        `),
+      });
+    }
+
+    // ── 6. Emit real-time socket event to patient ──────────────────────────
+    const { getIO } = require("../socketManager");
+    const io = getIO();
+    if (io) {
+      io.to(`user:${bookingRequest.patientId._id.toString()}`).emit(
+        "appointment_aborted",
+        {
+          requestId: bookingRequest._id,
+          status:    "ABORTED_BY_DOCTOR",
+          message:   "Your appointment has been marked as expired by the doctor.",
+        }
+      );
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Appointment has been marked as expired. Patient has been notified.",
+      data: {
+        requestId:  bookingRequest._id,
+        status:     bookingRequest.status,
+        abortedAt:  bookingRequest.abortedAt,
+        abortReason: bookingRequest.abortReason,
+      },
+    });
+  } catch (err) {
+    console.error("abortBookingRequest error:", err);
+    return res.status(500).json({ success: false, message: "Server error." });
+  }
+};
+
 // ─── GET MY BOOKING REQUESTS (Patient) ──────────────────────────────────────
 exports.getMyBookingRequests = async (req, res) => {
   try {
     const patientId = req.user.id;
 
-    // Exclude cancelled records — after cancellation they are deleted,
-    // but defensive-exclude any lingering soft-cancelled ones.
     const requests = await BookingRequest.find({
       patientId,
       status: { $nin: ["PATIENT_CANCELLED"] },
@@ -495,7 +615,6 @@ exports.getDoctorQueue = async (req, res) => {
   try {
     const doctorId = req.user.id;
 
-    // Exclude hard-deleted (already gone) and soft-cancelled records from doctor view
     const requests = await BookingRequest.find({
       doctorId,
       status: { $nin: ["PATIENT_CANCELLED"] },
