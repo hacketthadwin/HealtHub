@@ -29,18 +29,6 @@ const rawTimeTo12h = (raw) => {
 };
 
 // ─── Helper: convert "H:MM AM/PM" → "HH:MM" (24h) for the time input value ──
-const time12hToRaw = (ampmStr) => {
-  if (!ampmStr) return '';
-  const parts = ampmStr.trim().split(' ');
-  if (parts.length < 2) return '';
-  const [hStr, mStr] = parts[0].split(':');
-  let h = parseInt(hStr, 10);
-  const m = parseInt(mStr, 10);
-  const mod = parts[1].toUpperCase();
-  if (mod === 'PM' && h !== 12) h += 12;
-  if (mod === 'AM' && h === 12) h  = 0;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-};
 
 const AcceptModal = ({ request, onClose, onSubmit, loading }) => {
   // form.scheduledTime always stores the 24h raw string used by the <input type="time">.
