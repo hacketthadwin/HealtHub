@@ -1,17 +1,22 @@
 require("dotenv").config();
-const express  = require("express");
-const app      = express();
-const helmet   = require("helmet");
+const express   = require("express");
+const app       = express();
+const helmet    = require("helmet");
 const rateLimit = require("express-rate-limit");
-const Message  = require("./models/message");
-const cors     = require("cors");
-const http     = require("http");
+const Message   = require("./models/message");
+const cors      = require("cors");
+const http      = require("http");
 const { Server } = require("socket.io");
-const server   = http.createServer(app);
+const server    = http.createServer(app);
 
 const socketManager = require("./socketManager");
 
-console.log("Loaded DB URL:", process.env.DATABASE_URL);
+// REMOVED: console.log("Loaded DB URL:", process.env.DATABASE_URL)
+// Logging the full connection string (including credentials) to stdout is a
+// security risk — Render forwards logs to external collectors in production.
+if (process.env.NODE_ENV !== "production") {
+  console.log("DB connection initiated (development mode)");
+}
 
 const corsOptions = {
   origin: [
