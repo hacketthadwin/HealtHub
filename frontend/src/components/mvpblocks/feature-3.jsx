@@ -57,19 +57,20 @@ const FeatureCard = ({ feature }) => {
     <div className="h-full group">
       <div
         className={cn(
-          "relative rounded-[2.5rem] px-8 py-10 border-2 backdrop-blur-2xl shadow-xl transition-all duration-500 h-full flex flex-col justify-start overflow-hidden",
-          "bg-white dark:bg-white/5",
-          "border-[#1F3A4B]/5 dark:border-white/5 group-hover:border-[#1F3A4B] dark:group-hover:border-[#C2F84F] group-hover:shadow-2xl",
+          "relative rounded-[2.5rem] px-8 py-10 border border-[#1F3A4B]/10 dark:border-white/10 backdrop-blur-xl shadow-lg transition-all duration-500 h-full flex flex-col justify-start overflow-hidden bg-white/50 dark:bg-white/5 hover:shadow-2xl hover:scale-[1.02]",
           feature.cornerStyle
         )}
       >
-        <div className="absolute top-0 left-0 w-24 h-24 bg-[#C2F84F]/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-
-        <div className="p-3 bg-[#1F3A4B]/5 dark:bg-white/5 group-hover:bg-[#1F3A4B] dark:group-hover:bg-[#C2F84F] text-[#1F3A4B] dark:text-[#C2F84F] group-hover:text-[#C2F84F] group-hover:dark:text-[#1F3A4B] w-fit rounded-2xl shadow-sm transition-all duration-500 mb-6 relative z-10">
-          <Icon className="h-7 w-7 stroke-[2.25] transform group-hover:rotate-6 transition-transform duration-500" />
+        {/* Glassmorphic Glow Effect */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
+          <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-[#C2F84F]/20 to-transparent blur-3xl" />
         </div>
 
-        {/* CRITICAL UPDATE: Replaced font-sans with font-roboto-slab for feature headers */}
+        {/* Icon with Glassmorphic Hover (Color & Shadow only) */}
+        <div className="mb-6 w-fit relative z-10">
+          <Icon className="h-10 w-10 text-[#1F3A4B] dark:text-[#C2F84F] transition-all duration-500 stroke-[1.5] group-hover:text-[#C2F84F] dark:group-hover:text-white group-hover:drop-shadow-[0_0_8px_rgba(194,248,79,0.8)] transform group-hover:rotate-6" />
+        </div>
+
         <h3 className="text-[#1F3A4B] dark:text-[#FAFDEE] mb-3 text-2xl md:text-3xl font-extrabold italic uppercase tracking-tighter leading-none font-roboto-slab relative z-10">
           {feature.title}
         </h3>

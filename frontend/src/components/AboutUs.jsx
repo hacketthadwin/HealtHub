@@ -77,13 +77,18 @@ export default function AboutUs() {
             const Icon = item.icon;
             return (
               <div key={index} className="h-full group">
-                <div className={`relative rounded-[2.5rem] px-8 py-10 border-2 backdrop-blur-2xl shadow-xl transition-all duration-500 h-full flex flex-col justify-start bg-white dark:bg-white/5 border-[#1F3A4B]/5 dark:border-white/5 group-hover:border-[#1F3A4B] dark:group-hover:border-[#C2F84F] group-hover:shadow-2xl hover:scale-[1.01] ${item.cornerStyle}`}>
+                <div className={`relative overflow-hidden rounded-[2.5rem] px-8 py-10 border border-[#1F3A4B]/10 dark:border-white/10 backdrop-blur-xl shadow-lg transition-all duration-500 h-full flex flex-col justify-start bg-white/50 dark:bg-white/5 hover:shadow-2xl hover:scale-[1.02] ${item.cornerStyle}`}>
                   
-                  <div className="p-3 bg-[#1F3A4B]/5 dark:bg-white/5 group-hover:bg-[#1F3A4B] dark:group-hover:bg-[#C2F84F] text-[#1F3A4B] dark:text-[#C2F84F] group-hover:text-[#C2F84F] group-hover:dark:text-[#1F3A4B] w-fit rounded-2xl shadow-sm transition-all duration-500 mb-6 relative z-10">
-                    <Icon className="h-7 w-7 stroke-[2.25] transform group-hover:rotate-6 transition-transform duration-500" />
+                  {/* Card Glow Effect */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
+                    <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-[#C2F84F]/20 to-transparent blur-3xl" />
                   </div>
 
-                  {/* CRITICAL UPDATE: Changed class to font-roboto-slab for core box headers */}
+                  {/* Icon with Glassmorphic Hover Effect (Color & Shadow only) */}
+                  <div className="mb-6 w-fit relative z-10">
+                    <Icon className="h-10 w-10 text-[#1F3A4B] dark:text-[#C2F84F] transition-all duration-500 stroke-[1.5] group-hover:text-[#C2F84F] dark:group-hover:text-white group-hover:drop-shadow-[0_0_8px_rgba(194,248,79,0.8)] transform group-hover:rotate-6" />
+                  </div>
+
                   <h3 className="text-[#1F3A4B] dark:text-[#FAFDEE] mb-3 text-2xl font-bold italic uppercase tracking-tighter leading-none font-roboto-slab relative z-10">
                     {item.title}
                   </h3>
@@ -98,18 +103,16 @@ export default function AboutUs() {
         </div>
 
         {/* Highlight Banner Callout */}
-        <div className="w-full max-w-6xl rounded-[2.5rem] p-8 md:p-12 border-2 bg-white dark:bg-white/5 border-[#1F3A4B]/5 dark:border-white/5 shadow-3xl backdrop-blur-2xl grid md:grid-cols-3 gap-8 items-center">
+        <div className="w-full max-w-6xl rounded-[2.5rem] p-8 md:p-12 border border-[#1F3A4B]/10 dark:border-white/10 bg-white/50 dark:bg-white/5 shadow-3xl backdrop-blur-2xl grid md:grid-cols-3 gap-8 items-center">
           <div className="md:col-span-2 space-y-4 text-left">
-            {/* CRITICAL UPDATE: Changed class to font-roboto-slab for banner inner headers */}
             <h2 className="text-2xl md:text-4xl font-extrabold italic uppercase tracking-tighter text-[#1F3A4B] dark:text-[#FAFDEE] font-roboto-slab leading-none">
               Designed for Patients <br /> Built for Professionals
             </h2>
-            <p className="text-sm md:text-base  tracking-wide uppercase text-[#1F3A4B]/70 dark:text-[#FAFDEE]/50 leading-relaxed">
+            <p className="text-sm md:text-base tracking-wide uppercase text-[#1F3A4B]/70 dark:text-[#FAFDEE]/50 leading-relaxed">
               WHETHER YOU NEED QUICK CHAT ANSWERS OR SYSTEM DASHBOARD PANELS FOR AN ENTIRE HOSPITAL INFRASTRUCTURE, HEALTHHUB PROVIDES A SMOOTH EXPERIENCE ACROSS EVERY ROLE.
             </p>
           </div>
           <div className="rounded-[2rem] bg-gradient-to-br from-emerald-800 to-emerald-800/40 dark:from-[#C2F84F] dark:to-[#C2F84F]/40 border border-black/5 dark:border-white/5 p-6 flex flex-col justify-center h-full min-h-[160px] shadow-xl">
-            {/* Kept font-sans here deliberately to match numerical styling across the home page */}
             <span className="text-4xl md:text-5xl font-extrabold italic uppercase tracking-tighter text-white dark:text-[#1F3A4B] font-sans leading-none">100%</span>
             <p className="text-sm font-extrabold uppercase tracking-widest text-white dark:text-[#1F3A4B] mt-2 font-sans leading-none">
               DIGITAL SYSTEM SETUP

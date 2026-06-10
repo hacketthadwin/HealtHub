@@ -104,7 +104,7 @@ export default function CongestedFAQ() {
           <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold italic tracking-tighter uppercase text-[#1F3A4B] dark:text-[#FAFDEE] font-sans leading-none">
             Common Questions
           </h2>
-          <p className="text-sm font-bold tracking-widest uppercase opacity-50 max-w-xl mx-auto leading-relaxed">
+          <p className="text-md font-bold tracking-widest uppercase opacity-50 max-w-xl mx-auto leading-relaxed">
             EVERYTHING YOU NEED TO KNOW ABOUT HOW OUR PORTAL AND PLATFORM PLANS WORK.
           </p>
         </motion.div>
