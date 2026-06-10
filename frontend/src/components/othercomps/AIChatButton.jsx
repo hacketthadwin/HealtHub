@@ -144,7 +144,7 @@ function AIChatButton() {
                         <div className="flex items-center gap-2 bg-white/50 dark:bg-black/30 p-1 rounded-2xl border border-white/30 shadow-inner">
                             <input
                                 type="text"
-                                className="flex-1 bg-transparent px-4 py-3 text-[#1F3A4B] dark:text-white outline-none font-bold text-sm uppercase tracking-wide placeholder:text-[#1F3A4B]/40"
+                                className="flex-1 bg-transparent px-4 py-3 text-[#1F3A4B] dark:text-white outline-none font-bold text-sm tracking-wide placeholder:text-[#1F3A4B]/40"
                                 placeholder="CONSULT AI..."
                                 value={inputMessage}
                                 onChange={(e) => setInputMessage(e.target.value)}
