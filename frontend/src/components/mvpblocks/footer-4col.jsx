@@ -78,32 +78,31 @@ const contactInfo = [
 
 export default function Footer4Col() {
   return (
-    // font-roboto-slab is the base font for all normal text in this footer
-    <footer className="bg-transparent mt-16 w-full border-t-2 border-[#1F3A4B]/10 dark:border-white/10 relative z-10 font-roboto-slab">
-      <div className="mx-auto max-w-screen-xl pt-16 pb-6 px-6 lg:pt-20">
+    <footer className="bg-white dark:bg-white/5 backdrop-blur-2xl mt-24 w-full border-t border-[#1F3A4B]/10 dark:border-white/5 relative z-10 font-roboto-slab antialiased">
+      <div className="mx-auto max-w-screen-xl pt-16 pb-8 px-6 lg:pt-20">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
           
           {/* Brand/Company Section */}
           <div className="space-y-6">
             <div className="flex justify-center sm:justify-start items-center">
-              <span className="text-5xl  italic tracking-tighter uppercase text-[#1F3A4B] dark:text-[#FAFDEE]">
+              <span className="text-4xl md:text-5xl font-extrabold italic tracking-tighter uppercase text-[#1F3A4B] dark:text-[#FAFDEE] font-sans">
                 HEALTH<span className="text-emerald-600 dark:text-[#C2F84F]">HUB</span>
               </span>
             </div>
 
-            {/*  tracking-widest matches FAQ/features label style */}
-            <p className="text-md tracking-widest leading-relaxed uppercase text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 text-center sm:text-left max-w-sm">
+            {/* Expanded brand text body context */}
+            <p className="text-base font-medium tracking-widest leading-relaxed text-[#1F3A4B]/70 dark:text-[#FAFDEE]/60 text-center sm:text-left max-w-sm">
               {data.company.description}
             </p>
 
-            <ul className="mt-8 flex justify-center gap-4 sm:justify-start">
+            <ul className="mt-8 flex justify-center gap-3.5 sm:justify-start">
               {socialLinks.map(({ icon: Icon, label, href }) => (
                 <li key={label}>
                   <a
                     href={href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center w-11 h-11 rounded-xl bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] hover:scale-105 transition-all shadow-md"
+                    className="flex items-center justify-center w-12 h-12 rounded-xl bg-[#1F3A4B] dark:bg-white/5 text-white dark:text-[#C2F84F] hover:bg-emerald-600 dark:hover:bg-[#C2F84F] hover:text-white dark:hover:text-[#1F3A4B] hover:scale-105 transition-all shadow-md border border-transparent dark:border-white/5"
                   >
                     <Icon className="w-5 h-5" />
                   </a>
@@ -117,12 +116,12 @@ export default function Footer4Col() {
             
             {/* About Us */}
             <div className="text-center sm:text-left">
-              <p className="text-[#1F3A4B] dark:text-[#FAFDEE] text-md  uppercase tracking-widest mb-6">ABOUT US</p>
-              {/*  tracking-widest matches FAQ/features link style */}
-              <ul className="space-y-4 text-md  tracking-widest">
+              {/* Category headings amplified safely to text-base */}
+              <p className="text-[#1F3A4B] dark:text-[#FAFDEE] text-base font-extrabold uppercase tracking-widest mb-6 font-sans">ABOUT US</p>
+              <ul className="space-y-4 text-sm md:text-base font-bold tracking-wider">
                 {aboutLinks.map(({ text, href }) => (
                   <li key={text}>
-                    <Link to={href} className="text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 hover:text-emerald-600 dark:hover:text-[#C2F84F] transition-colors">{text}</Link>
+                    <Link to={href} className="text-[#1F3A4B]/70 dark:text-[#FAFDEE]/60 hover:text-emerald-600 dark:hover:text-[#C2F84F] transition-colors underline decoration-transparent hover:decoration-current decoration-2 underline-offset-4">{text}</Link>
                   </li>
                 ))}
               </ul>
@@ -130,12 +129,11 @@ export default function Footer4Col() {
 
             {/* Services */}
             <div className="text-center sm:text-left">
-              <p className="text-[#1F3A4B] dark:text-[#FAFDEE] text-md  uppercase tracking-widest mb-6">SERVICES</p>
-              {/*  tracking-widest matches FAQ/features link style */}
-              <ul className="space-y-4 text-md  tracking-widest">
+              <p className="text-[#1F3A4B] dark:text-[#FAFDEE] text-base font-extrabold uppercase tracking-widest mb-6 font-sans">SERVICES</p>
+              <ul className="space-y-4 text-sm md:text-base font-bold tracking-wider">
                 {serviceLinks.map(({ text, href }) => (
                   <li key={text}>
-                    <Link to={href} className="text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 hover:text-emerald-600 dark:hover:text-[#C2F84F] transition-colors">{text}</Link>
+                    <Link to={href} className="text-[#1F3A4B]/70 dark:text-[#FAFDEE]/60 hover:text-emerald-600 dark:hover:text-[#C2F84F] transition-colors underline decoration-transparent hover:decoration-current decoration-2 underline-offset-4">{text}</Link>
                   </li>
                 ))}
               </ul>
@@ -143,17 +141,16 @@ export default function Footer4Col() {
 
             {/* Help */}
             <div className="text-center sm:text-left">
-              <p className="text-[#1F3A4B] dark:text-[#FAFDEE] text-md  uppercase tracking-widest mb-6">HELP</p>
-              {/*  tracking-widest matches FAQ/features link style */}
-              <ul className="space-y-4 text-md  tracking-widest">
+              <p className="text-[#1F3A4B] dark:text-[#FAFDEE] text-base font-extrabold uppercase tracking-widest mb-6 font-sans">HELP</p>
+              <ul className="space-y-4 text-sm md:text-base font-bold tracking-wider">
                 {helpfulLinks.map(({ text, href, hasIndicator }) => (
                   <li key={text}>
-                    <Link to={href} className={cn("transition-colors flex justify-center sm:justify-start items-center gap-2", hasIndicator ? "text-emerald-600 dark:text-[#C2F84F]" : "text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 hover:text-emerald-600 dark:hover:text-[#C2F84F]")}>
+                    <Link to={href} className={cn("transition-colors flex justify-center sm:justify-start items-center gap-2 underline decoration-transparent hover:decoration-current decoration-2 underline-offset-4", hasIndicator ? "text-emerald-600 dark:text-[#C2F84F]" : "text-[#1F3A4B]/70 dark:text-[#FAFDEE]/60 hover:text-emerald-600 dark:hover:text-[#C2F84F]")}>
                       <span>{text}</span>
                       {hasIndicator && (
-                        <span className="relative flex w-2 h-2">
+                        <span className="relative flex w-2.5 h-2.5">
                           <span className="bg-emerald-600 dark:bg-[#C2F84F] animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" />
-                          <span className="bg-emerald-600 dark:bg-[#C2F84F] relative inline-flex w-2 h-2 rounded-full" />
+                          <span className="bg-emerald-600 dark:bg-[#C2F84F] relative inline-flex w-2.5 h-2.5 rounded-full" />
                         </span>
                       )}
                     </Link>
@@ -164,14 +161,13 @@ export default function Footer4Col() {
 
             {/* Contact */}
             <div className="text-center sm:text-left">
-              <p className="text-[#1F3A4B] dark:text-[#FAFDEE] text-md  uppercase tracking-widest mb-6">CONTACT</p>
-              {/*  tracking-widest matches FAQ/features link style */}
-              <ul className="space-y-4 text-md  tracking-widest">
+              <p className="text-[#1F3A4B] dark:text-[#FAFDEE] text-base font-extrabold uppercase tracking-widest mb-6 font-sans">CONTACT</p>
+              <ul className="space-y-4 text-sm md:text-base font-bold tracking-wider">
                 {contactInfo.map(({ icon: Icon, text, isAddress }) => (
                   <li key={text}>
                     <a className="flex items-center justify-center gap-3 sm:justify-start group" href={isAddress ? `https://maps.google.com/search?q=${encodeURIComponent(text)}` : text.includes("@") ? `mailto:${text}` : `tel:${text}`} target={isAddress ? "_blank" : "_self"} rel={isAddress ? "noopener noreferrer" : undefined}>
                       <Icon className="text-[#1F3A4B] dark:text-[#C2F84F] w-5 h-5 shrink-0" />
-                      <span className="text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 group-hover:text-[#1F3A4B] dark:group-hover:text-[#FAFDEE] transition-colors">{text}</span>
+                      <span className="text-[#1F3A4B]/70 dark:text-[#FAFDEE]/60 group-hover:text-emerald-600 dark:group-hover:text-[#C2F84F] transition-colors underline decoration-transparent hover:decoration-current decoration-2 underline-offset-4">{text}</span>
                     </a>
                   </li>
                 ))}
@@ -180,11 +176,11 @@ export default function Footer4Col() {
           </div>
         </div>
 
-        {/* Footer Bottom */}
-        <div className="mt-16 border-t border-[#1F3A4B]/10 dark:border-white/10 pt-8">
+        {/* Footer Bottom — Base metrics bumped completely up to text-sm */}
+        <div className="mt-16 border-t border-[#1F3A4B]/5 dark:border-white/5 pt-8">
           <div className="text-center sm:flex sm:justify-between sm:text-left">
-            <p className="text-xs text-[#1F3A4B]/50 dark:text-[#FAFDEE]/50  uppercase tracking-widest">ALL RIGHTS RESERVED.</p>
-            <p className="text-xs text-[#1F3A4B]/50 dark:text-[#FAFDEE]/50 mt-4 sm:mt-0  tracking-widest">&copy; 2026 {data.company.name.toUpperCase()}</p>
+            <p className="text-sm text-[#1F3A4B]/50 dark:text-[#FAFDEE]/40 font-bold uppercase tracking-widest">ALL RIGHTS RESERVED.</p>
+            <p className="text-sm text-[#1F3A4B]/50 dark:text-[#FAFDEE]/40 mt-4 sm:mt-0 font-bold uppercase tracking-widest">© 2026 {data.company.name.toUpperCase()}</p>
           </div>
         </div>
       </div>

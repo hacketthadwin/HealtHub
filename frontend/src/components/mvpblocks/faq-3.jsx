@@ -16,18 +16,19 @@ function FAQItem({ question, answer, index }) {
       transition={{ duration: 0.4, delay: index * 0.05 }}
       className={cn(
         "relative rounded-[2rem] border-2 transition-all duration-300 overflow-hidden",
-        "bg-black/5 dark:bg-white/5", 
+        "bg-white dark:bg-white/5 backdrop-blur-md shadow-sm", 
         isOpen 
-          ? "border-[#1F3A4B] dark:border-[#C2F84F] z-10 scale-[1.01]" 
-          : "border-[#1F3A4B]/10 dark:border-white/10 z-0 hover:border-[#1F3A4B]/30 dark:hover:border-[#C2F84F]/30"
+          ? "border-[#1F3A4B] dark:border-[#C2F84F] z-10 scale-[1.01] shadow-xl" 
+          : "border-[#1F3A4B]/5 dark:border-white/5 z-0 hover:border-[#1F3A4B]/20 dark:hover:border-[#C2F84F]/30"
       )}
     >
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
+        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left select-none"
       >
-        <h3 className="text-base md:text-xl  uppercase tracking-tight text-[#1F3A4B] dark:text-[#FAFDEE]">
+        {/* CRITICAL UPDATE: Swapped font-sans for font-roboto-slab for the questions */}
+        <h3 className="text-base md:text-lg font-medium italic uppercase tracking-wider text-[#1F3A4B] dark:text-[#FAFDEE] font-roboto-slab">
           {question}
         </h3>
         <motion.div
@@ -35,7 +36,7 @@ function FAQItem({ question, answer, index }) {
           transition={{ duration: 0.25, ease: "easeOut" }}
           className="shrink-0 text-[#1F3A4B] dark:text-[#C2F84F]"
         >
-          <ChevronDown className="h-5 w-5 stroke-[3]" />
+          <ChevronDown className="h-5 w-5 stroke-[2.5]" />
         </motion.div>
       </button>
 
@@ -54,8 +55,8 @@ function FAQItem({ question, answer, index }) {
               transition: { height: { duration: 0.25 }, opacity: { duration: 0.15 } } 
             }}
           >
-            <div className="px-6 pb-6 pt-0 border-t-2 border-[#1F3A4B]/10 dark:border-white/10 mt-2">
-              <p className="text-[#1F3A4B]/80 dark:text-[#FAFDEE]/80 text-sm md:text-lg leading-relaxed pt-4 tracking-wide">
+            <div className="px-6 pb-6 pt-0 border-t-2 border-[#1F3A4B]/5 dark:border-white/5 mt-1">
+              <p className="text-[#1F3A4B]/80 dark:text-[#FAFDEE]/70 text-base leading-relaxed pt-4 tracking-wide font-medium">
                 {answer}
               </p>
             </div>
@@ -87,7 +88,7 @@ export default function CongestedFAQ() {
   ];
 
   return (
-    <div className="w-full h-auto block relative px-4 bg-transparent transition-all duration-300 z-10">
+    <div className="w-full h-auto block relative px-4 bg-transparent transition-all duration-300 z-10 font-roboto-slab antialiased">
       <div className="max-w-4xl mx-auto">
         
         {/* Header Block */}
@@ -95,15 +96,15 @@ export default function CongestedFAQ() {
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-12 space-y-4"
+          className="text-center mb-14 space-y-4"
         >
-          <Badge className="px-4 py-1.5 rounded-full border-2 text-sm  uppercase tracking-widest bg-[#1F3A4B] dark:bg-[#C2F84F] border-transparent text-white dark:text-[#1F3A4B]">
+          <Badge className="px-5 py-2 rounded-full text-xs font-bold uppercase tracking-widest bg-[#1F3A4B] dark:bg-[#C2F84F] border-transparent text-white dark:text-[#1F3A4B] shadow-md">
             FAQ
           </Badge>
-          <h2 className="text-4xl font-black italic tracking-tighter uppercase sm:text-5xl text-[#1F3A4B] dark:text-[#FAFDEE]">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-extrabold italic tracking-tighter uppercase text-[#1F3A4B] dark:text-[#FAFDEE] font-sans leading-none">
             Common Questions
           </h2>
-          <p className="text-md  tracking-widest uppercase opacity-40 max-w-xl mx-auto">
+          <p className="text-sm font-bold tracking-widest uppercase opacity-50 max-w-xl mx-auto leading-relaxed">
             EVERYTHING YOU NEED TO KNOW ABOUT HOW OUR PORTAL AND PLATFORM PLANS WORK.
           </p>
         </motion.div>
@@ -120,20 +121,21 @@ export default function CongestedFAQ() {
           initial={{ opacity: 0, scale: 0.98 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="mt-16 p-8 md:p-12 rounded-[2.5rem] md:rounded-[4rem] text-center border-2 bg-black/5 dark:bg-white/5 border-[#1F3A4B]/10 dark:border-white/10"
+          className="mt-16 p-8 md:p-12 rounded-[2.5rem] md:rounded-[4rem] text-center border-2 bg-white dark:bg-white/5 border-[#1F3A4B]/5 dark:border-white/5 shadow-2xl backdrop-blur-2xl"
         >
-          <div className="bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] inline-flex p-4 rounded-2xl mb-4 shadow-md">
+          <div className="bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] inline-flex p-4 rounded-2xl mb-5 shadow-lg">
             <Mail className="w-6 h-6" />
           </div>
-          <h4 className="text-[#1F3A4B] dark:text-[#FAFDEE] text-2xl md:text-3xl  italic uppercase tracking-tighter mb-2">
+          {/* CRITICAL UPDATE: Modified font weight to font-medium for standard prose alignment */}
+          <h4 className="text-[#1F3A4B] dark:text-[#FAFDEE] text-2xl md:text-4xl font-medium italic uppercase tracking-tighter mb-2 leading-none">
             Still have questions?
           </h4>
-          <p className="text-md  tracking-widest uppercase opacity-40 mb-8">
+          <p className="text-sm font-bold tracking-widest uppercase opacity-50 mb-8 max-w-md mx-auto leading-relaxed">
             CAN'T FIND WHAT YOU'RE LOOKING FOR? REACH OUT TO OUR SUPPORT TEAM.
           </p>
           <Link 
             to="/contact"
-            className="inline-block px-8 py-4 rounded-xl  text-sm uppercase tracking-widest bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] hover:scale-105 active:scale-95 transition-all shadow-md"
+            className="inline-block px-10 py-5 rounded-2xl text-sm font-bold uppercase tracking-widest bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] hover:scale-105 active:scale-95 transition-all shadow-xl italic"
           >
             Contact Support
           </Link>

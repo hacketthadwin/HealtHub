@@ -20,7 +20,7 @@ const leftFeatures = [
     icon: User2,
     title: "Patient Support Rooms",
     description: "JOIN SECURE CHAT SPACES TO DISCUSS SYMPTOMS, ASK QUESTIONS, AND GET ADVICE SAFELY.",
-    cornerStyle: "sm:-translate-x-2 sm:rounded-br-[2px]",
+    cornerStyle: "sm:translate-x-2 sm:rounded-br-[2px]",
   },
   {
     icon: Trophy,
@@ -54,22 +54,27 @@ const rightFeatures = [
 const FeatureCard = ({ feature }) => {
   const Icon = feature.icon;
   return (
-    <div className="h-full">
+    <div className="h-full group">
       <div
         className={cn(
-          "relative rounded-[2.5rem] px-8 py-10 border-2 transition-all duration-300 h-full flex flex-col justify-start",
+          "relative rounded-[2.5rem] px-8 py-10 border-2 backdrop-blur-2xl shadow-xl transition-all duration-500 h-full flex flex-col justify-start overflow-hidden",
           "bg-white dark:bg-white/5",
-          "border-[#1F3A4B]/10 dark:border-white/10 hover:border-emerald-500 dark:hover:border-[#C2F84F]",
+          "border-[#1F3A4B]/5 dark:border-white/5 group-hover:border-[#1F3A4B] dark:group-hover:border-[#C2F84F] group-hover:shadow-2xl",
           feature.cornerStyle
         )}
       >
-        <div className="text-[#1F3A4B] dark:text-[#C2F84F] mb-4">
-          <Icon className="h-8 w-8 stroke-[2.5]" />
+        <div className="absolute top-0 left-0 w-24 h-24 bg-[#C2F84F]/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+        <div className="p-3 bg-[#1F3A4B]/5 dark:bg-white/5 group-hover:bg-[#1F3A4B] dark:group-hover:bg-[#C2F84F] text-[#1F3A4B] dark:text-[#C2F84F] group-hover:text-[#C2F84F] group-hover:dark:text-[#1F3A4B] w-fit rounded-2xl shadow-sm transition-all duration-500 mb-6 relative z-10">
+          <Icon className="h-7 w-7 stroke-[2.25] transform group-hover:rotate-6 transition-transform duration-500" />
         </div>
-        <h3 className="text-[#1F3A4B] dark:text-[#FAFDEE] mb-3 text-2xl md:text-4xl  italic uppercase tracking-tighter leading-none">
+
+        {/* CRITICAL UPDATE: Replaced font-sans with font-roboto-slab for feature headers */}
+        <h3 className="text-[#1F3A4B] dark:text-[#FAFDEE] mb-3 text-2xl md:text-3xl font-extrabold italic uppercase tracking-tighter leading-none font-roboto-slab relative z-10">
           {feature.title}
         </h3>
-        <p className="text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 text-md tracking-wide leading-relaxed uppercase">
+        
+        <p className="text-[#1F3A4B]/70 dark:text-[#FAFDEE]/60 text-base font-bold tracking-wide leading-relaxed uppercase relative z-10">
           {feature.description}
         </p>
       </div>
@@ -79,9 +84,9 @@ const FeatureCard = ({ feature }) => {
 
 export default function CongestedFeatures() {
   return (
-    <section className="relative w-full py-12 bg-transparent transition-colors duration-300 z-10" id="features">
-      <div className="mx-auto px-2 max-w-[1400px]">
-        <div className="flex flex-col-reverse gap-8 lg:grid lg:grid-cols-3 items-center">
+    <section className="relative w-full py-20 bg-transparent transition-colors duration-300 z-10 font-roboto-slab antialiased" id="features">
+      <div className="mx-auto px-4 max-w-[1500px]">
+        <div className="flex flex-col-reverse gap-10 lg:grid lg:grid-cols-3 items-center">
           
           {/* Left Feature Column */}
           <div className="flex flex-col gap-6 w-full">
@@ -91,15 +96,15 @@ export default function CongestedFeatures() {
           </div>
 
           {/* Sticky Center Strategic Branding Column */}
-          <div className="text-center md:sticky md:top-32 py-8 px-4 self-center">
-            <div className="bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] relative mx-auto mb-6 w-fit rounded-full px-4 py-1.5 text-md  tracking-widest uppercase">
+          <div className="text-center lg:sticky lg:top-40 py-8 px-4 self-center flex flex-col items-center">
+            <div className="bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] relative mx-auto mb-5 w-fit rounded-full px-5 py-2 text-xs font-bold tracking-widest uppercase shadow-md transition-transform duration-500 hover:scale-105">
               <span className="relative z-1">FEATURES</span>
             </div>
-            <h2 className="text-[#1F3A4B] dark:text-[#FAFDEE] mb-4 text-3xl  italic uppercase tracking-tighter font-black sm:text-4xl md:text-5xl leading-none">
+            <h2 className="text-[#1F3A4B] dark:text-[#FAFDEE] mb-4 text-3xl sm:text-4xl md:text-5xl font-extrabold italic uppercase tracking-tighter leading-none font-sans">
               WHAT ARE WE<br /> PROVIDING?
             </h2>
-            <p className="text-md  tracking-widest uppercase opacity-40 mx-auto max-w-[16rem]">
-              EASY AND POWERFUL TOOLS DESIGNED TO GIVE YOU A SMOOTH EXPERIANCE.
+            <p className="text-sm font-bold tracking-widest uppercase opacity-50 mx-auto max-w-xs leading-relaxed">
+              EASY AND POWERFUL TOOLS DESIGNED TO GIVE YOU A SMOOTH EXPERIENCE.
             </p>
           </div>
 

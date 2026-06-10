@@ -11,8 +11,6 @@ import { API_URL, pingServer } from "../../config/api";
 import Header1 from "../UIcomponents/Header1";
 
 // ─── Isolated Globe Panel ─────────────────────────────────────────────────────
-// Extracted into its own memo'd component so that typing in the form
-// (which updates name/email/message state) never triggers a re-render here.
 const GlobePanel = memo(({ isInView }) => (
   <motion.div
     initial={{ opacity: 0, x: 20 }}
@@ -21,7 +19,8 @@ const GlobePanel = memo(({ isInView }) => (
     className="relative my-8 hidden items-center justify-center overflow-hidden px-4 min-[350px]:flex md:items-start md:px-0 md:pr-8"
   >
     <div className="flex flex-col items-center justify-center overflow-hidden w-full h-full">
-      <article className="relative mx-auto h-[350px] min-h-60 w-full max-w-[450px] overflow-hidden rounded-3xl border border-black/5 dark:border-white/5 bg-gradient-to-b from-[#C2F84F] to-[#C2F84F]/5 p-6 text-3xl  italic tracking-tighter uppercase text-[#1F3A4B] dark:text-[#FAFDEE] md:h-[450px] md:min-h-80 md:p-8 md:text-4xl md:leading-[1.05] lg:text-5xl">
+      {/* Article text configuration matched cleanly to font-roboto-slab */}
+      <article className="relative mx-auto h-[350px] min-h-60 w-full max-w-[450px] overflow-hidden rounded-[2.5rem] border border-[#1F3A4B]/5 dark:border-white/5 bg-gradient-to-b from-[#C2F84F] to-[#C2F84F]/5 p-6 text-3xl font-medium italic tracking-tighter uppercase text-[#1F3A4B] dark:text-[#FAFDEE] md:h-[450px] md:min-h-80 md:p-8 md:text-4xl md:leading-[1.05] lg:text-5xl font-roboto-slab">
         Your health matters.
         <br />
         <div className="absolute -right-20 -bottom-20 z-10 mx-auto flex h-full w-full max-w-[300px] items-center justify-center transition-all duration-700 hover:scale-105 md:-right-28 md:-bottom-28 md:max-w-[550px]">
@@ -38,11 +37,9 @@ const GlobePanel = memo(({ isInView }) => (
 ));
 GlobePanel.displayName = "GlobePanel";
 
-// ─── Helper: safe JSON parse (handles HTML error pages from sleeping server) ──
 async function safeJsonParse(response) {
   const contentType = response.headers.get("content-type") || "";
   if (!contentType.includes("application/json")) {
-    // Server returned HTML (e.g. Render's 503 while waking up)
     throw new Error(
       "Server is starting up — please wait a few seconds and try again."
     );
@@ -63,16 +60,13 @@ export default function ContactUs1() {
   const formRef = useRef(null);
   const isInView = useInView(formRef, { once: true, amount: 0.1 });
 
-  // Defer sparkle init so the primary canvas settles first
   useEffect(() => {
     const timer = setTimeout(() => setLoadParticles(true), 300);
     return () => clearTimeout(timer);
   }, []);
 
-  // Pre-warm the Render server as soon as the page mounts — avoids cold-start
-  // HTML response that causes the JSON parse crash when the user submits.
   useEffect(() => {
-    pingServer().catch(() => {/* silent — best-effort */});
+    pingServer().catch(() => {});
   }, []);
 
   const handleSubmit = useCallback(async (e) => {
@@ -86,7 +80,6 @@ export default function ContactUs1() {
         body: JSON.stringify({ name, email, message }),
       });
 
-      // Safe parse — won't crash on HTML error pages
       const data = await safeJsonParse(response);
 
       if (!response.ok) {
@@ -107,9 +100,8 @@ export default function ContactUs1() {
   }, [name, email, message]);
 
   return (
-    // font-roboto-slab is the base font for all normal text in this page
     <section
-      className="relative w-full min-h-screen flex items-center justify-center pt-40 pb-16 overflow-y-auto transition-colors duration-300 font-roboto-slab select-none"
+      className="relative w-full min-h-screen flex items-center justify-center pt-40 pb-16 overflow-y-auto transition-colors duration-300 font-roboto-slab select-none antialiased"
       style={{ backgroundColor: "var(--body-bg)", color: "var(--body-text)" }}
     >
       <Header1 />
@@ -129,22 +121,23 @@ export default function ContactUs1() {
       />
 
       <div className="relative z-10 container mx-auto px-4 md:px-6 flex items-center justify-center w-full">
-        <div className="mx-auto w-full max-w-7xl overflow-hidden rounded-[28px] backdrop-blur-sm">
+        <div className="mx-auto w-full max-w-7xl overflow-hidden rounded-[2.5rem] bg-white dark:bg-white/5 border border-[#1F3A4B]/5 dark:border-white/5 shadow-3xl backdrop-blur-2xl">
           <div className="grid md:grid-cols-2 gap-4">
 
             {/* ── Form Side ── */}
-            <div className="relative p-6 md:p-10" ref={formRef}>
+            <div className="relative p-6 md:p-12" ref={formRef}>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
-                className="flex w-full gap-2 relative z-20"
+                className="flex w-full gap-2 relative z-20 items-baseline"
               >
-                <h2 className="from-foreground to-foreground/80 mb-2 bg-gradient-to-r bg-clip-text text-4xl font-black italic tracking-tighter uppercase md:text-5xl">
-                  Contact
+                {/* Headers updated to font-sans font-extrabold layout metrics */}
+                <h2 className="text-[#1F3A4B] dark:text-[#FAFDEE] mb-2 text-4xl sm:text-5xl font-extrabold italic tracking-tighter uppercase font-sans leading-none">
+                  CONTACT
                 </h2>
-                <span className="text-[#476407] dark:text-[#C2F84F] relative z-10 w-full text-4xl font-black tracking-tighter italic uppercase md:text-5xl">
-                  HealthHub
+                <span className="text-[#476407] dark:text-[#C2F84F] relative z-10 text-4xl sm:text-5xl font-extrabold tracking-tighter italic uppercase font-sans leading-none">
+                  HEALTHHUB
                 </span>
 
                 {loadParticles && (
@@ -167,17 +160,15 @@ export default function ContactUs1() {
                 onSubmit={handleSubmit}
                 className="mt-8 space-y-6"
               >
-                {/* tracking-wide matches FAQ answer body text style */}
-                <p className="text-muted-foreground text-sm md:text-base tracking-wide leading-relaxed uppercase">
-                  Have a question about appointments, doctor availability, or health
-                  support? Send us a message and our team will respond shortly.
+                <p className="text-[#1F3A4B]/70 dark:text-[#FAFDEE]/60 text-sm md:text-base font-bold tracking-wide leading-relaxed uppercase">
+                  HAVE A QUESTION ABOUT APPOINTMENTS, DOCTOR AVAILABILITY, OR HEALTH
+                  SUPPORT? SEND US A MESSAGE AND OUR TEAM WILL RESPOND SHORTLY.
                 </p>
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   <div className="space-y-2">
-                    {/*  tracking-widest uppercase matches FAQ/features label style */}
-                    <Label htmlFor="name" className="text-sm  tracking-widest uppercase opacity-80">
-                      Full Name
+                    <Label htmlFor="name" className="text-sm font-bold tracking-widest uppercase opacity-80 text-[#1F3A4B] dark:text-[#FAFDEE] ml-1">
+                      FULL NAME
                     </Label>
                     <Input
                       id="name"
@@ -185,14 +176,15 @@ export default function ContactUs1() {
                       onChange={(e) => setName(e.target.value)}
                       placeholder="ENTER YOUR FULL NAME"
                       required
-                      className="w-full h-12 px-4 rounded-xl border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.03] focus:bg-transparent dark:focus:bg-transparent focus:ring-2 focus:ring-[#C2F84F] focus:border-transparent transition-all duration-200 outline-none shadow-inner"
+                      disabled={isSubmitting}
+                      /* Added normal-case utility to make input text box typing case-friendly */
+                      className="w-full h-14 px-5 rounded-2xl border border-[#1F3A4B]/10 dark:border-white/10 bg-[#1F3A4B]/5 dark:bg-white/5 font-bold text-base outline-none focus:border-[#C2F84F] transition-all duration-200 shadow-inner text-[#1F3A4B] dark:text-[#FAFDEE] normal-case tracking-wide placeholder:text-sm placeholder:uppercase placeholder:tracking-wider"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    {/*  tracking-widest uppercase matches FAQ/features label style */}
-                    <Label htmlFor="email" className="text-sm  tracking-widest uppercase opacity-80">
-                      Email Address
+                    <Label htmlFor="email" className="text-sm font-bold tracking-widest uppercase opacity-80 text-[#1F3A4B] dark:text-[#FAFDEE] ml-1">
+                      EMAIL ADDRESS
                     </Label>
                     <Input
                       id="email"
@@ -201,15 +193,16 @@ export default function ContactUs1() {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="ENTER YOUR EMAIL ADDRESS"
                       required
-                      className="w-full h-12 px-4 rounded-xl border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.03] focus:bg-transparent dark:focus:bg-transparent focus:ring-2 focus:ring-[#C2F84F] focus:border-transparent transition-all duration-200 outline-none shadow-inner"
+                      disabled={isSubmitting}
+                      /* Added normal-case utility to allow exact case inputs */
+                      className="w-full h-14 px-5 rounded-2xl border border-[#1F3A4B]/10 dark:border-white/10 bg-[#1F3A4B]/5 dark:bg-white/5 font-bold text-base outline-none focus:border-[#C2F84F] transition-all duration-200 shadow-inner text-[#1F3A4B] dark:text-[#FAFDEE] normal-case tracking-wide placeholder:text-sm placeholder:uppercase placeholder:tracking-wider"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  {/*  tracking-widest uppercase matches FAQ/features label style */}
-                  <Label htmlFor="message" className="text-sm  tracking-widest uppercase opacity-80">
-                    How can we help you?
+                  <Label htmlFor="message" className="text-sm font-bold tracking-widest uppercase opacity-80 text-[#1F3A4B] dark:text-[#FAFDEE] ml-1">
+                    HOW CAN WE HELP YOU?
                   </Label>
                   <Textarea
                     id="message"
@@ -217,14 +210,15 @@ export default function ContactUs1() {
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="WRITE YOUR MESSAGE ABOUT APPOINTMENTS, DOCTORS, OR HEALTH QUERIES..."
                     required
-                    className="w-full h-40 p-4 rounded-xl border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.03] focus:bg-transparent dark:focus:bg-transparent focus:ring-2 focus:ring-[#C2F84F] focus:border-transparent transition-all duration-200 outline-none resize-none shadow-inner leading-relaxed"
+                    disabled={isSubmitting}
+                    /* Added normal-case utility to make long text fields case-friendly */
+                    className="w-full h-40 p-5 rounded-2xl border border-[#1F3A4B]/10 dark:border-white/10 bg-[#1F3A4B]/5 dark:bg-white/5 font-bold text-base outline-none focus:border-[#C2F84F] transition-all duration-200 shadow-inner text-[#1F3A4B] dark:text-[#FAFDEE] resize-none normal-case tracking-wide placeholder:text-sm placeholder:uppercase placeholder:tracking-wider leading-relaxed"
                   />
                 </div>
 
-                {/* Error message —  tracking-wide matches FAQ body text style */}
                 {errorMsg && (
-                  <p className="text-sm  tracking-wide uppercase text-rose-500 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-700/40 rounded-xl px-4 py-3">
-                    {errorMsg}
+                  <p className="text-sm font-bold tracking-wide uppercase text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-700/40 rounded-2xl px-5 py-4">
+                    {errorMsg.toUpperCase()}
                   </p>
                 )}
 
@@ -233,31 +227,30 @@ export default function ContactUs1() {
                   whileTap={{ scale: 0.99 }}
                   className="w-full pt-2"
                 >
-                  {/*  uppercase tracking-widest matches FAQ contact button style */}
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full h-12 rounded-xl text-sm  uppercase tracking-widest bg-[#476407] dark:bg-[#C2F84F] text-[#FAFDEE] dark:text-[#1F3A4B] shadow-md transition-all duration-200"
+                    className="w-full h-14 rounded-2xl text-base font-bold uppercase tracking-widest bg-[#476407] dark:bg-[#C2F84F] text-[#FAFDEE] dark:text-[#1F3A4B] shadow-xl transition-all duration-200 italic"
                   >
                     {isSubmitting ? (
                       <span className="flex items-center justify-center">
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Sending...
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        SENDING...
                       </span>
                     ) : isSubmitted ? (
-                      <span className="flex items-center justify-center">
-                        <Check className="mr-2 h-4 w-4" />
-                        Message Sent!
+                      <span className="flex items-center justify-center text-emerald-600 dark:text-[#1F3A4B]">
+                        <Check className="mr-2 h-5 w-5 stroke-[3]" />
+                        MESSAGE SENT!
                       </span>
                     ) : (
-                      <span>Send Message</span>
+                      <span>SEND MESSAGE</span>
                     )}
                   </Button>
                 </motion.div>
               </motion.form>
             </div>
 
-            {/* ── Globe Side (isolated — never re-renders on keystrokes) ── */}
+            {/* ── Globe Side ── */}
             <GlobePanel isInView={isInView} />
           </div>
         </div>

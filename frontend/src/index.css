@@ -35,7 +35,8 @@
     @apply overflow-x-hidden min-h-screen transition-colors duration-300;
   }
 }
-  /* Stylish Calendar Customization */
+
+/* Stylish Calendar Customization */
 .react-calendar {
   border: none;
   border-radius: 1rem;
@@ -113,6 +114,7 @@ code {
 .bg-white {
   @apply bg-white/10 backdrop-blur-lg;
 }
+
 /* Apply blur to the calendar content */
 /* Custom class for your calendar container */
 /* Make internal elements transparent to allow backdrop-blur to show */
@@ -194,4 +196,39 @@ header {
 html {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch; /* Smooth momentum scrolling for iOS */
+}
+
+/* ─── PREMIUM AMBIENT GLOBAL SCROLLBAR SYSTEM ─── */
+
+/* 1. Track width frame metrics */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* 2. Background track path - forced transparent to inherit layout backgrounds */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 3. Floating handle pill handle */
+::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background-color: rgba(31, 58, 75, 0.15); /* Semi-transparent layout navy */
+  border: 2px solid transparent; /* Generates beautiful isolation padding gaps */
+  background-clip: padding-box;
+  transition: background-color 0.3s ease;
+}
+
+/* 4. Action track hover metrics */
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(31, 58, 75, 0.35);
+}
+
+/* 5. Fluid dark mode variable context adjustments */
+.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(250, 253, 238, 0.1); /* Semi-transparent layout cream */
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(250, 253, 238, 0.25);
 }
