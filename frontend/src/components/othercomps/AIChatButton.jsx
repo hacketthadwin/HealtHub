@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import DOMPurify from 'dompurify';
 import { AIResponseContext } from '../../context/AIResponseContext';
-import { MessageSquare, X, Plus, Minus, Send, Sparkles } from 'lucide-react';
+import { MessageSquare, X, Plus, Minus, Send, Bot } from 'lucide-react';
 import axios from 'axios';
 import { API_URL } from '../../config/api';
 
@@ -17,25 +17,10 @@ function AIChatButton() {
 
     const getChatDimensions = () => {
         switch (chatSize) {
-            case 'small': return 'w-[90vw] max-w-xs h-[50vh] max-h-[16rem] sm:h-[60vh] sm:max-h-[20rem]';
-            case 'large': return 'w-[90vw] max-w-xl h-[80vh] max-h-[30rem] sm:max-h-[35rem] md:max-h-[40rem]';
-            default:      return 'w-[90vw] max-w-md h-[70vh] max-h-[24rem] sm:max-h-[28rem]';
+            case 'small': return 'w-[90vw] max-w-xs h-[50vh] max-h-[16rem]';
+            case 'large': return 'w-[90vw] max-w-xl h-[80vh] max-h-[40rem]';
+            default:      return 'w-[90vw] max-w-md h-[70vh] max-h-[28rem]';
         }
-    };
-
-    /* Font size rules scaled up for input fields */
-    const getInputFieldClasses = () => chatSize === 'small' ? 'p-1 sm:p-2 text-xs sm:text-sm' : 'p-2 sm:p-3 text-sm sm:text-base';
-    const getSendButtonClasses = () => chatSize === 'small' ? 'py-1 px-2 sm:px-3 text-xs sm:text-sm ml-1' : 'py-1 sm:py-2 px-3 sm:px-4 text-sm sm:text-base ml-1';
-
-    const increaseChatSize = () => {
-        if (window.innerWidth < 640 && chatSize === 'medium') return;
-        if (chatSize === 'small') setChatSize('medium');
-        else if (chatSize === 'medium') setChatSize('large');
-    };
-
-    const decreaseChatSize = () => {
-        if (chatSize === 'large') setChatSize('medium');
-        else if (chatSize === 'medium') setChatSize('small');
     };
 
     const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -43,7 +28,7 @@ function AIChatButton() {
 
     useEffect(() => {
         if (isOpen && messages.length === 0) {
-            setMessages([{ text: 'Hi there! I am your clinical assistant. How can I help?', sender: 'ai' }]);
+            setMessages([{ text: 'HI THERE! I AM YOUR CLINICAL ASSISTANT. HOW CAN I HELP?', sender: 'ai' }]);
         }
     }, [isOpen, messages.length]);
 
@@ -102,38 +87,51 @@ function AIChatButton() {
 
     return (
         <div className="fixed bottom-8 right-8 z-[200] select-none font-roboto-slab antialiased">
-            {!isOpen ? (
+                {!isOpen ? (
                 <button
                     onClick={toggleChat}
-                    className="bg-[#C2F84F] text-[#1F3A4B] w-16 h-16 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-all duration-300 relative group"
+                    className="w-16 h-16 rounded-[2rem] flex items-center justify-center 
+                    bg-white/30 dark:bg-black/30 backdrop-blur-xl border border-white/30 
+                    shadow-[0_8px_32px_rgba(0,0,0,0.2)] hover:scale-105 active:scale-95 
+                    transition-all duration-300 group overflow-hidden relative"
                 >
-                    <Sparkles className="group-hover:rotate-12 transition-transform" />
-                    <div className="absolute inset-0 rounded-full border-2 border-[#C2F84F] animate-ping opacity-20" />
+                    {/* Glass Glow effect */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-gradient-to-br from-[#C2F84F]/30 to-transparent" />
+                    
+                    {/* Icon */}
+                    <Bot 
+                    className="relative z-10 text-[#1F3A4B] dark:text-[#C2F84F] group-hover:scale-110 transition-transform duration-300" 
+                    size={28}
+                    strokeWidth={2}
+                />
                 </button>
             ) : (
-                <div className={`rounded-[2.5rem] flex flex-col overflow-hidden shadow-2xl border-4 border-[#1F3A4B] ${getChatDimensions()} bg-white dark:bg-[#0a111a] transition-all duration-500`}>
+                <div className={`rounded-[2.5rem] flex flex-col overflow-hidden shadow-2xl border border-white/20 backdrop-blur-[24px] bg-white/70 dark:bg-[#0a111a]/70 transition-all duration-500 ${getChatDimensions()}`}>
 
-                    <div className="p-5 flex justify-between items-center bg-[#1F3A4B] text-[#FAFDEE]">
+                    {/* Header: Glassmorphic with translucent icons */}
+                    <div className="p-5 flex justify-between items-center bg-white/10 dark:bg-black/20 border-b border-white/20 text-[#1F3A4B] dark:text-white">
                         <div className="flex items-center gap-3">
-                            <span className="p-2 bg-[#C2F84F] rounded-xl"><MessageSquare size={18} className="text-[#1F3A4B]" /></span>
-                            {/* Heading title font isolated and set to uppercase case */}
+                            {/* Glassmorphic Icon Wrapper */}
+                            <span className="p-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl text-[#1F3A4B] dark:text-[#C2F84F]">
+                                <MessageSquare size={18} />
+                            </span>
                             <h3 className="font-extrabold italic uppercase text-xs tracking-widest leading-none mt-1 font-sans">CLINICAL AI</h3>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <button onClick={decreaseChatSize} className="p-1.5 hover:bg-white/10 rounded-lg"><Minus size={16} /></button>
-                            <button onClick={increaseChatSize} className="p-1.5 hover:bg-white/10 rounded-lg"><Plus size={16} /></button>
-                            <button onClick={toggleChat} className="ml-2 p-1.5 bg-rose-600 rounded-full hover:bg-rose-500 transition-colors shadow-md"><X size={16} /></button>
+                        <div className="flex items-center gap-1">
+                            {/* Icon buttons with glass hover */}
+                            <button onClick={() => setChatSize(s => s === 'large' ? 'medium' : 'small')} className="p-2 hover:bg-white/20 backdrop-blur-sm rounded-lg transition-all"><Minus size={14} /></button>
+                            <button onClick={() => setChatSize(s => s === 'small' ? 'medium' : 'large')} className="p-2 hover:bg-white/20 backdrop-blur-sm rounded-lg transition-all"><Plus size={14} /></button>
+                            <button onClick={toggleChat} className="ml-2 p-2 hover:bg-rose-500/20 backdrop-blur-sm rounded-full transition-all"><X size={16} /></button>
                         </div>
                     </div>
 
-                    <div className="flex-1 p-6 overflow-y-auto space-y-6 bg-[#FAFDEE] dark:bg-black/40 scroll-smooth">
+                    <div className="flex-1 p-6 overflow-y-auto space-y-4">
                         {messages.map((msg, index) => (
                             <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                {/* Bubble font increased to text-sm with clean font weights */}
-                                <div className={`max-w-[85%] px-5 py-4 rounded-[2rem] text-sm font-bold leading-relaxed shadow-sm transition-all ${
+                                <div className={`max-w-[85%] px-5 py-3 rounded-[1.5rem] text-sm font-bold shadow-lg backdrop-blur-sm ${
                                     msg.sender === 'user'
-                                        ? 'bg-[#1F3A4B] text-[#FAFDEE] rounded-tr-none'
-                                        : 'bg-[#C2F84F] text-[#1F3A4B] rounded-tl-none border border-transparent dark:border-white/5 shadow-md'
+                                        ? 'bg-[#1F3A4B] text-white rounded-tr-none'
+                                        : 'bg-white/60 dark:bg-black/30 border border-white/20 text-[#1F3A4B] dark:text-[#C2F84F] rounded-tl-none'
                                 }`}>
                                     <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(msg.text) }} />
                                 </div>
@@ -142,22 +140,22 @@ function AIChatButton() {
                         <div ref={messagesEndRef} />
                     </div>
 
-                    <div className="p-4 bg-white dark:bg-transparent border-t border-[#1F3A4B]/10">
-                        <div className="bg-[#1F3A4B]/5 dark:bg-white/5 p-1 rounded-full border-2 border-[#1F3A4B]/10 flex items-center shadow-inner">
+                    <div className="p-4 border-t border-white/20 bg-white/40 dark:bg-black/20 backdrop-blur-md">
+                        <div className="flex items-center gap-2 bg-white/50 dark:bg-black/30 p-1 rounded-2xl border border-white/30 shadow-inner">
                             <input
                                 type="text"
-                                /* Input text base font size increased to match console requirements */
-                                className={`flex-1 bg-transparent px-5 py-2 text-[#1F3A4B] dark:text-white outline-none font-bold text-sm uppercase tracking-wide placeholder:text-xs ${getInputFieldClasses()}`}
-                                placeholder="CONSULT WITH AI ASSISTANT..."
+                                className="flex-1 bg-transparent px-4 py-3 text-[#1F3A4B] dark:text-white outline-none font-bold text-sm uppercase tracking-wide placeholder:text-[#1F3A4B]/40"
+                                placeholder="CONSULT AI..."
                                 value={inputMessage}
                                 onChange={(e) => setInputMessage(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                             />
+                            {/* Send Button: Glassmorphic hover */}
                             <button
                                 onClick={handleSendMessage}
-                                className={`h-12 w-12 sm:h-10 sm:w-10 rounded-full bg-[#1F3A4B] dark:bg-[#C2F84F] text-[#C2F84F] dark:text-[#1F3A4B] flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg ${getSendButtonClasses()}`}
+                                className="h-10 w-10 rounded-xl bg-white/30 hover:bg-[#1F3A4B] hover:text-[#C2F84F] dark:hover:bg-[#C2F84F] dark:hover:text-[#1F3A4B] flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg border border-white/20"
                             >
-                                <Send size={18} />
+                                <Send size={16} />
                             </button>
                         </div>
                     </div>
