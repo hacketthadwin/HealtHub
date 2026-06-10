@@ -11,6 +11,15 @@ import { API_URL, pingServer } from "../../config/api";
 import Header1 from "../UIcomponents/Header1";
 
 // ─── Isolated Globe Panel ─────────────────────────────────────────────────────
+const inputClass = `
+  w-full h-12 sm:h-14 px-5 rounded-2xl border bg-[#1F3A4B]/5 dark:bg-white/5 
+  font-bold text-sm sm:text-base outline-none transition-all duration-300 
+  text-[#1F3A4B] dark:text-[#FAFDEE] normal-case tracking-wide 
+  placeholder:text-xs placeholder:uppercase placeholder:tracking-wider
+  border-[#1F3A4B]/10 dark:border-white/10
+  focus:border-[#C2F84F] focus:ring-4 focus:ring-[#C2F84F]/20 focus:shadow-[0_0_20px_rgba(194,248,79,0.15)]
+`;
+
 const GlobePanel = memo(({ isInView }) => (
   <motion.div
     initial={{ opacity: 0, x: 20 }}
@@ -176,8 +185,8 @@ export default function ContactUs1() {
                       placeholder="ENTER YOUR FULL NAME"
                       required
                       disabled={isSubmitting}
-                      className="w-full h-12 sm:h-14 px-5 rounded-2xl border border-[#1F3A4B]/10 dark:border-white/10 bg-[#1F3A4B]/5 dark:bg-white/5 font-bold text-sm sm:text-base outline-none focus:border-[#C2F84F] transition-all duration-200 shadow-inner text-[#1F3A4B] dark:text-[#FAFDEE] normal-case tracking-wide placeholder:text-xs placeholder:uppercase placeholder:tracking-wider"
-                    />
+                      className={inputClass}                    
+                      />
                   </div>
 
                   <div className="space-y-2">
@@ -192,8 +201,8 @@ export default function ContactUs1() {
                       placeholder="ENTER YOUR EMAIL ADDRESS"
                       required
                       disabled={isSubmitting}
-                      className="w-full h-12 sm:h-14 px-5 rounded-2xl border border-[#1F3A4B]/10 dark:border-white/10 bg-[#1F3A4B]/5 dark:bg-white/5 font-bold text-sm sm:text-base outline-none focus:border-[#C2F84F] transition-all duration-200 shadow-inner text-[#1F3A4B] dark:text-[#FAFDEE] normal-case tracking-wide placeholder:text-xs placeholder:uppercase placeholder:tracking-wider"
-                    />
+                      className={inputClass}                                        
+                      />
                   </div>
                 </div>
 
@@ -208,8 +217,7 @@ export default function ContactUs1() {
                     placeholder="WRITE YOUR MESSAGE..."
                     required
                     disabled={isSubmitting}
-                    className="w-full h-32 sm:h-40 p-5 rounded-2xl border border-[#1F3A4B]/10 dark:border-white/10 bg-[#1F3A4B]/5 dark:bg-white/5 font-bold text-sm sm:text-base outline-none focus:border-[#C2F84F] transition-all duration-200 shadow-inner text-[#1F3A4B] dark:text-[#FAFDEE] resize-none normal-case tracking-wide placeholder:text-xs placeholder:uppercase placeholder:tracking-wider leading-relaxed"
-                  />
+                    className={inputClass}                                      />
                 </div>
 
                 {errorMsg && (
