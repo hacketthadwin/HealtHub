@@ -311,8 +311,8 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
                 {statusMeta?.label}
               </span>
               {current.feeRupees > 0 && (
-                <span className="flex items-center gap-0.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest leading-none bg-[#C2F84F]/20 text-[#476407]">
-                  <IndianRupee size={10} className="shrink-0" />₹{current.feeRupees.toFixed(0)}
+                <span className="flex items-center gap-0.5 px-3 py-1 dark:text-[#C2F84F] rounded-full text-xs font-bold uppercase tracking-widest leading-none bg-[#C2F84F]/20 text-[#476407]">
+                  <IndianRupee size={10} className="shrink-0" />{current.feeRupees.toFixed(0)}
                 </span>
               )}
             </div>
