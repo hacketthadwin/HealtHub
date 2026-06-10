@@ -20,10 +20,10 @@ const GlobePanel = memo(({ isInView }) => (
   >
     <div className="flex flex-col items-center justify-center overflow-hidden w-full h-full">
       {/* Article text configuration matched cleanly to font-roboto-slab */}
-      <article className="relative mx-auto h-[350px] min-h-60 w-full max-w-[450px] overflow-hidden rounded-[2.5rem] border border-[#1F3A4B]/5 dark:border-white/5 bg-gradient-to-b from-[#C2F84F] to-[#C2F84F]/5 p-6 text-3xl font-medium italic tracking-tighter uppercase text-[#1F3A4B] dark:text-[#FAFDEE] md:h-[450px] md:min-h-80 md:p-8 md:text-4xl md:leading-[1.05] lg:text-5xl font-roboto-slab">
+      <article className="relative mx-auto h-[250px] sm:h-[350px] min-h-60 w-full max-w-[450px] overflow-hidden rounded-[2.5rem] border border-[#1F3A4B]/5 dark:border-white/5 bg-gradient-to-b from-[#C2F84F] to-[#C2F84F]/5 p-6 text-2xl sm:text-3xl font-medium italic tracking-tighter uppercase text-[#1F3A4B] dark:text-[#FAFDEE] md:h-[450px] md:min-h-80 md:p-8 md:text-4xl md:leading-[1.05] lg:text-5xl font-roboto-slab">
         Your health matters.
         <br />
-        <div className="absolute -right-20 -bottom-20 z-10 mx-auto flex h-full w-full max-w-[300px] items-center justify-center transition-all duration-700 hover:scale-105 md:-right-28 md:-bottom-28 md:max-w-[550px]">
+        <div className="absolute -right-16 -bottom-16 z-10 mx-auto flex h-full w-full max-w-[200px] sm:max-w-[300px] items-center justify-center transition-all duration-700 hover:scale-105 md:-right-28 md:-bottom-28 md:max-w-[550px]">
           <Earth
             scale={1.1}
             baseColor={[0.76, 0.97, 0.31]}
@@ -101,28 +101,28 @@ export default function ContactUs1() {
 
   return (
     <section
-      className="relative w-full min-h-screen flex items-center justify-center pt-40 pb-16 overflow-y-auto transition-colors duration-300 font-roboto-slab select-none antialiased"
+      className="relative w-full min-h-screen flex items-center justify-center py-10 md:pt-40 md:pb-16 overflow-y-auto transition-colors duration-300 font-roboto-slab select-none antialiased"
       style={{ backgroundColor: "var(--body-bg)", color: "var(--body-text)" }}
     >
       <Header1 />
 
       {/* Background Glows */}
       <div
-        className="absolute top-0 left-0 h-[500px] w-[500px] rounded-full opacity-20 blur-[120px] pointer-events-none"
+        className="absolute top-0 left-0 h-[300px] w-[300px] md:h-[500px] md:w-[500px] rounded-full opacity-20 blur-[120px] pointer-events-none"
         style={{
           background: `radial-gradient(circle at center, var(--sparkle-neon), transparent 70%)`,
         }}
       />
       <div
-        className="absolute right-0 bottom-0 h-[300px] w-[300px] rounded-full opacity-10 blur-[100px] pointer-events-none"
+        className="absolute right-0 bottom-0 h-[200px] w-[200px] md:h-[300px] md:w-[300px] rounded-full opacity-10 blur-[100px] pointer-events-none"
         style={{
           background: `radial-gradient(circle at center, #476407, transparent 70%)`,
         }}
       />
 
-      <div className="relative z-10 container mx-auto px-4 md:px-6 flex items-center justify-center w-full">
-        <div className="mx-auto w-full max-w-7xl overflow-hidden rounded-[2.5rem] bg-white dark:bg-white/5 border border-[#1F3A4B]/5 dark:border-white/5 shadow-3xl backdrop-blur-2xl">
-          <div className="grid md:grid-cols-2 gap-4">
+      <div className="relative z-10 container mx-auto px-4 flex items-center justify-center w-full">
+        <div className="mx-auto w-full max-w-7xl overflow-hidden rounded-[2rem] md:rounded-[2.5rem] bg-white dark:bg-white/5 border border-[#1F3A4B]/5 dark:border-white/5 shadow-3xl backdrop-blur-2xl">
+          <div className="flex flex-col-reverse md:grid md:grid-cols-2 gap-0">
 
             {/* ── Form Side ── */}
             <div className="relative p-6 md:p-12" ref={formRef}>
@@ -130,13 +130,12 @@ export default function ContactUs1() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
-                className="flex w-full gap-2 relative z-20 items-baseline"
+                className="flex w-full flex-wrap gap-x-2 relative z-20 items-baseline"
               >
-                {/* Headers updated to font-sans font-extrabold layout metrics */}
-                <h2 className="text-[#1F3A4B] dark:text-[#FAFDEE] mb-2 text-4xl sm:text-5xl font-extrabold italic tracking-tighter uppercase font-sans leading-none">
+                <h2 className="text-[#1F3A4B] dark:text-[#FAFDEE] mb-2 text-3xl sm:text-5xl font-extrabold italic tracking-tighter uppercase font-sans leading-none">
                   CONTACT
                 </h2>
-                <span className="text-[#476407] dark:text-[#C2F84F] relative z-10 text-4xl sm:text-5xl font-extrabold tracking-tighter italic uppercase font-sans leading-none">
+                <span className="text-[#476407] dark:text-[#C2F84F] relative z-10 text-3xl sm:text-5xl font-extrabold tracking-tighter italic uppercase font-sans leading-none">
                   HEALTHHUB
                 </span>
 
@@ -146,8 +145,8 @@ export default function ContactUs1() {
                     background="transparent"
                     minSize={0.6}
                     maxSize={1.4}
-                    particleDensity={200}
-                    className="absolute inset-0 -top-5 h-32 w-full pointer-events-none"
+                    particleDensity={100}
+                    className="absolute inset-0 -top-5 h-24 w-full pointer-events-none"
                     particleColor="#C2F84F"
                   />
                 )}
@@ -158,16 +157,16 @@ export default function ContactUs1() {
                 animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
                 onSubmit={handleSubmit}
-                className="mt-8 space-y-6"
+                className="mt-6 sm:mt-8 space-y-4 sm:space-y-6"
               >
-                <p className="text-[#1F3A4B]/70 dark:text-[#FAFDEE]/60 text-sm md:text-base font-bold tracking-wide leading-relaxed uppercase">
+                <p className="text-[#1F3A4B]/70 dark:text-[#FAFDEE]/60 text-xs sm:text-sm md:text-base font-bold tracking-wide leading-relaxed uppercase">
                   HAVE A QUESTION ABOUT APPOINTMENTS, DOCTOR AVAILABILITY, OR HEALTH
                   SUPPORT? SEND US A MESSAGE AND OUR TEAM WILL RESPOND SHORTLY.
                 </p>
 
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="text-sm font-bold tracking-widest uppercase opacity-80 text-[#1F3A4B] dark:text-[#FAFDEE] ml-1">
+                    <Label htmlFor="name" className="text-xs sm:text-sm font-bold tracking-widest uppercase opacity-80 text-[#1F3A4B] dark:text-[#FAFDEE] ml-1">
                       FULL NAME
                     </Label>
                     <Input
@@ -177,13 +176,12 @@ export default function ContactUs1() {
                       placeholder="ENTER YOUR FULL NAME"
                       required
                       disabled={isSubmitting}
-                      /* Added normal-case utility to make input text box typing case-friendly */
-                      className="w-full h-14 px-5 rounded-2xl border border-[#1F3A4B]/10 dark:border-white/10 bg-[#1F3A4B]/5 dark:bg-white/5 font-bold text-base outline-none focus:border-[#C2F84F] transition-all duration-200 shadow-inner text-[#1F3A4B] dark:text-[#FAFDEE] normal-case tracking-wide placeholder:text-sm placeholder:uppercase placeholder:tracking-wider"
+                      className="w-full h-12 sm:h-14 px-5 rounded-2xl border border-[#1F3A4B]/10 dark:border-white/10 bg-[#1F3A4B]/5 dark:bg-white/5 font-bold text-sm sm:text-base outline-none focus:border-[#C2F84F] transition-all duration-200 shadow-inner text-[#1F3A4B] dark:text-[#FAFDEE] normal-case tracking-wide placeholder:text-xs placeholder:uppercase placeholder:tracking-wider"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-bold tracking-widest uppercase opacity-80 text-[#1F3A4B] dark:text-[#FAFDEE] ml-1">
+                    <Label htmlFor="email" className="text-xs sm:text-sm font-bold tracking-widest uppercase opacity-80 text-[#1F3A4B] dark:text-[#FAFDEE] ml-1">
                       EMAIL ADDRESS
                     </Label>
                     <Input
@@ -194,30 +192,28 @@ export default function ContactUs1() {
                       placeholder="ENTER YOUR EMAIL ADDRESS"
                       required
                       disabled={isSubmitting}
-                      /* Added normal-case utility to allow exact case inputs */
-                      className="w-full h-14 px-5 rounded-2xl border border-[#1F3A4B]/10 dark:border-white/10 bg-[#1F3A4B]/5 dark:bg-white/5 font-bold text-base outline-none focus:border-[#C2F84F] transition-all duration-200 shadow-inner text-[#1F3A4B] dark:text-[#FAFDEE] normal-case tracking-wide placeholder:text-sm placeholder:uppercase placeholder:tracking-wider"
+                      className="w-full h-12 sm:h-14 px-5 rounded-2xl border border-[#1F3A4B]/10 dark:border-white/10 bg-[#1F3A4B]/5 dark:bg-white/5 font-bold text-sm sm:text-base outline-none focus:border-[#C2F84F] transition-all duration-200 shadow-inner text-[#1F3A4B] dark:text-[#FAFDEE] normal-case tracking-wide placeholder:text-xs placeholder:uppercase placeholder:tracking-wider"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="message" className="text-sm font-bold tracking-widest uppercase opacity-80 text-[#1F3A4B] dark:text-[#FAFDEE] ml-1">
+                  <Label htmlFor="message" className="text-xs sm:text-sm font-bold tracking-widest uppercase opacity-80 text-[#1F3A4B] dark:text-[#FAFDEE] ml-1">
                     HOW CAN WE HELP YOU?
                   </Label>
                   <Textarea
                     id="message"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="WRITE YOUR MESSAGE ABOUT APPOINTMENTS, DOCTORS, OR HEALTH QUERIES..."
+                    placeholder="WRITE YOUR MESSAGE..."
                     required
                     disabled={isSubmitting}
-                    /* Added normal-case utility to make long text fields case-friendly */
-                    className="w-full h-40 p-5 rounded-2xl border border-[#1F3A4B]/10 dark:border-white/10 bg-[#1F3A4B]/5 dark:bg-white/5 font-bold text-base outline-none focus:border-[#C2F84F] transition-all duration-200 shadow-inner text-[#1F3A4B] dark:text-[#FAFDEE] resize-none normal-case tracking-wide placeholder:text-sm placeholder:uppercase placeholder:tracking-wider leading-relaxed"
+                    className="w-full h-32 sm:h-40 p-5 rounded-2xl border border-[#1F3A4B]/10 dark:border-white/10 bg-[#1F3A4B]/5 dark:bg-white/5 font-bold text-sm sm:text-base outline-none focus:border-[#C2F84F] transition-all duration-200 shadow-inner text-[#1F3A4B] dark:text-[#FAFDEE] resize-none normal-case tracking-wide placeholder:text-xs placeholder:uppercase placeholder:tracking-wider leading-relaxed"
                   />
                 </div>
 
                 {errorMsg && (
-                  <p className="text-sm font-bold tracking-wide uppercase text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-700/40 rounded-2xl px-5 py-4">
+                  <p className="text-xs sm:text-sm font-bold tracking-wide uppercase text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-700/40 rounded-2xl px-5 py-3">
                     {errorMsg.toUpperCase()}
                   </p>
                 )}
@@ -225,12 +221,12 @@ export default function ContactUs1() {
                 <motion.div
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.99 }}
-                  className="w-full pt-2"
+                  className="w-full pt-1 sm:pt-2"
                 >
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full h-14 rounded-2xl text-base font-bold uppercase tracking-widest bg-[#476407] dark:bg-[#C2F84F] text-[#FAFDEE] dark:text-[#1F3A4B] shadow-xl transition-all duration-200 italic"
+                    className="w-full h-12 sm:h-14 rounded-2xl text-sm sm:text-base font-bold uppercase tracking-widest bg-[#476407] dark:bg-[#C2F84F] text-[#FAFDEE] dark:text-[#1F3A4B] shadow-xl transition-all duration-200 italic"
                   >
                     {isSubmitting ? (
                       <span className="flex items-center justify-center">

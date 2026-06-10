@@ -57,7 +57,6 @@ const HomePage = () => {
               grid: { display: false },
               ticks: {
                 color: dynamicLabelColor,
-                /* Restored original unmapped chart fonts layout */
                 font: { size: 11, weight: '800' },
                 padding: 10
               }
@@ -70,7 +69,6 @@ const HomePage = () => {
               },
               ticks: {
                 color: dynamicLabelColor,
-                /* Restored original unmapped chart fonts layout */
                 font: { size: 11, weight: '800' },
                 callback: (v) => v
               }
@@ -166,9 +164,10 @@ const HomePage = () => {
           <div className="bg-white dark:bg-white/5 backdrop-blur-2xl rounded-[2.5rem] md:rounded-[4rem] border border-[#1F3A4B]/5 dark:border-white/5 p-6 md:p-10 shadow-3xl relative overflow-hidden group will-change-transform">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl md:text-3xl font-extrabold italic uppercase tracking-tighter text-[#1F3A4B] dark:text-[#FAFDEE] font-sans leading-none">Patient Registrations</h2>
-              <span className="px-4 py-1.5 bg-[#1F3A4B]/5 dark:bg-white/5 border border-[#1F3A4B]/10 dark:border-white/10 text-sm font-bold uppercase tracking-wider rounded-full text-[#1F3A4B] dark:text-[#FAFDEE]">Growth Over Time</span>
+              <span className="hidden md:flex px-4 py-1.5 bg-[#1F3A4B]/5 dark:bg-white/5 border border-[#1F3A4B]/10 dark:border-white/10 text-sm font-bold uppercase tracking-wider rounded-full text-[#1F3A4B] dark:text-[#FAFDEE]">Growth Over Time</span>
             </div>
-            <div className="h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80">
+            {/* Added relative wrapper with height for responsiveness */}
+            <div className="relative w-full h-64 sm:h-72 md:h-80">
               <canvas ref={chartLineCanvasRef}></canvas>
             </div>
           </div>
@@ -177,9 +176,10 @@ const HomePage = () => {
           <div className="bg-white dark:bg-white/5 backdrop-blur-2xl rounded-[2.5rem] md:rounded-[4rem] border border-[#1F3A4B]/5 dark:border-white/5 p-6 md:p-10 shadow-3xl relative overflow-hidden group will-change-transform">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl md:text-3xl font-extrabold italic uppercase tracking-tighter text-[#1F3A4B] dark:text-[#FAFDEE] font-sans leading-none">Appointment Status</h2>
-              <span className="px-4 py-1.5 bg-[#1F3A4B]/5 dark:bg-white/5 border border-[#1F3A4B]/10 dark:border-white/10 text-sm font-bold uppercase tracking-wider rounded-full text-[#1F3A4B] dark:text-[#FAFDEE]">Current Numbers</span>
+              <span className="hidden md:flex px-4 py-1.5 bg-[#1F3A4B]/5 dark:bg-white/5 border border-[#1F3A4B]/10 dark:border-white/10 text-sm font-bold uppercase tracking-wider rounded-full text-[#1F3A4B] dark:text-[#FAFDEE]">Current Numbers</span>
             </div>
-            <div className="h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80">
+            {/* Added relative wrapper with height for responsiveness */}
+            <div className="relative w-full h-64 sm:h-72 md:h-80">
               <canvas ref={chartBarCanvasRef}></canvas>
             </div>
           </div>
