@@ -12,10 +12,9 @@ import { API_URL } from "../../config/api";
 
 const getAuthToken = () => localStorage.getItem('userToken');
 
-// Shorter date format so it never overflows the nav container
 const formatDate = (dateString) => {
   const opts = { weekday: 'short', month: 'short', day: 'numeric' };
-  return new Date(dateString).toLocaleDateString('en-US', opts);
+  return new Date(dateString).toLocaleDateString('en-IN', opts).toUpperCase();
 };
 
 const parseHTMLList = (htmlString) => {
@@ -68,9 +67,10 @@ const TaskItem = React.memo(({ task, onToggle }) => (
         <Circle className="text-[#1F3A4B]/20 dark:text-white/20" size={22} />
       )}
     </div>
-    <span className={`text-sm font-bold tracking-tight leading-snug transition-all
+    {/* CRITICAL FIX: Swapped font-bold out for font-medium to decrease task title weight */}
+    <span className={`text-base font-medium tracking-wide leading-snug transition-all
       ${task.completed ? "text-[#1F3A4B]/40 dark:text-white/30 line-through" : "text-[#1F3A4B] dark:text-[#FAFDEE]"}`}>
-      {task.description}
+      {task.description.toUpperCase()}
     </span>
   </li>
 ));
@@ -188,25 +188,25 @@ function DailyTaskLog({ onTaskUpdate }) {
   ), [taskLogData, currentIndex]);
 
   return (
-    <div className="w-full mx-auto p-4">
+    <div className="w-full mx-auto p-4 font-roboto-slab antialiased">
 
-      {/* HEADER — title always on top, date nav always below (no overflow) */}
+      {/* HEADER */}
       <div className="flex flex-col gap-4 mb-6 px-1">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-[#1F3A4B] dark:bg-[#C2F84F] rounded-2xl shadow-lg">
             <CalendarDays size={22} className="text-[#C2F84F] dark:text-[#1F3A4B]" />
           </div>
           <div>
-            <h2 className="text-2xl font-black italic uppercase tracking-tighter text-[#1F3A4B] dark:text-[#FAFDEE]">
-              Daily Tasks
+            <h2 className="text-xl sm:text-3xl font-extrabold italic uppercase tracking-tighter text-[#1F3A4B] dark:text-[#FAFDEE] font-sans">
+              DAILY TASKS
             </h2>
-            <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 text-[#1F3A4B] dark:text-[#FAFDEE]">
-              Track your health tasks
+            <p className="text-xs font-bold uppercase tracking-widest opacity-50 text-[#1F3A4B] dark:text-[#FAFDEE]">
+              TRACK YOUR HEALTH TASKS
             </p>
           </div>
         </div>
 
-        {/* Date navigator — on its own row, always centred, never overflows */}
+        {/* Date navigator */}
         {taskLogData.length > 0 && (
           <div className="flex items-center justify-between gap-2 bg-white/60 dark:bg-white/10 rounded-2xl px-3 py-2 border border-[#1F3A4B]/10 dark:border-white/5 shadow-sm w-full">
             <button
@@ -216,7 +216,7 @@ function DailyTaskLog({ onTaskUpdate }) {
             >
               <ChevronLeft size={18} />
             </button>
-            <span className="text-[11px] font-black italic tracking-wide uppercase text-[#1F3A4B] dark:text-[#FAFDEE] text-center flex-1 truncate">
+            <span className="text-xs font-bold italic tracking-widest uppercase text-[#1F3A4B] dark:text-[#FAFDEE] text-center flex-1 truncate">
               {currentDay ? formatDate(currentDay.date) : '--'}
             </span>
             <button
@@ -234,23 +234,31 @@ function DailyTaskLog({ onTaskUpdate }) {
       {loading ? (
         <div className="h-48 flex flex-col items-center justify-center bg-white/40 dark:bg-[#1F3A4B]/10 rounded-3xl border-2 border-dashed border-[#1F3A4B]/10 animate-pulse">
           <Activity className="animate-spin text-[#1F3A4B] dark:text-[#C2F84F] mb-3" size={32} />
-          <p className="text-xs font-black tracking-widest uppercase opacity-40 text-[#1F3A4B] dark:text-[#FAFDEE]">Loading tasks...</p>
+          <p className="text-xs sm:text-sm font-bold tracking-widest uppercase opacity-50 text-[#1F3A4B] dark:text-[#FAFDEE]">LOADING TASKS...</p>
         </div>
       ) : error ? (
         <div className="h-48 flex flex-col items-center justify-center bg-rose-50 dark:bg-rose-900/10 rounded-3xl border-2 border-rose-500/20 p-6 text-center">
           <AlertCircle className="text-rose-500 mb-3" size={32} />
-          <p className="text-sm font-black uppercase tracking-wide text-rose-600 dark:text-rose-300">{error}</p>
-          <p className="text-[10px] uppercase opacity-40 mt-1">Please refresh and try again.</p>
+          <p className="text-sm sm:text-base font-bold uppercase tracking-wide text-rose-600 dark:text-rose-300">{error.toUpperCase()}</p>
+          <p className="text-xs uppercase opacity-50 mt-1">PLEASE REFRESH AND TRY AGAIN.</p>
         </div>
       ) : taskLogData.length === 0 ? (
         <div className="h-48 flex flex-col items-center justify-center bg-white/40 dark:bg-white/5 border-2 border-dashed border-[#1F3A4B]/10 rounded-3xl p-8 group text-center">
           <ClipboardX size={40} className="text-[#1F3A4B]/20 dark:text-white/20 mb-3 group-hover:rotate-12 transition-transform duration-500" />
-          <p className="text-base font-black italic uppercase opacity-50 text-[#1F3A4B] dark:text-white">No tasks yet</p>
-          <p className="text-[10px] font-bold uppercase opacity-30 tracking-wide mt-1">Chat with AI to get your daily tasks</p>
+          <p className="text-base sm:text-lg font-bold italic uppercase opacity-50 text-[#1F3A4B] dark:text-white">NO TASKS YET</p>
+          <p className="text-xs font-bold uppercase opacity-40 tracking-wide mt-1">CHAT WITH AI TO GET YOUR DAILY TASKS</p>
         </div>
       ) : (
         <div className="space-y-6">
-          <ul className="max-h-[28rem] overflow-y-auto pr-2 scrollbar-hide">
+          <ul className="max-h-[17.5rem] overflow-y-auto pr-2 scroll-smooth
+            [&::-webkit-scrollbar]:w-1.5
+            [&::-webkit-scrollbar-track]:bg-transparent
+            [&::-webkit-scrollbar-thumb]:rounded-full
+            [&::-webkit-scrollbar-thumb]:bg-[#1F3A4B]/20
+            dark:[&::-webkit-scrollbar-thumb]:bg-white/10
+            hover:[&::-webkit-scrollbar-thumb]:bg-[#1F3A4B]/40
+            dark:hover:[&::-webkit-scrollbar-thumb]:bg-white/20"
+          >
             {currentDay?.tasks.map(t => (
               <TaskItem key={t.id} task={t} onToggle={handleTaskCheck} />
             ))}
@@ -266,17 +274,17 @@ function DailyTaskLog({ onTaskUpdate }) {
                 <Activity size={22} />
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase text-white/40 tracking-widest">Today's Progress</p>
-                <p className="text-xl font-black italic uppercase text-white">
-                  {currentDay?.summary.completedTasks} <span className="text-white/30 not-italic">/</span> {currentDay?.summary.totalTasks} Done
+                <p className="text-xs font-bold uppercase text-white/40 tracking-widest">TODAY'S PROGRESS</p>
+                <p className="text-xl sm:text-2xl font-bold italic uppercase text-white">
+                  {currentDay?.summary.completedTasks} <span className="text-white/30 not-italic">/</span> {currentDay?.summary.totalTasks} DONE
                 </p>
               </div>
             </div>
             <div className="text-right relative z-10">
-              <p className="text-4xl font-black italic tracking-tighter text-[#C2F84F] leading-none">
+              <p className="text-4xl sm:text-5xl font-black italic tracking-tighter text-[#C2F84F] leading-none">
                 {currentDay?.summary.completionPercentage.toFixed(0)}%
               </p>
-              <p className="text-[9px] font-black uppercase opacity-60 text-white tracking-widest mt-1">Keep it up!</p>
+              <p className="text-[10px] font-bold uppercase opacity-60 text-white tracking-widest mt-1">KEEP IT UP!</p>
             </div>
           </div>
         </div>

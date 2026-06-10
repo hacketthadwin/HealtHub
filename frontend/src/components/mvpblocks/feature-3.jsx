@@ -66,10 +66,10 @@ const FeatureCard = ({ feature }) => {
         <div className="text-[#1F3A4B] dark:text-[#C2F84F] mb-4">
           <Icon className="h-8 w-8 stroke-[2.5]" />
         </div>
-        <h3 className="text-[#1F3A4B] dark:text-[#FAFDEE] mb-3 text-xl md:text-2xl font-black italic uppercase tracking-tighter leading-none">
+        <h3 className="text-[#1F3A4B] dark:text-[#FAFDEE] mb-3 text-2xl md:text-4xl  italic uppercase tracking-tighter leading-none">
           {feature.title}
         </h3>
-        <p className="text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 text-[11px] font-bold tracking-wide leading-relaxed uppercase">
+        <p className="text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 text-md tracking-wide leading-relaxed uppercase">
           {feature.description}
         </p>
       </div>
@@ -80,8 +80,8 @@ const FeatureCard = ({ feature }) => {
 export default function CongestedFeatures() {
   return (
     <section className="relative w-full py-12 bg-transparent transition-colors duration-300 z-10" id="features">
-      <div className="mx-auto px-4 max-w-[1400px]">
-        <div className="flex flex-col-reverse gap-8 md:grid md:grid-cols-3 items-center">
+      <div className="mx-auto px-2 max-w-[1400px]">
+        <div className="flex flex-col-reverse gap-8 lg:grid lg:grid-cols-3 items-center">
           
           {/* Left Feature Column */}
           <div className="flex flex-col gap-6 w-full">
@@ -92,13 +92,13 @@ export default function CongestedFeatures() {
 
           {/* Sticky Center Strategic Branding Column */}
           <div className="text-center md:sticky md:top-32 py-8 px-4 self-center">
-            <div className="bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] relative mx-auto mb-6 w-fit rounded-full px-4 py-1.5 text-[10px] font-black tracking-widest uppercase">
+            <div className="bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] relative mx-auto mb-6 w-fit rounded-full px-4 py-1.5 text-md  tracking-widest uppercase">
               <span className="relative z-1">FEATURES</span>
             </div>
-            <h2 className="text-[#1F3A4B] dark:text-[#FAFDEE] mb-4 text-3xl font-black italic uppercase tracking-tighter sm:text-4xl md:text-5xl leading-none">
-              PLATFORM <br /> CAPABILITIES
+            <h2 className="text-[#1F3A4B] dark:text-[#FAFDEE] mb-4 text-3xl  italic uppercase tracking-tighter font-black sm:text-4xl md:text-5xl leading-none">
+              WHAT ARE WE<br /> PROVIDING?
             </h2>
-            <p className="text-[10px] font-black tracking-widest uppercase opacity-40 mx-auto max-w-[16rem]">
+            <p className="text-md  tracking-widest uppercase opacity-40 mx-auto max-w-[16rem]">
               EASY AND POWERFUL TOOLS DESIGNED TO GIVE YOU A SMOOTH EXPERIANCE.
             </p>
           </div>

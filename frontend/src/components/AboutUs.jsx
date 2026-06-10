@@ -33,8 +33,9 @@ export default function AboutUs() {
   }, []);
 
   return (
+    // font-roboto-slab is the base font for all normal text in this page
     <div 
-      className="w-full min-h-screen transition-colors duration-300 font-sans overflow-x-hidden relative select-none pt-44 pb-24 px-6"
+      className="w-full min-h-screen transition-colors duration-300 font-roboto-slab overflow-x-hidden relative select-none pt-44 pb-24 px-6"
       style={{ backgroundColor: 'transparent' }}
     >
       
@@ -51,9 +52,6 @@ export default function AboutUs() {
 
       <Header1 />
 
-      {/* Replaced AnimatePresence with a stable hardware-accelerated CSS transition shell.
-        This forces the layout height container to stay rigid, preventing scrollbar jump glitches.
-      */}
       <div 
         ref={containerRef}
         className={`relative z-10 mx-auto max-w-[1400px] flex flex-col items-center space-y-16 md:space-y-20 transition-all duration-500 ease-out ${
@@ -63,13 +61,16 @@ export default function AboutUs() {
         
         {/* Header Strategic Branding Block */}
         <div className="text-center max-w-3xl self-center space-y-4">
-          <div className="bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] relative mx-auto w-fit rounded-full px-4 py-1.5 text-xs font-bold tracking-wide uppercase">
+          {/* font-black tracking-widest matches footer/FAQ badge style */}
+          <div className="bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] relative mx-auto w-fit rounded-full px-4 py-1.5 text-md font-black tracking-widest uppercase">
             <span className="relative z-1">Our Story</span>
           </div>
+          {/* font-sans keeps heading font — unchanged */}
           <h1 className="text-[#1F3A4B] dark:text-[#FAFDEE] text-3xl sm:text-4xl md:text-5xl font-black italic uppercase tracking-tighter">
             Bridging the Gap in Modern <span className="text-emerald-600 dark:text-[#C2F84F]">Healthcare</span>
           </h1>
-          <p className="text-base md:text-lg font-medium text-[#1F3A4B]/80 dark:text-[#FAFDEE]/80 max-w-2xl mx-auto leading-relaxed">
+          {/* font-black tracking-wide uppercase matches footer description style */}
+          <p className="text-base md:text-lg  tracking-wide uppercase text-[#1F3A4B]/80 dark:text-[#FAFDEE]/80 max-w-2xl mx-auto leading-relaxed">
             HealthHub is a unified platform built to connect patients, doctors, and hospitals through smart dashboard tools that place your wellness first.
           </p>
         </div>
@@ -84,10 +85,12 @@ export default function AboutUs() {
                   <div className="text-[#1F3A4B] dark:text-[#C2F84F] mb-4">
                     <Icon className="h-8 w-8 stroke-[2]" />
                   </div>
-                  <h3 className="text-[#1F3A4B] dark:text-[#FAFDEE] mb-3 text-lg md:text-xl font-bold tracking-tight">
+                  {/* font-black italic uppercase tracking-tighter matches footer/features card heading style */}
+                  <h3 className="text-[#1F3A4B] dark:text-[#FAFDEE] mb-3 text-lg md:text-xl  italic uppercase tracking-tighter">
                     {item.title}
                   </h3>
-                  <p className="text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 text-sm md:text-base font-medium leading-relaxed">
+                  {/* tracking-wide uppercase matches footer body text style */}
+                  <p className="text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 text-sm md:text-base tracking-wide uppercase leading-relaxed">
                     {item.description}
                   </p>
                 </div>
@@ -99,19 +102,23 @@ export default function AboutUs() {
         {/* Highlight Banner Callout */}
         <div className="w-full max-w-6xl rounded-[2.5rem] p-8 md:p-12 border-2 bg-black/5 dark:bg-white/5 border-[#1F3A4B]/10 dark:border-white/10 backdrop-blur-sm grid md:grid-cols-3 gap-8 items-center">
           <div className="md:col-span-2 space-y-3 text-left">
-            <h2 className="text-xl md:text-3xl font-black italic uppercase tracking-tighter text-[#1F3A4B] dark:text-[#FAFDEE] leading-none">
+            {/* heading unchanged */}
+            <h2 className="text-xl md:text-3xl  italic uppercase tracking-tighter text-[#1F3A4B] dark:text-[#FAFDEE] leading-none">
               Designed for Patients <br /> Built for Professionals
             </h2>
-            <p className="text-sm md:text-base font-medium text-[#1F3A4B]/80 dark:text-[#FAFDEE]/80 leading-relaxed">
+            {/* tracking-wide uppercase matches footer body text style */}
+            <p className="text-sm md:text-base tracking-wide uppercase text-[#1F3A4B]/80 dark:text-[#FAFDEE]/80 leading-relaxed">
               Whether you need quick chat answers or system dashboard panels for an entire hospital infrastructure, HealthHub provides a smooth experience across every role.
             </p>
           </div>
           <div className="rounded-3xl bg-gradient-to-br from-emerald-800 to-emerald-800/40 dark:from-[#C2F84F] dark:to-[#C2F84F]/40 border border-black/5 dark:border-white/5 p-6 flex flex-col justify-center h-full min-h-[140px]">
             <span className="text-4xl font-black italic uppercase tracking-tighter text-white dark:text-[#1F3A4B]">100%</span>
-            <p className="text-sm font-bold uppercase tracking-tight text-white dark:text-[#1F3A4B] mt-1">
+            {/* font-black uppercase tracking-tighter matches footer label style */}
+            <p className="text-sm font-black uppercase tracking-tighter text-white dark:text-[#1F3A4B] mt-1">
               Digital System Setup
             </p>
-            <p className="text-xs sm:text-sm font-medium text-white dark:text-[#1F3A4B] leading-normal mt-1">
+            {/* tracking-wide uppercase matches footer body text style */}
+            <p className="text-xs sm:text-sm tracking-wide uppercase text-white dark:text-[#1F3A4B] leading-normal mt-1">
               No paper records needed. Comprehensive clinical dashboards keep data safe and accessible anytime.
             </p>
           </div>

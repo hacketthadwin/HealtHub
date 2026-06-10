@@ -18,7 +18,6 @@ import { API_URL } from '../config/api';
 
 const socket = io(`${API_URL}`);
 
-// ─── Helper: convert "HH:MM" (24h) → "H:MM AM/PM" ────────────────────────
 const rawTimeTo12h = (raw) => {
   if (!raw) return '';
   const [h, m] = raw.split(':').map(Number);
@@ -28,7 +27,6 @@ const rawTimeTo12h = (raw) => {
   return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
 };
 
-// ─── Helper: has the booking's consultation window already ended? ──────────
 const isAbortEligible = (booking) => {
   if (!booking?.scheduledDate) return false;
   const slotEnd = new Date(
@@ -40,7 +38,7 @@ const isAbortEligible = (booking) => {
 
 // ─── Abort Confirmation Modal ──────────────────────────────────────────────
 const AbortConfirmModal = ({ booking, onClose, onConfirm, loading }) => (
-  <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+  <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 font-roboto-slab">
     <div className="w-full max-w-md bg-[#FAFDEE] dark:bg-[#0d131b] rounded-[2.5rem] p-8 shadow-2xl border border-[#1F3A4B]/10 dark:border-white/10 relative">
       <button
         onClick={onClose}
@@ -54,27 +52,27 @@ const AbortConfirmModal = ({ booking, onClose, onConfirm, loading }) => (
           <TriangleAlert size={20} />
         </div>
         <div>
-          <h3 className="text-lg font-black italic uppercase text-[#1F3A4B] dark:text-[#FAFDEE] leading-none">
-            Mark as Expired
+          <h3 className="text-xl font-extrabold italic uppercase text-[#1F3A4B] dark:text-[#FAFDEE] leading-none font-sans">
+            MARK AS EXPIRED
           </h3>
-          <p className="text-[10px] font-bold text-[#1F3A4B]/50 dark:text-white/40 uppercase tracking-widest mt-0.5">
-            Patient: {booking?.patient}
+          <p className="text-xs font-bold text-[#1F3A4B]/50 dark:text-white/40 uppercase tracking-widest mt-1.5">
+            PATIENT: {booking?.patient?.toUpperCase()}
           </p>
         </div>
       </div>
 
-      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-400/40 rounded-2xl p-4 mb-6">
-        <p className="text-sm font-bold text-amber-800 dark:text-amber-300">
-          Appointment time has already passed. Do you want to mark this appointment as expired?
+      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-400/40 rounded-2xl p-5 mb-6">
+        <p className="text-base font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wide leading-relaxed">
+          APPOINTMENT TIME HAS ALREADY PASSED. DO YOU WANT TO MARK THIS APPOINTMENT AS EXPIRED?
         </p>
-        <p className="text-[10px] text-amber-700 dark:text-amber-400 mt-2 font-medium">
-          The patient will be notified by email. This appointment will move to consultation history.
+        <p className="text-xs text-amber-700 dark:text-amber-400 mt-2 font-bold uppercase tracking-wide">
+          THE PATIENT WILL BE NOTIFIED BY EMAIL. THIS APPOINTMENT WILL MOVE TO CONSULTATION HISTORY.
         </p>
       </div>
 
       {booking?.scheduledDate && (
-        <div className="bg-[#1F3A4B]/5 dark:bg-white/5 rounded-2xl p-3 mb-6 text-[10px] font-black uppercase tracking-widest text-[#1F3A4B]/60 dark:text-white/50">
-          📅 {new Date(booking.scheduledDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
+        <div className="bg-[#1F3A4B]/5 dark:bg-white/5 rounded-2xl p-4 mb-6 text-xs font-bold uppercase tracking-widest text-[#1F3A4B]/60 dark:text-white/50 text-center">
+          📅 {new Date(booking.scheduledDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()}
           &nbsp;·&nbsp;⏰ {booking.scheduledTime || 'N/A'}
         </div>
       )}
@@ -82,21 +80,21 @@ const AbortConfirmModal = ({ booking, onClose, onConfirm, loading }) => (
       <div className="flex gap-3">
         <button
           onClick={onClose}
-          className="flex-1 py-3 rounded-2xl border-2 border-[#1F3A4B]/20 dark:border-white/20 text-[#1F3A4B] dark:text-white font-black text-sm uppercase tracking-widest hover:border-rose-400 hover:text-rose-500 transition-all"
+          className="flex-1 py-4 rounded-2xl border-2 border-[#1F3A4B]/20 dark:border-white/20 text-[#1F3A4B] dark:text-white font-bold text-sm uppercase tracking-widest hover:border-rose-400 hover:text-rose-500 transition-all"
         >
-          Cancel
+          CANCEL
         </button>
         <button
           onClick={onConfirm}
           disabled={loading}
-          className="flex-1 py-3 rounded-2xl bg-rose-500 text-white font-black text-sm uppercase tracking-widest hover:scale-105 transition-all shadow-xl disabled:opacity-50 flex items-center justify-center gap-2"
+          className="flex-1 py-4 rounded-2xl bg-rose-500 text-white font-bold text-sm uppercase tracking-widest hover:scale-105 transition-all shadow-xl disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {loading ? (
             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
           ) : (
             <Ban size={16} />
           )}
-          {loading ? 'Marking...' : 'Mark Expired'}
+          {loading ? 'MARKING...' : 'MARK EXPIRED'}
         </button>
       </div>
     </div>
@@ -139,7 +137,7 @@ const AcceptModal = ({ request, onClose, onSubmit, loading }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 font-roboto-slab">
       <style>{`
         .accept-modal-input[type="date"],
         .accept-modal-input[type="time"] { color-scheme: light; }
@@ -165,74 +163,74 @@ const AcceptModal = ({ request, onClose, onSubmit, loading }) => {
         </button>
 
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-xl bg-[#1F3A4B] text-[#C2F84F]">
-            <CalendarCheck size={20} />
+          <div className="p-3 rounded-2xl bg-[#1F3A4B] text-[#C2F84F] shadow-md">
+            <CalendarCheck size={22} />
           </div>
           <div>
-            <h3 className="text-lg font-black italic uppercase text-[#1F3A4B] dark:text-[#FAFDEE] leading-none">
+            <h3 className="text-xl font-extrabold italic uppercase text-[#1F3A4B] dark:text-[#FAFDEE] leading-none font-sans">
               Propose Consultation Time
             </h3>
-            <p className="text-[10px] font-bold text-[#1F3A4B]/50 dark:text-white/40 uppercase tracking-widest mt-0.5">
-              Patient: {request.patient}
+            <p className="text-xs font-bold text-[#1F3A4B]/50 dark:text-white/40 uppercase tracking-widest mt-1.5">
+              PATIENT: {request.patient?.toUpperCase()}
             </p>
           </div>
         </div>
 
-        <div className="bg-[#1F3A4B]/5 dark:bg-white/5 rounded-2xl p-4 mb-6 text-xs font-bold text-[#1F3A4B]/70 dark:text-white/60 italic">
-          <span className="font-black text-[#1F3A4B] dark:text-white not-italic">Reason: </span>
+        <div className="bg-[#1F3A4B]/5 dark:bg-white/5 rounded-2xl p-4 mb-6 text-sm font-bold text-[#1F3A4B]/70 dark:text-white/60 italic uppercase tracking-wide">
+          <span className="font-extrabold text-[#1F3A4B] dark:text-white not-italic">REASON: </span>
           {request.reason}
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div>
-            <label className="block text-[10px] font-black uppercase tracking-widest text-[#1F3A4B] dark:text-[#FAFDEE] mb-1.5">
-              Date
+            <label className="block text-xs font-bold uppercase tracking-widest text-[#1F3A4B] dark:text-[#FAFDEE] mb-2 ml-1">
+              DATE
             </label>
             <input
               type="date"
               min={today}
               value={form.scheduledDate}
               onChange={(e) => handleDateChange(e.target.value)}
-              className="accept-modal-input w-full p-3 rounded-2xl bg-[#1F3A4B]/5 dark:bg-white/5 text-[#1F3A4B] dark:text-white font-bold outline-none border-2 border-transparent focus:border-[#C2F84F] transition-all text-sm"
+              className="accept-modal-input w-full p-4 rounded-2xl bg-[#1F3A4B]/5 dark:bg-white/5 text-[#1F3A4B] dark:text-white font-bold outline-none border-2 border-transparent focus:border-[#C2F84F] transition-all text-base"
             />
           </div>
 
           <div>
-            <label className="block text-[10px] font-black uppercase tracking-widest text-[#1F3A4B] dark:text-[#FAFDEE] mb-1.5">
-              Time
+            <label className="block text-xs font-bold uppercase tracking-widest text-[#1F3A4B] dark:text-[#FAFDEE] mb-2 ml-1">
+              TIME
             </label>
             <input
               type="time"
               value={form.rawTime}
               onChange={(e) => handleTimeChange(e.target.value)}
-              className="accept-modal-input w-full p-3 rounded-2xl bg-[#1F3A4B]/5 dark:bg-white/5 text-[#1F3A4B] dark:text-white font-bold outline-none border-2 border-transparent focus:border-[#C2F84F] transition-all text-sm"
+              className="accept-modal-input w-full p-4 rounded-2xl bg-[#1F3A4B]/5 dark:bg-white/5 text-[#1F3A4B] dark:text-white font-bold outline-none border-2 border-transparent focus:border-[#C2F84F] transition-all text-base"
             />
             {form.scheduledTime && (
-              <p className="mt-1.5 ml-1 text-[10px] font-black text-[#C2F84F] uppercase tracking-widest">
-                Selected: {form.scheduledTime}
+              <p className="mt-2 ml-1 text-xs font-bold text-[#C2F84F] uppercase tracking-widest">
+                SELECTED: {form.scheduledTime}
               </p>
             )}
           </div>
 
           <div>
-            <label className="block text-[10px] font-black uppercase tracking-widest text-[#1F3A4B] dark:text-[#FAFDEE] mb-1.5">
-              Duration
+            <label className="block text-xs font-bold uppercase tracking-widest text-[#1F3A4B] dark:text-[#FAFDEE] mb-2 ml-1">
+              DURATION
             </label>
             <select
               value={form.slotDurationMinutes}
               onChange={(e) => setForm((prev) => ({ ...prev, slotDurationMinutes: Number(e.target.value) }))}
-              className="w-full p-3 rounded-2xl bg-[#1F3A4B]/5 dark:bg-white/5 text-[#1F3A4B] dark:text-white font-bold outline-none border-2 border-transparent focus:border-[#C2F84F] transition-all text-sm cursor-pointer"
+              className="w-full p-4 rounded-2xl bg-[#1F3A4B]/5 dark:bg-white/5 text-[#1F3A4B] dark:text-white font-bold outline-none border-2 border-transparent focus:border-[#C2F84F] transition-all text-base cursor-pointer uppercase tracking-wide"
             >
-              <option value={15}>15 minutes</option>
-              <option value={30}>30 minutes</option>
-              <option value={45}>45 minutes</option>
-              <option value={60}>60 minutes</option>
+              <option value={15} className="text-sm">15 MINUTES</option>
+              <option value={30} className="text-sm">30 MINUTES</option>
+              <option value={45} className="text-sm">45 MINUTES</option>
+              <option value={60} className="text-sm">60 MINUTES</option>
             </select>
           </div>
 
           {form.scheduledDate && form.scheduledTime && (
-            <div className="bg-[#C2F84F]/10 dark:bg-[#C2F84F]/5 border border-[#C2F84F]/30 rounded-2xl p-3 text-[10px] font-black uppercase tracking-widest text-[#476407] dark:text-[#C2F84F]">
-              📅 {form.scheduledDate} · ⏰ {form.scheduledTime} · ⏱ {form.slotDurationMinutes} min
+            <div className="bg-[#C2F84F]/10 dark:bg-[#C2F84F]/5 border border-[#C2F84F]/30 rounded-2xl p-4 text-xs font-bold uppercase tracking-widest text-[#476407] dark:text-[#C2F84F] text-center">
+              📅 {form.scheduledDate} · ⏰ {form.scheduledTime} · ⏱ {form.slotDurationMinutes} MIN
             </div>
           )}
         </div>
@@ -240,16 +238,16 @@ const AcceptModal = ({ request, onClose, onSubmit, loading }) => {
         <div className="flex gap-3 mt-8">
           <button
             onClick={onClose}
-            className="flex-1 py-3 rounded-2xl border-2 border-[#1F3A4B]/20 dark:border-white/20 text-[#1F3A4B] dark:text-white font-black text-sm uppercase tracking-widest hover:border-rose-400 hover:text-rose-500 transition-all"
+            className="flex-1 py-4 rounded-2xl border-2 border-[#1F3A4B]/20 dark:border-white/20 text-[#1F3A4B] dark:text-white font-bold text-sm uppercase tracking-widest hover:border-rose-400 hover:text-rose-500 transition-all"
           >
-            Cancel
+            CANCEL
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="flex-1 py-3 rounded-2xl bg-[#1F3A4B] dark:bg-[#C2F84F] text-[#C2F84F] dark:text-[#1F3A4B] font-black text-sm uppercase tracking-widest hover:scale-105 transition-all shadow-xl disabled:opacity-50"
+            className="flex-1 py-4 rounded-2xl bg-[#1F3A4B] dark:bg-[#C2F84F] text-[#C2F84F] dark:text-[#1F3A4B] font-bold text-sm uppercase tracking-widest hover:scale-105 transition-all shadow-xl disabled:opacity-50"
           >
-            {loading ? 'Accepting...' : 'Confirm & Accept'}
+            {loading ? 'ACCEPTING...' : 'CONFIRM & ACCEPT'}
           </button>
         </div>
       </div>
@@ -264,7 +262,7 @@ const DoctorPage = () => {
   const fileInputRef = useRef(null);
 
   const [userId,       setUserId]       = useState(null);
-  const [userName,     setUserName]     = useState('User');
+  const [userName,     setUserName]     = useState('USER');
   const [consultingFee,          setConsultingFee]          = useState(null);
   const [consultingFeeConfirmed, setConsultingFeeConfirmed] = useState(false);
   const [feeInput,               setFeeInput]               = useState('');
@@ -288,7 +286,6 @@ const DoctorPage = () => {
   const [acceptModal,   setAcceptModal]   = useState({ open: false, request: null });
   const [acceptLoading, setAcceptLoading] = useState(false);
 
-  // ── Abort state ──────────────────────────────────────────────────────────
   const [abortModal,   setAbortModal]   = useState({ open: false, booking: null });
   const [abortLoading, setAbortLoading] = useState(false);
 
@@ -318,7 +315,7 @@ const DoctorPage = () => {
 
     try {
       const decoded = jwtDecode(token);
-      setUserName(decoded.name || 'User');
+      setUserName((decoded.name || 'USER').toUpperCase());
       setUserId(decoded.id);
     } catch {
       localStorage.clear(); navigate('/login'); return;
@@ -335,7 +332,6 @@ const DoctorPage = () => {
       const all = data.data || [];
       const now = new Date();
 
-      // ── Pending requests ────────────────────────────────────────────────
       const pending = all
         .filter((r) => r.status === 'PENDING_DOCTOR_APPROVAL')
         .map((r) => ({
@@ -346,7 +342,6 @@ const DoctorPage = () => {
           originalReq: r,
         }));
 
-      // ── Confirmed patients (deduped for chat sidebar) ───────────────────
       const seenPatients = new Set();
       const confirmed = all
         .filter((r) => r.status === 'PAID_CONFIRMED')
@@ -367,7 +362,6 @@ const DoctorPage = () => {
           return acc;
         }, []);
 
-      // ── Today's schedule (full details for abort eligibility) ───────────
       const todayStr = now.toDateString();
       const todays = all
         .filter((r) => {
@@ -384,13 +378,12 @@ const DoctorPage = () => {
           slotDurationMinutes: r.proposedByDoctor?.slotDurationMinutes || 30,
         }));
 
-      // ── Past due: PAID_CONFIRMED + not today + slotEnd already passed ───
       const pastDue = all
         .filter((r) => {
           if (r.status !== 'PAID_CONFIRMED') return false;
           if (!r.proposedByDoctor?.scheduledDate) return false;
           const scheduledDate = new Date(r.proposedByDoctor.scheduledDate);
-          if (scheduledDate.toDateString() === todayStr) return false; // handled above
+          if (scheduledDate.toDateString() === todayStr) return false; 
           const durationMins = r.proposedByDoctor?.slotDurationMinutes || 30;
           const slotEnd = new Date(scheduledDate.getTime() + durationMins * 60 * 1000);
           return now > slotEnd;
@@ -417,7 +410,6 @@ const DoctorPage = () => {
 
   useEffect(() => { fetchAppointments(); }, [fetchAppointments]);
 
-  // ── Join personal notification room (for abort events emitted TO this doctor) ─
   useEffect(() => {
     if (!userId) return;
     socket.emit('joinUserRoom', userId);
@@ -510,7 +502,6 @@ const DoctorPage = () => {
     }
   };
 
-  // ── Abort handlers ────────────────────────────────────────────────────────
   const handleAbortOpen = (booking) => {
     setAbortModal({ open: true, booking });
   };
@@ -608,7 +599,7 @@ const DoctorPage = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#FAFDEE] dark:bg-[#0a111a] transition-all duration-500 text-[#1F3A4B] dark:text-[#FAFDEE] font-sans overflow-x-hidden">
+    <div className="min-h-screen w-full bg-[#FAFDEE] dark:bg-[#0a111a] transition-all duration-500 text-[#1F3A4B] dark:text-[#FAFDEE] font-roboto-slab overflow-x-hidden antialiased">
       <ToastContainer autoClose={2500} />
       <Header1 />
 
@@ -640,17 +631,17 @@ const DoctorPage = () => {
 
       {/* ── Page header ── */}
       <header className="relative z-10 px-4 md:px-10 pt-4 md:pt-6 pb-2 flex items-center gap-4">
-        <div className="p-1 rounded-full bg-gradient-to-tr from-[#1F3A4B] to-[#C2F84F] shrink-0">
+        <div className="p-1 rounded-full bg-gradient-to-tr from-[#1F3A4B] to-[#C2F84F] shrink-0 shadow-md">
           <div className="h-14 w-14 md:h-16 md:w-16 rounded-full bg-white dark:bg-[#1F3A4B] flex items-center justify-center">
             <Stethoscope size={26} className="text-[#1F3A4B] dark:text-[#C2F84F]" />
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="px-3 py-1 bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] font-black text-[8px] md:text-[10px] rounded-full uppercase tracking-widest flex items-center gap-1">
-            <IndianRupee size={10} />
-            {consultingFee ? `₹${consultingFee}/session` : 'Fee Not Set'}
+          <span className="px-4 py-1.5 bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] font-bold text-xs rounded-full uppercase tracking-widest flex items-center gap-1.5 shadow-sm">
+            <IndianRupee size={12} />
+            {consultingFee ? `₹${consultingFee} / SESSION` : 'FEE NOT SET'}
           </span>
-          <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
         </div>
       </header>
 
@@ -662,20 +653,20 @@ const DoctorPage = () => {
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-400 rounded-[2rem] shadow-md">
               <TriangleAlert className="text-amber-500 shrink-0 mt-0.5" size={22} />
               <div className="flex-1">
-                <p className="font-black text-amber-800 dark:text-amber-300 text-sm uppercase tracking-wide">
-                  Consulting fee not confirmed
+                <p className="font-extrabold text-amber-800 dark:text-amber-300 text-sm uppercase tracking-wide">
+                  CONSULTING FEE NOT CONFIRMED
                 </p>
-                <p className="text-xs text-amber-700 dark:text-amber-400 mt-1 font-medium">
+                <p className="text-xs text-amber-700 dark:text-amber-400 mt-1 font-bold uppercase tracking-wide">
                   {consultingFee
-                    ? `Patients currently see ₹${consultingFee}/session (migration default). Update it to your actual rate.`
-                    : 'Set your consulting fee so patients can find and book you.'}
+                    ? `PATIENTS CURRENTLY SEE ₹${consultingFee}/SESSION (MIGRATION DEFAULT). UPDATE IT TO YOUR ACTUAL RATE.`
+                    : 'SET YOUR CONSULTING FEE SO PATIENTS CAN FIND AND BOOK YOU.'}
                 </p>
               </div>
               <button
                 onClick={() => feePanelRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                className="shrink-0 px-5 py-2 bg-amber-400 text-amber-900 font-black text-xs uppercase tracking-widest rounded-full hover:scale-105 transition-all shadow-md"
+                className="shrink-0 px-6 py-2.5 bg-amber-400 text-amber-900 font-bold text-xs uppercase tracking-widest rounded-full hover:scale-105 active:scale-95 transition-all shadow-md"
               >
-                Set Fee Now
+                SET FEE NOW
               </button>
             </div>
           )}
@@ -684,27 +675,31 @@ const DoctorPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8">
             <div className="p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] bg-[#1F3A4B] text-[#FAFDEE] shadow-2xl relative overflow-hidden group">
               <UserCheck className="absolute right-[-10px] bottom-[-10px] opacity-10 scale-150" size={100} />
-              <p className="text-[10px] font-black uppercase text-[#C2F84F] mb-2 tracking-widest">Confirmed Patients</p>
-              <h3 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter">{patients.length} Total</h3>
+              <p className="text-xs font-bold uppercase text-[#C2F84F] mb-2 tracking-widest">CONFIRMED PATIENTS</p>
+              <h3 className="text-2xl md:text-4xl font-extrabold italic uppercase tracking-tighter font-sans leading-none">{patients.length} TOTAL</h3>
             </div>
-            <div className="p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] bg-white dark:bg-white/5 border-2 border-[#1F3A4B]/10 dark:border-white/10 shadow-xl relative group">
+            <div className="p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] bg-white dark:bg-white/5 border-2 border-[#1F3A4B]/10 dark:border-white/5 shadow-xl relative group">
               <Clock className="absolute right-[-10px] bottom-[-10px] opacity-10 group-hover:rotate-12 transition-transform duration-500" size={100} />
-              <p className="text-[10px] font-black uppercase opacity-40 text-[#1F3A4B] dark:text-[#FAFDEE] tracking-widest">Awaiting Decision</p>
-              <h3 className="text-3xl md:text-5xl font-black italic uppercase leading-none mt-2">{pendingRequests.length} Requests</h3>
+              <p className="text-xs font-bold uppercase opacity-50 text-[#1F3A4B] dark:text-[#FAFDEE] tracking-widest">AWAITING DECISION</p>
+              <h3 className="text-2xl md:text-4xl font-extrabold italic uppercase leading-none mt-2 font-sans">{pendingRequests.length} REQUESTS</h3>
             </div>
           </div>
 
           {/* ── Calendar + Today's Schedule ── */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
-            <div className="bg-white dark:bg-white/5 backdrop-blur-xl rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-8 border-2 border-[#1F3A4B]/10 dark:border-white/20 shadow-2xl">
-              <h2 className="text-2xl md:text-3xl font-black italic tracking-tighter mb-6 uppercase text-[#1F3A4B] dark:text-[#FAFDEE]">Calendar</h2>
+            <div className="bg-white dark:bg-white/5 backdrop-blur-xl rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-8 border-2 border-[#1F3A4B]/5 dark:border-white/5 shadow-2xl">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold italic tracking-tighter mb-6 uppercase text-[#1F3A4B] dark:text-[#FAFDEE] font-sans leading-none">CALENDAR</h2>
               <style>{`
                 .react-calendar { border: none !important; background: transparent !important; width: 100% !important; }
-                .react-calendar__navigation button { font-weight: 900 !important; font-style: italic; border: none !important; background: none !important; min-width: 44px; color: #1F3A4B !important; }
+                .react-calendar__navigation button { font-weight: 800 !important; font-style: italic; border: none !important; background: none !important; min-width: 44px; color: #1F3A4B !important; }
                 .dark .react-calendar__navigation button { color: #FAFDEE !important; }
                 .react-calendar__navigation button:enabled:hover { color: #C2F84F !important; }
                 .react-calendar__month-view__weekdays__weekday { text-transform: uppercase; font-weight: 900; opacity: 0.6; color: #1F3A4B; }
                 .dark .react-calendar__month-view__weekdays__weekday { color: #FAFDEE; }
+                /* FIXED CALENDAR DARK MODE FONT COLOR TO INHERIT DYNAMICALLY */
+                .react-calendar__month-view__days__day { color: #1F3A4B !important; }
+                .dark .react-calendar__month-view__days__day { color: #FAFDEE !important; }
+                .react-calendar__month-view__days__day--neighboringMonth { opacity: 0.25; }
                 .react-calendar__tile { padding: 1.2em 0.5em !important; border-radius: 1.2rem !important; font-weight: 800 !important; border: none !important; }
                 .react-calendar__tile--active { background: #1F3A4B !important; color: #C2F84F !important; }
                 .dark .react-calendar__tile--active { background: #C2F84F !important; color: #1F3A4B !important; }
@@ -712,12 +707,12 @@ const DoctorPage = () => {
               <Calendar onChange={setCalendarDate} value={calendarDate} />
             </div>
 
-            {/* Today's Schedule — includes abort button for eligible appointments */}
-            <div className="bg-white dark:bg-white/5 backdrop-blur-xl rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-10 border-2 border-[#1F3A4B]/10 dark:border-white/20 shadow-2xl min-h-[380px]">
-              <h2 className="text-2xl md:text-3xl font-black italic tracking-tighter mb-6 uppercase text-[#1F3A4B] dark:text-[#FAFDEE]">Today's Schedule</h2>
+            {/* Today's Schedule */}
+            <div className="bg-white dark:bg-white/5 backdrop-blur-xl rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-10 border-2 border-[#1F3A4B]/5 dark:border-white/5 shadow-2xl min-h-[380px]">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold italic tracking-tighter mb-6 uppercase text-[#1F3A4B] dark:text-[#FAFDEE] font-sans leading-none">TODAY'S SCHEDULE</h2>
               <div className="space-y-4">
                 {todaysAppointments.length === 0 ? (
-                  <p className="text-center py-16 opacity-40 italic font-medium text-sm uppercase tracking-wider">No appointments today</p>
+                  <p className="text-center py-16 opacity-50 italic font-bold text-base uppercase tracking-wider">No appointments today</p>
                 ) : (
                   todaysAppointments.map((app) => {
                     const eligible = isAbortEligible(app);
@@ -725,16 +720,16 @@ const DoctorPage = () => {
                       <div key={app.id} className={`p-5 rounded-2xl border flex flex-col gap-3 transition-all ${eligible ? 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-800/40' : 'bg-[#1F3A4B]/5 dark:bg-white/5 border-[#1F3A4B]/10'}`}>
                         <div className="flex justify-between items-start">
                           <div>
-                            <p className="font-bold italic text-base uppercase text-[#1F3A4B] dark:text-[#FAFDEE]">{app.patient}</p>
-                            <p className="text-xs opacity-60 font-medium tracking-wide uppercase mt-0.5">{app.time}</p>
+                            <p className="font-extrabold italic text-base uppercase text-[#1F3A4B] dark:text-[#FAFDEE] font-sans">{app.patient.toUpperCase()}</p>
+                            <p className="text-xs opacity-60 font-bold tracking-wide uppercase mt-1">{app.time.toUpperCase()}</p>
                           </div>
                           {eligible ? (
-                            <span className="flex items-center gap-1 text-[9px] font-black uppercase px-2 py-1 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600">
-                              <Clock size={10} /> Window Passed
+                            <span className="flex items-center gap-1 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 tracking-wider">
+                              <Clock size={12} /> WINDOW PASSED
                             </span>
                           ) : (
-                            <span className="flex items-center gap-1 text-[9px] font-black uppercase px-2 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700">
-                              <CheckCircle size={10} /> Paid
+                            <span className="flex items-center gap-1 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 tracking-wider">
+                              <CheckCircle size={12} /> PAID
                             </span>
                           )}
                         </div>
@@ -744,17 +739,17 @@ const DoctorPage = () => {
                               href={app.meetLink}
                               target="_blank"
                               rel="noreferrer"
-                              className="flex items-center gap-2 px-4 py-2 bg-[#C2F84F] text-[#1F3A4B] rounded-full font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all w-fit shadow-md"
+                              className="flex items-center gap-2 px-5 py-2.5 bg-[#C2F84F] text-[#1F3A4B] rounded-full font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all w-fit shadow-md"
                             >
-                              <Video size={12} /> Start Call
+                              <Video size={14} /> START CALL
                             </a>
                           )}
                           {eligible && (
                             <button
                               onClick={() => handleAbortOpen(app)}
-                              className="flex items-center gap-2 px-4 py-2 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all"
+                              className="flex items-center gap-2 px-5 py-2.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all shadow-sm active:scale-95"
                             >
-                              <Ban size={12} /> Mark as Expired
+                              <Ban size={14} /> MARK AS EXPIRED
                             </button>
                           )}
                         </div>
@@ -766,40 +761,46 @@ const DoctorPage = () => {
             </div>
           </div>
 
-          {/* ── Past Due Appointments — requires action ── */}
+          {/* ── Past Due Appointments ── */}
           {pastDueBookings.length > 0 && (
-            <div className="bg-white dark:bg-white/5 rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-10 border-2 border-rose-500/20 shadow-xl">
-              <h2 className="text-2xl md:text-3xl font-black italic mb-2 flex items-center gap-3 uppercase tracking-tighter text-rose-600 dark:text-rose-400">
+            <div className="bg-white dark:bg-white/5 rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-10 border-2 border-rose-500/20 shadow-2xl">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold italic mb-2 flex items-center gap-3 uppercase tracking-tighter text-rose-600 dark:text-rose-400 font-sans leading-none">
                 <TriangleAlert size={28} className="shrink-0" />
-                Appointments Requiring Action
+                APPOINTMENTS REQUIRING ACTION
               </h2>
-              <p className="text-[10px] text-rose-600/70 dark:text-rose-400/60 font-bold uppercase tracking-widest mb-6">
-                These confirmed appointments have passed their scheduled consultation window
+              <p className="text-xs text-rose-600/70 dark:text-rose-400/60 font-bold uppercase tracking-widest mb-6">
+                THESE CONFIRMED APPOINTMENTS HAVE PASSED THEIR SCHEDULED CONSULTATION WINDOW
               </p>
-              <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1 scrollbar-hide">
+              <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1
+                [&::-webkit-scrollbar]:w-1.5
+                [&::-webkit-scrollbar-track]:bg-transparent
+                [&::-webkit-scrollbar-thumb]:rounded-full
+                [&::-webkit-scrollbar-thumb]:bg-rose-500/20
+                dark:[&::-webkit-scrollbar-thumb]:bg-rose-500/10"
+              >
                 {pastDueBookings.map((booking) => (
                   <div
                     key={booking.id}
-                    className="p-5 rounded-2xl bg-rose-50/60 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-800/40 flex flex-col sm:flex-row justify-between sm:items-center gap-3 transition-all hover:border-rose-400"
+                    className="p-5 rounded-2xl bg-rose-50/60 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-800/40 flex flex-col sm:flex-row justify-between sm:items-center gap-3 transition-all hover:border-rose-400 shadow-sm"
                   >
                     <div>
-                      <p className="font-black italic uppercase text-[#1F3A4B] dark:text-[#FAFDEE] text-base">{booking.patient}</p>
-                      <p className="text-[10px] opacity-60 font-medium tracking-wide uppercase mt-0.5">
+                      <p className="font-extrabold italic uppercase text-[#1F3A4B] dark:text-[#FAFDEE] text-base font-sans">{booking.patient.toUpperCase()}</p>
+                      <p className="text-xs opacity-60 font-bold tracking-wide uppercase mt-1">
                         {new Date(booking.scheduledDate).toLocaleDateString('en-IN', {
                           weekday: 'short', month: 'short', day: 'numeric',
-                        })} · {booking.scheduledTime}
+                        }).toUpperCase()} · {booking.scheduledTime.toUpperCase()}
                       </p>
                       {booking.reason && (
-                        <p className="text-[10px] text-[#1F3A4B]/50 dark:text-white/40 font-medium italic mt-1 max-w-xs truncate">
+                        <p className="text-xs text-[#1F3A4B]/50 dark:text-white/40 font-bold italic mt-1.5 max-w-xs truncate uppercase tracking-wide">
                           {booking.reason}
                         </p>
                       )}
                     </div>
                     <button
                       onClick={() => handleAbortOpen(booking)}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all shrink-0"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all shrink-0 shadow-sm active:scale-95"
                     >
-                      <Ban size={12} /> Mark as Expired
+                      <Ban size={14} /> MARK AS EXPIRED
                     </button>
                   </div>
                 ))}
@@ -808,36 +809,42 @@ const DoctorPage = () => {
           )}
 
           {/* ── Pending Requests ── */}
-          <div className="bg-white dark:bg-white/5 rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-12 border-2 border-[#1F3A4B]/10 shadow-3xl">
-            <h2 className="text-2xl md:text-4xl font-black italic mb-8 flex items-center gap-4 uppercase tracking-tighter text-[#1F3A4B] dark:text-[#FAFDEE]">
+          <div className="bg-white dark:bg-white/5 rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-12 border-2 border-[#1F3A4B]/5 dark:border-white/5 shadow-3xl">
+            <h2 className="text-xl sm:text-2xl md:text-4xl font-extrabold italic mb-8 flex items-center gap-4 uppercase tracking-tighter text-[#1F3A4B] dark:text-[#FAFDEE] font-sans leading-none">
               <Clock size={32} className="text-[#C2F84F] dark:text-[#1F3A4B] bg-[#1F3A4B] dark:bg-[#C2F84F] p-1.5 rounded-xl shrink-0" />
-              Pending Requests
+              PENDING REQUESTS
             </h2>
-            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 scrollbar-hide">
+            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 
+              [&::-webkit-scrollbar]:w-1.5
+              [&::-webkit-scrollbar-track]:bg-transparent
+              [&::-webkit-scrollbar-thumb]:rounded-full
+              [&::-webkit-scrollbar-thumb]:bg-[#1F3A4B]/20
+              dark:[&::-webkit-scrollbar-thumb]:bg-white/10"
+            >
               {pendingRequests.length === 0 ? (
-                <p className="text-center py-20 italic font-medium text-base uppercase tracking-wider opacity-40">No pending requests</p>
+                <p className="text-center py-20 italic font-bold text-base uppercase tracking-wider opacity-50">No pending requests</p>
               ) : (
                 pendingRequests.map((req) => (
                   <div key={req.id} className="p-6 md:p-8 rounded-[2rem] md:rounded-[3rem] bg-[#1F3A4B]/5 dark:bg-white/5 border border-transparent hover:border-[#C2F84F] flex flex-col md:flex-row justify-between md:items-center gap-4 transition-all shadow-md">
-                    <div>
-                      <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-[#C2F84F]/20 text-[#476407] mb-2">
-                        <IndianRupee size={9} />₹{req.feeRupees} consultation
+                    <div className="min-w-0 flex-1">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-3 py-1 rounded-full bg-[#C2F84F]/20 text-[#476407] mb-2 tracking-wider">
+                        <IndianRupee size={10} />₹{req.feeRupees} CONSULTATION
                       </span>
-                      <p className="text-xl md:text-2xl font-black italic uppercase tracking-tight text-[#1F3A4B] dark:text-[#FAFDEE]">{req.patient}</p>
-                      <p className="text-sm text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 font-medium mt-1.5">
-                        <span className="font-semibold text-xs uppercase tracking-wider">Reason: </span>{req.reason}
+                      <p className="text-xl md:text-2xl font-extrabold italic uppercase tracking-tight text-[#1F3A4B] dark:text-[#FAFDEE] font-sans truncate">{req.patient.toUpperCase()}</p>
+                      <p className="text-sm text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 font-bold mt-2 uppercase tracking-wide">
+                        <span className="font-extrabold text-xs uppercase tracking-wider text-[#1F3A4B] dark:text-white">REASON: </span>{req.reason}
                       </p>
                     </div>
                     <div className="flex gap-3 shrink-0">
                       <button
                         onClick={() => handleAcceptOpen(req)}
-                        className="px-6 py-3 bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] font-bold rounded-xl md:rounded-2xl text-xs uppercase tracking-wider hover:scale-105 transition-all shadow-md"
+                        className="px-6 py-3.5 bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] font-bold rounded-xl md:rounded-2xl text-xs uppercase tracking-wider hover:scale-105 active:scale-95 transition-all shadow-md"
                       >
                         Accept & Schedule
                       </button>
                       <button
                         onClick={() => handleReject(req.id)}
-                        className="p-3 bg-rose-500/10 text-rose-600 border border-rose-500/20 rounded-xl md:rounded-2xl hover:bg-rose-600 hover:text-white transition-all"
+                        className="p-3.5 bg-rose-500/10 text-rose-600 border border-rose-500/20 rounded-xl md:rounded-2xl hover:bg-rose-600 hover:text-white transition-all shadow-sm active:scale-95"
                       >
                         <X size={18} />
                       </button>
@@ -856,77 +863,83 @@ const DoctorPage = () => {
             className="w-full py-8 md:py-12 px-6 md:px-10 rounded-[2.5rem] md:rounded-[4rem] bg-gradient-to-br from-[#1F3A4B] to-[#2a4d61] text-white flex justify-between items-center transition-all shadow-2xl border-2 border-transparent hover:border-[#C2F84F]"
           >
             <div className="text-left">
-              <h2 className="text-2xl md:text-4xl font-black italic uppercase">Community Support</h2>
-              <p className="text-[10px] font-black uppercase tracking-widest text-[#C2F84F] mt-1">Connect Globally</p>
+              <h2 className="text-2xl md:text-4xl font-extrabold italic uppercase font-sans leading-none mb-1.5">COMMUNITY SUPPORT</h2>
+              <p className="text-xs font-bold uppercase tracking-widest text-[#C2F84F]">CONNECT GLOBALLY</p>
             </div>
             <ChevronRight size={24} />
           </button>
 
           {/* Fee panel */}
-          <div ref={feePanelRef} className="bg-white dark:bg-white/5 rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-8 border-2 border-amber-400/40 shadow-3xl transition-all" style={!consultingFeeConfirmed ? { borderColor: 'rgb(251 191 36 / 0.6)' } : {}}>
-            <h2 className="text-lg md:text-xl font-black italic uppercase mb-4 text-[#1F3A4B] dark:text-[#FAFDEE] flex items-center gap-2">
+          <div ref={feePanelRef} className="bg-white dark:bg-white/5 rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-8 border-2 border-transparent border-[#1F3A4B]/5 dark:border-white/5 shadow-3xl transition-all" style={!consultingFeeConfirmed ? { borderColor: 'rgb(251 191 36 / 0.6)', borderWidth: '2px' } : {}}>
+            <h2 className="text-base md:text-lg font-extrabold italic uppercase mb-4 text-[#1F3A4B] dark:text-[#FAFDEE] flex items-center gap-2 font-sans leading-none">
               <IndianRupee size={18} className="text-[#C2F84F]" />
-              My Consulting Fee
-              {!consultingFeeConfirmed && <span className="ml-auto text-[9px] font-black bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full uppercase tracking-widest">Not Set</span>}
+              MY CONSULTING FEE
+              {!consultingFeeConfirmed && <span className="ml-auto text-[10px] font-bold bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded-full uppercase tracking-widest">NOT SET</span>}
             </h2>
-            <p className="text-[10px] text-[#1F3A4B]/50 dark:text-white/40 font-bold uppercase tracking-widest mb-4">
-              Patients are charged this amount per confirmed appointment
+            <p className="text-xs text-[#1F3A4B]/50 dark:text-white/40 font-bold uppercase tracking-widest mb-4">
+              PATIENTS ARE CHARGED THIS AMOUNT PER CONFIRMED APPOINTMENT
             </p>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1F3A4B]/40 font-black text-sm">₹</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1F3A4B]/40 font-bold text-sm">₹</span>
                 <input
                   type="number" min="1" max="50000"
                   value={feeInput}
                   onChange={(e) => setFeeInput(e.target.value)}
-                  className="w-full pl-7 pr-3 py-3 rounded-2xl bg-[#1F3A4B]/5 dark:bg-white/5 text-[#1F3A4B] dark:text-white font-bold outline-none border-2 border-transparent focus:border-[#C2F84F] transition-all text-sm"
+                  className="w-full pl-7 pr-3 py-3.5 rounded-2xl bg-[#1F3A4B]/5 dark:bg-white/5 text-[#1F3A4B] dark:text-white font-bold outline-none border-2 border-transparent focus:border-[#C2F84F] transition-all text-sm uppercase tracking-wide"
                   placeholder="e.g. 500"
                 />
               </div>
               <button
                 onClick={handleFeeUpdate}
                 disabled={updatingFee}
-                className="px-5 py-3 bg-[#1F3A4B] dark:bg-[#C2F84F] text-[#C2F84F] dark:text-[#1F3A4B] font-black rounded-2xl text-xs uppercase tracking-widest hover:scale-105 transition-all disabled:opacity-50"
+                className="px-5 py-3.5 bg-[#1F3A4B] dark:bg-[#C2F84F] text-[#C2F84F] dark:text-[#1F3A4B] font-bold rounded-2xl text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
               >
-                {updatingFee ? '...' : 'Set'}
+                {updatingFee ? '...' : 'SET'}
               </button>
             </div>
           </div>
 
-          {/* My Patients (chat list — deduped) */}
-          <div className="bg-white dark:bg-white/5 rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-10 border-2 border-[#1F3A4B]/10 shadow-3xl backdrop-blur-md relative overflow-hidden">
-            <h2 className="text-xl md:text-2xl font-black italic uppercase mb-6 text-[#1F3A4B] dark:text-[#FAFDEE]">My Patients</h2>
+          {/* My Patients */}
+          <div className="bg-white dark:bg-white/5 rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-10 border-2 border-[#1F3A4B]/5 dark:border-white/5 shadow-3xl backdrop-blur-md relative overflow-hidden">
+            <h2 className="text-xl md:text-2xl font-extrabold italic uppercase mb-6 text-[#1F3A4B] dark:text-[#FAFDEE] font-sans leading-none">MY PATIENTS</h2>
             <div className="block lg:hidden">
               <button
                 onClick={() => setShowPatientList(true)}
-                className="w-full py-8 px-6 rounded-[2rem] bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] flex justify-between items-center shadow-xl transition-all"
+                className="w-full py-8 px-6 rounded-[2rem] bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] flex justify-between items-center shadow-xl transition-all active:scale-95"
               >
                 <div className="text-left">
-                  <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Confirmed</p>
-                  <h3 className="text-xl font-black italic uppercase">View List</h3>
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">CONFIRMED</p>
+                  <h3 className="text-xl font-extrabold italic uppercase font-sans">VIEW LIST</h3>
                 </div>
                 <Users size={24} />
               </button>
             </div>
-            <div className="hidden lg:block space-y-4 max-h-[600px] overflow-y-auto pr-2 scrollbar-hide">
+            <div className="hidden lg:block space-y-4 max-h-[600px] overflow-y-auto pr-2
+              [&::-webkit-scrollbar]:w-1.5
+              [&::-webkit-scrollbar-track]:bg-transparent
+              [&::-webkit-scrollbar-thumb]:rounded-full
+              [&::-webkit-scrollbar-thumb]:bg-[#1F3A4B]/20
+              dark:[&::-webkit-scrollbar-thumb]:bg-white/10"
+            >
               {patients.length === 0 ? (
-                <p className="text-center py-20 italic opacity-40 text-sm font-medium uppercase tracking-wider">No confirmed patients yet</p>
+                <p className="text-center py-20 italic opacity-40 text-sm font-bold uppercase tracking-wider">No confirmed patients yet</p>
               ) : (
                 patients.map((p) => (
                   <div key={p.id} className="p-5 rounded-[1.5rem] bg-[#1F3A4B]/5 dark:bg-white/5 border border-transparent hover:border-[#C2F84F] flex flex-col items-start transition-all shadow-sm">
-                    <p className="text-lg font-black italic uppercase leading-none mb-1 text-[#1F3A4B] dark:text-[#FAFDEE]">{p.name}</p>
+                    <p className="text-lg font-extrabold italic uppercase leading-none mb-1 text-[#1F3A4B] dark:text-[#FAFDEE] font-sans">{p.name.toUpperCase()}</p>
                     {p.scheduledTime && (
-                      <p className="text-[9px] font-bold uppercase opacity-50 tracking-widest mb-3">{p.scheduledTime}</p>
+                      <p className="text-[10px] font-bold uppercase opacity-50 tracking-widest mb-3">{p.scheduledTime.toUpperCase()}</p>
                     )}
                     <div className="flex justify-between w-full items-center gap-2">
-                      <span className="text-[10px] font-semibold uppercase opacity-60 tracking-wider">Paid & Confirmed</span>
+                      <span className="text-[10px] font-bold uppercase opacity-60 tracking-wider">PAID & CONFIRMED</span>
                       <div className="flex items-center gap-2">
                         {p.meetLink && (
-                          <a href={p.meetLink} target="_blank" rel="noreferrer" className="p-2 rounded-full bg-[#C2F84F] text-[#1F3A4B] shadow-md hover:scale-105 transition-all">
+                          <a href={p.meetLink} target="_blank" rel="noreferrer" className="p-2 rounded-full bg-[#C2F84F] text-[#1F3A4B] shadow-md hover:scale-105 active:scale-95 transition-all">
                             <Video size={14} />
                           </a>
                         )}
-                        <button onClick={() => handleOpenChat(p)} className="p-3 rounded-full bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] shadow-lg hover:scale-105 transition-transform">
+                        <button onClick={() => handleOpenChat(p)} className="p-3 rounded-full bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] shadow-lg hover:scale-105 active:scale-95 transition-transform">
                           <MessageSquare size={16} />
                         </button>
                       </div>
@@ -942,19 +955,26 @@ const DoctorPage = () => {
       {/* ── Mobile patient list overlay ── */}
       <div className={`fixed inset-0 z-[120] bg-[#FAFDEE] dark:bg-[#0a111a] transition-all duration-500 lg:hidden ${showPatientList ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="p-6 h-full flex flex-col pt-24 relative">
-          <button onClick={() => setShowPatientList(false)} className="absolute top-6 left-6 z-20 group flex items-center gap-2.5 px-4 py-2 rounded-xl border border-[#1F3A4B]/20 dark:border-white/10 bg-white/50 dark:bg-[#1F3A4B]/20 backdrop-blur-md text-[#1F3A4B] dark:text-[#FAFDEE] font-bold text-xs tracking-widest">
-            <ArrowLeft size={16} /><span>BACK</span>
+          <button onClick={() => setShowPatientList(false)} className="absolute top-6 left-4 z-20 group flex items-center justify-center gap-3.5 h-12 w-12 rounded-full border border-neutral-200/40 dark:border-white/5 bg-white/40 dark:bg-neutral-950/20 backdrop-blur-md text-[#1F3A4B]/80 dark:text-[#FAFDEE]/80 text-sm font-bold tracking-widest transition-all duration-300 shadow-sm uppercase">
+            <ArrowLeft size={18} />
           </button>
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-black italic uppercase text-[#1F3A4B] dark:text-[#FAFDEE]">My Patients</h2>
+            <h2 className="text-2xl font-extrabold italic uppercase text-[#1F3A4B] dark:text-[#FAFDEE] font-sans leading-none">MY PATIENTS</h2>
           </div>
-          <div className="flex-1 overflow-y-auto space-y-4 pb-12 pr-2 scrollbar-hide">
+          <div className="flex-1 overflow-y-auto space-y-4 pb-12 pr-2
+            [&::-webkit-scrollbar]:w-1.5
+            [&::-webkit-scrollbar-track]:bg-transparent
+            [&::-webkit-scrollbar-thumb]:rounded-full
+            [&::-webkit-scrollbar-thumb]:bg-[#1F3A4B]/20
+            dark:[&::-webkit-scrollbar-thumb]:bg-white/10"
+          >
             {patients.map((p) => (
               <div key={p.id} onClick={() => { handleOpenChat(p); setShowPatientList(false); }}
-                className="p-6 rounded-[2rem] bg-white dark:bg-[#111827] border border-[#1F3A4B]/10 active:border-[#C2F84F] flex justify-between items-center transition-all shadow-md cursor-pointer">
+                className="p-6 rounded-[2rem] bg-white dark:bg-[#111827] border border-[#1F3A4B]/10 active:border-[#C2F84F] flex justify-between items-center transition-all shadow-md cursor-pointer"
+              >
                 <div>
-                  <h3 className="text-xl font-black italic uppercase text-[#1F3A4B] dark:text-[#FAFDEE]">{p.name}</h3>
-                  <p className="text-[10px] font-semibold opacity-40 uppercase tracking-widest mt-1">Confirmed</p>
+                  <h3 className="text-xl font-extrabold italic uppercase text-[#1F3A4B] dark:text-[#FAFDEE] font-sans leading-none">{p.name.toUpperCase()}</h3>
+                  <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest mt-1.5">CONFIRMED</p>
                 </div>
                 <MessageSquare size={20} className="text-[#1F3A4B] dark:text-[#C2F84F] opacity-50" />
               </div>
@@ -965,48 +985,55 @@ const DoctorPage = () => {
 
       {/* ── Chat panel ── */}
       <div className={`fixed top-0 right-0 h-full w-full sm:w-[480px] md:w-[540px] z-[150] transition-all duration-500 ${chatOpen ? 'translate-x-0 visible' : 'translate-x-full invisible'}`}>
-        <div className="absolute inset-0 bg-white dark:bg-[#0d131b] border-l-4 border-[#1F3A4B] shadow-2xl" />
+        <div className="absolute inset-0 bg-white dark:bg-[#0d131b] border-l-4 border-[#1F3A4B] dark:border-[#C2F84F] shadow-2xl" />
         <div className="h-full p-6 md:p-8 flex flex-col relative z-10 text-[#1F3A4B] dark:text-[#FAFDEE]">
           <div className="flex justify-between items-center mb-6 md:mb-10">
             <div className="flex items-center gap-4">
-              <span className="p-2 md:p-3 bg-[#1F3A4B] dark:bg-[#C2F84F] rounded-2xl text-[#C2F84F] dark:text-[#1F3A4B]"><Heart size={20} /></span>
-              <h2 className="text-lg md:text-2xl font-black italic uppercase">{chatPatient?.name}</h2>
+              <span className="p-3 bg-[#1F3A4B] dark:bg-[#C2F84F] rounded-2xl text-[#C2F84F] dark:text-[#1F3A4B] shadow-md"><Heart size={20} /></span>
+              <h2 className="text-xl md:text-2xl font-extrabold italic uppercase font-sans leading-none">{chatPatient?.name?.toUpperCase()}</h2>
             </div>
-            <button onClick={handleCloseChat} className="p-2 bg-[#1F3A4B]/5 hover:bg-rose-600 hover:text-white transition-all rounded-full"><X size={24} /></button>
+            <button onClick={handleCloseChat} className="p-2.5 bg-[#1F3A4B]/5 dark:bg-white/5 hover:bg-rose-600 hover:text-white transition-all rounded-full shadow-sm active:scale-95"><X size={22} /></button>
           </div>
-          <div className="flex-1 overflow-y-auto space-y-4 px-1 scrollbar-hide">
+          <div className="flex-1 overflow-y-auto space-y-4 px-1 min-h-0
+            [&::-webkit-scrollbar]:w-1.5
+            [&::-webkit-scrollbar-track]:bg-transparent
+            [&::-webkit-scrollbar-thumb]:rounded-full
+            [&::-webkit-scrollbar-thumb]:bg-[#1F3A4B]/20
+            dark:[&::-webkit-scrollbar-thumb]:bg-white/10"
+          >
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.sender === 'doctor' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`p-4 text-[11px] font-bold leading-relaxed max-w-[85%] rounded-2xl ${m.sender === 'doctor' ? 'bg-[#1F3A4B] text-[#FAFDEE] rounded-tr-none shadow-md' : 'bg-[#C2F84F] text-[#1F3A4B] rounded-tl-none'}`}>
+                <div className={`p-4 text-sm font-bold leading-relaxed max-w-[85%] rounded-[1.5rem] shadow-sm ${m.sender === 'doctor' ? 'bg-[#1F3A4B] text-[#FAFDEE] rounded-tr-none shadow-md' : 'bg-[#C2F84F] text-[#1F3A4B] rounded-tl-none border border-transparent dark:border-white/5'}`}>
                   {m.messageType === 'file' ? (
-                    <a href={m.fileUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 underline font-black">
-                      <FileText size={14} />{m.fileName || 'View Document'}
+                    <a href={m.fileUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 underline font-extrabold uppercase text-xs tracking-wider">
+                      <FileText size={16} />{m.fileName ? m.fileName.toUpperCase() : 'VIEW DOCUMENT'}
                     </a>
-                  ) : <span>{m.text}</span>}
+                  ) : <span className="uppercase tracking-wide">{m.text.toUpperCase()}</span>}
                 </div>
               </div>
             ))}
             <div ref={chatEndRef} />
           </div>
           {selectedFile && (
-            <div className="mt-2 px-4 py-2 bg-[#C2F84F]/20 rounded-xl flex items-center justify-between">
-              <span className="text-[10px] font-black truncate">{selectedFile.name}</span>
-              <button onClick={() => { setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }} className="ml-2 text-rose-500"><X size={14} /></button>
+            <div className="mt-3 px-5 py-3 bg-[#C2F84F]/20 rounded-xl flex items-center justify-between border border-[#C2F84F]/30 shadow-inner">
+              <span className="text-xs font-bold truncate text-[#1F3A4B] dark:text-[#C2F84F] uppercase tracking-wide">{selectedFile.name}</span>
+              <button onClick={() => { setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }} className="ml-2 text-rose-500 hover:scale-105 transition-transform"><X size={16} /></button>
             </div>
           )}
-          <form onSubmit={handleSendMessage} className="mt-4 bg-[#1F3A4B]/5 dark:bg-white/5 p-1 rounded-full border border-[#1F3A4B]/20 flex items-center">
-            <button type="button" onClick={() => fileInputRef.current?.click()} className="h-10 w-10 rounded-full flex items-center justify-center text-[#1F3A4B]/50 hover:text-[#1F3A4B] transition-all ml-1">
-              <Paperclip size={16} />
+          <form onSubmit={handleSendMessage} className="mt-4 bg-[#1F3A4B]/5 dark:bg-white/5 p-1 rounded-full border-2 border-[#1F3A4B]/10 dark:border-white/10 flex items-center shadow-inner">
+            <button type="button" onClick={() => fileInputRef.current?.click()} className="h-12 w-12 rounded-full flex items-center justify-center text-[#1F3A4B]/50 dark:text-white/40 hover:text-[#1F3A4B] dark:hover:text-[#C2F84F] transition-all ml-1">
+              <Paperclip size={18} />
             </button>
             <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={handleFileSelect} />
             <input value={inputMessage} onChange={(e) => setInputMessage(e.target.value)}
-              className="flex-1 bg-transparent px-4 py-3 font-bold text-xs outline-none"
-              placeholder={selectedFile ? 'Press send to upload...' : 'Type a message...'}
+              className="flex-1 bg-transparent px-4 py-3 font-bold text-sm uppercase tracking-wide placeholder:text-xs outline-none"
+              placeholder={selectedFile ? 'PRESS SEND TO UPLOAD...' : 'TYPE A MESSAGE...'}
               disabled={!!selectedFile}
             />
             <button type="submit" disabled={isUploading}
-              className="h-10 w-10 rounded-full bg-[#1F3A4B] dark:bg-[#C2F84F] text-[#C2F84F] dark:text-[#1F3A4B] flex items-center justify-center transition-all disabled:opacity-50">
-              {isUploading ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Send size={16} />}
+              className="h-12 w-12 rounded-full bg-[#1F3A4B] dark:bg-[#C2F84F] text-[#C2F84F] dark:text-[#1F3A4B] flex items-center justify-center transition-all disabled:opacity-50 shadow-md shrink-0 active:scale-95"
+            >
+              {isUploading ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Send size={18} />}
             </button>
           </form>
         </div>

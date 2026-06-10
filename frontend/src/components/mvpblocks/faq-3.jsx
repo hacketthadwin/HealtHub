@@ -27,7 +27,7 @@ function FAQItem({ question, answer, index }) {
         onClick={() => setIsOpen(!isOpen)}
         className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
       >
-        <h3 className="text-base md:text-lg font-black uppercase tracking-tight text-[#1F3A4B] dark:text-[#FAFDEE]">
+        <h3 className="text-base md:text-xl  uppercase tracking-tight text-[#1F3A4B] dark:text-[#FAFDEE]">
           {question}
         </h3>
         <motion.div
@@ -55,7 +55,7 @@ function FAQItem({ question, answer, index }) {
             }}
           >
             <div className="px-6 pb-6 pt-0 border-t-2 border-[#1F3A4B]/10 dark:border-white/10 mt-2">
-              <p className="text-[#1F3A4B]/80 dark:text-[#FAFDEE]/80 text-xs md:text-sm font-bold leading-relaxed pt-4 tracking-wide">
+              <p className="text-[#1F3A4B]/80 dark:text-[#FAFDEE]/80 text-sm md:text-lg leading-relaxed pt-4 tracking-wide">
                 {answer}
               </p>
             </div>
@@ -97,13 +97,13 @@ export default function CongestedFAQ() {
           viewport={{ once: true }}
           className="text-center mb-12 space-y-4"
         >
-          <Badge className="px-4 py-1.5 rounded-full border-2 text-[10px] font-black uppercase tracking-widest bg-[#1F3A4B] dark:bg-[#C2F84F] border-transparent text-white dark:text-[#1F3A4B]">
+          <Badge className="px-4 py-1.5 rounded-full border-2 text-sm  uppercase tracking-widest bg-[#1F3A4B] dark:bg-[#C2F84F] border-transparent text-white dark:text-[#1F3A4B]">
             FAQ
           </Badge>
           <h2 className="text-4xl font-black italic tracking-tighter uppercase sm:text-5xl text-[#1F3A4B] dark:text-[#FAFDEE]">
             Common Questions
           </h2>
-          <p className="text-xs font-black tracking-widest uppercase opacity-40 max-w-xl mx-auto">
+          <p className="text-md  tracking-widest uppercase opacity-40 max-w-xl mx-auto">
             EVERYTHING YOU NEED TO KNOW ABOUT HOW OUR PORTAL AND PLATFORM PLANS WORK.
           </p>
         </motion.div>
@@ -125,15 +125,15 @@ export default function CongestedFAQ() {
           <div className="bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] inline-flex p-4 rounded-2xl mb-4 shadow-md">
             <Mail className="w-6 h-6" />
           </div>
-          <h4 className="text-[#1F3A4B] dark:text-[#FAFDEE] text-2xl md:text-3xl font-black italic uppercase tracking-tighter mb-2">
+          <h4 className="text-[#1F3A4B] dark:text-[#FAFDEE] text-2xl md:text-3xl  italic uppercase tracking-tighter mb-2">
             Still have questions?
           </h4>
-          <p className="text-[10px] font-black tracking-widest uppercase opacity-40 mb-8">
+          <p className="text-md  tracking-widest uppercase opacity-40 mb-8">
             CAN'T FIND WHAT YOU'RE LOOKING FOR? REACH OUT TO OUR SUPPORT TEAM.
           </p>
           <Link 
             to="/contact"
-            className="inline-block px-8 py-4 rounded-xl font-black text-xs uppercase tracking-widest bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] hover:scale-105 active:scale-95 transition-all shadow-md"
+            className="inline-block px-8 py-4 rounded-xl  text-sm uppercase tracking-widest bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] hover:scale-105 active:scale-95 transition-all shadow-md"
           >
             Contact Support
           </Link>

@@ -21,7 +21,7 @@ const GlobePanel = memo(({ isInView }) => (
     className="relative my-8 hidden items-center justify-center overflow-hidden px-4 min-[350px]:flex md:items-start md:px-0 md:pr-8"
   >
     <div className="flex flex-col items-center justify-center overflow-hidden w-full h-full">
-      <article className="relative mx-auto h-[350px] min-h-60 w-full max-w-[450px] overflow-hidden rounded-3xl border border-black/5 dark:border-white/5 bg-gradient-to-b from-[#C2F84F] to-[#C2F84F]/5 p-6 text-3xl tracking-tight text-[#1F3A4B] dark:text-[#FAFDEE] md:h-[450px] md:min-h-80 md:p-8 md:text-4xl md:leading-[1.05] lg:text-5xl">
+      <article className="relative mx-auto h-[350px] min-h-60 w-full max-w-[450px] overflow-hidden rounded-3xl border border-black/5 dark:border-white/5 bg-gradient-to-b from-[#C2F84F] to-[#C2F84F]/5 p-6 text-3xl  italic tracking-tighter uppercase text-[#1F3A4B] dark:text-[#FAFDEE] md:h-[450px] md:min-h-80 md:p-8 md:text-4xl md:leading-[1.05] lg:text-5xl">
         Your health matters.
         <br />
         <div className="absolute -right-20 -bottom-20 z-10 mx-auto flex h-full w-full max-w-[300px] items-center justify-center transition-all duration-700 hover:scale-105 md:-right-28 md:-bottom-28 md:max-w-[550px]">
@@ -107,8 +107,9 @@ export default function ContactUs1() {
   }, [name, email, message]);
 
   return (
+    // font-roboto-slab is the base font for all normal text in this page
     <section
-      className="relative w-full min-h-screen flex items-center justify-center pt-40 pb-16 overflow-y-auto transition-colors duration-300 font-sans select-none"
+      className="relative w-full min-h-screen flex items-center justify-center pt-40 pb-16 overflow-y-auto transition-colors duration-300 font-roboto-slab select-none"
       style={{ backgroundColor: "var(--body-bg)", color: "var(--body-text)" }}
     >
       <Header1 />
@@ -139,10 +140,10 @@ export default function ContactUs1() {
                 transition={{ duration: 0.5, delay: 0.1 }}
                 className="flex w-full gap-2 relative z-20"
               >
-                <h2 className="from-foreground to-foreground/80 mb-2 bg-gradient-to-r bg-clip-text text-4xl font-bold tracking-tight text-bold md:text-5xl">
+                <h2 className="from-foreground to-foreground/80 mb-2 bg-gradient-to-r bg-clip-text text-4xl font-black italic tracking-tighter uppercase md:text-5xl">
                   Contact
                 </h2>
-                <span className="text-[#476407] dark:text-[#C2F84F] relative z-10 w-full text-4xl font-bold tracking-tight italic md:text-5xl">
+                <span className="text-[#476407] dark:text-[#C2F84F] relative z-10 w-full text-4xl font-black tracking-tighter italic uppercase md:text-5xl">
                   HealthHub
                 </span>
 
@@ -166,28 +167,31 @@ export default function ContactUs1() {
                 onSubmit={handleSubmit}
                 className="mt-8 space-y-6"
               >
-                <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
+                {/* tracking-wide matches FAQ answer body text style */}
+                <p className="text-muted-foreground text-sm md:text-base tracking-wide leading-relaxed uppercase">
                   Have a question about appointments, doctor availability, or health
                   support? Send us a message and our team will respond shortly.
                 </p>
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="text-sm font-semibold tracking-wide opacity-80">
+                    {/*  tracking-widest uppercase matches FAQ/features label style */}
+                    <Label htmlFor="name" className="text-sm  tracking-widest uppercase opacity-80">
                       Full Name
                     </Label>
                     <Input
                       id="name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="Enter your full name"
+                      placeholder="ENTER YOUR FULL NAME"
                       required
                       className="w-full h-12 px-4 rounded-xl border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.03] focus:bg-transparent dark:focus:bg-transparent focus:ring-2 focus:ring-[#C2F84F] focus:border-transparent transition-all duration-200 outline-none shadow-inner"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-semibold tracking-wide opacity-80">
+                    {/*  tracking-widest uppercase matches FAQ/features label style */}
+                    <Label htmlFor="email" className="text-sm  tracking-widest uppercase opacity-80">
                       Email Address
                     </Label>
                     <Input
@@ -195,7 +199,7 @@ export default function ContactUs1() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter your email address"
+                      placeholder="ENTER YOUR EMAIL ADDRESS"
                       required
                       className="w-full h-12 px-4 rounded-xl border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.03] focus:bg-transparent dark:focus:bg-transparent focus:ring-2 focus:ring-[#C2F84F] focus:border-transparent transition-all duration-200 outline-none shadow-inner"
                     />
@@ -203,22 +207,23 @@ export default function ContactUs1() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="message" className="text-sm font-semibold tracking-wide opacity-80">
+                  {/*  tracking-widest uppercase matches FAQ/features label style */}
+                  <Label htmlFor="message" className="text-sm  tracking-widest uppercase opacity-80">
                     How can we help you?
                   </Label>
                   <Textarea
                     id="message"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Write your message about appointments, doctors, or health queries..."
+                    placeholder="WRITE YOUR MESSAGE ABOUT APPOINTMENTS, DOCTORS, OR HEALTH QUERIES..."
                     required
                     className="w-full h-40 p-4 rounded-xl border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.03] focus:bg-transparent dark:focus:bg-transparent focus:ring-2 focus:ring-[#C2F84F] focus:border-transparent transition-all duration-200 outline-none resize-none shadow-inner leading-relaxed"
                   />
                 </div>
 
-                {/* Error message — shown instead of alert() popup */}
+                {/* Error message —  tracking-wide matches FAQ body text style */}
                 {errorMsg && (
-                  <p className="text-sm font-semibold text-rose-500 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-700/40 rounded-xl px-4 py-3">
+                  <p className="text-sm  tracking-wide uppercase text-rose-500 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-700/40 rounded-xl px-4 py-3">
                     {errorMsg}
                   </p>
                 )}
@@ -228,10 +233,11 @@ export default function ContactUs1() {
                   whileTap={{ scale: 0.99 }}
                   className="w-full pt-2"
                 >
+                  {/*  uppercase tracking-widest matches FAQ contact button style */}
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full h-12 rounded-xl text-sm font-bold bg-[#476407] dark:bg-[#C2F84F] text-[#FAFDEE] dark:text-[#1F3A4B] shadow-md transition-all duration-200"
+                    className="w-full h-12 rounded-xl text-sm  uppercase tracking-widest bg-[#476407] dark:bg-[#C2F84F] text-[#FAFDEE] dark:text-[#1F3A4B] shadow-md transition-all duration-200"
                   >
                     {isSubmitting ? (
                       <span className="flex items-center justify-center">

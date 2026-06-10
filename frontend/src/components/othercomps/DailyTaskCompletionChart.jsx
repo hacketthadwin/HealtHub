@@ -19,7 +19,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 
 const formatDate = (dateString) => {
   const options = { month: 'short', day: 'numeric' };
-  return new Date(dateString).toLocaleDateString('en-US', options);
+  return new Date(dateString).toLocaleDateString('en-IN', options).toUpperCase();
 };
 
 function DailyTaskCompletionChart() {
@@ -85,11 +85,11 @@ function DailyTaskCompletionChart() {
   const chartData = useMemo(() => ({
     labels: taskRawData.labels,
     datasets: [{
-      label: 'Completion %',
+      label: 'COMPLETION %',
       data: taskRawData.values,
       fill: true,
       borderColor: '#C2F84F',
-      borderWidth: 4, // Slightly reduced for better small-screen visibility
+      borderWidth: 4,
       pointBackgroundColor: isDark ? '#FAFDEE' : '#1F3A4B',
       pointBorderColor: '#C2F84F',
       pointBorderWidth: 2,
@@ -121,6 +121,8 @@ function DailyTaskCompletionChart() {
         titleColor: '#C2F84F',
         displayColors: false,
         padding: 12,
+        titleFont: { family: 'Roboto Slab', size: 12, weight: 'bold' },
+        bodyFont: { family: 'Roboto Slab', size: 13, weight: '800' }
       },
     },
     scales: {
@@ -130,16 +132,17 @@ function DailyTaskCompletionChart() {
         grid: { color: isDark ? 'rgba(250, 253, 238, 0.1)' : 'rgba(31, 58, 75, 0.04)', drawBorder: false },
         ticks: {
           color: isDark ? '#FAFDEE' : '#1F3A4B',
-          font: { weight: '700', size: 9 }, // Fluid font
+          font: { weight: '800', size: 10 }, 
           callback: (v) => v + '%',
-          maxTicksLimit: 6,
+          /* Hard-set specific 20% steps for the line spacing grids */
+          stepSize: 20, 
         },
       },
       x: {
-        grid: { display: false },
+        grid: { display: false }, 
         ticks: {
           color: isDark ? '#FAFDEE' : '#1F3A4B',
-          font: { weight: '900', size: 10, style: 'italic' }, // Fluid font
+          font: { weight: '900', size: 11, style: 'italic' }, 
         },
       },
     },
@@ -147,46 +150,59 @@ function DailyTaskCompletionChart() {
 
   if (loading) {
     return (
-      <div className="w-full h-[24rem] md:h-[32rem] flex flex-col items-center justify-center p-6 md:p-8 bg-white/40 dark:bg-[#1F3A4B]/10 backdrop-blur-md rounded-[2.5rem] md:rounded-[4rem] border-2 border-dashed border-[#1F3A4B]/10 animate-pulse">
+      <div className="w-full h-[24rem] md:h-[28rem] font-roboto-slab flex flex-col items-center justify-center p-6 md:p-8 bg-white/40 dark:bg-[#1F3A4B]/10 backdrop-blur-md rounded-[2.5rem] md:rounded-[4rem] border-2 border-dashed border-[#1F3A4B]/10 animate-pulse">
         <Activity className="text-[#1F3A4B] dark:text-[#C2F84F] animate-spin mb-4" size={32} />
-        <p className="text-[10px] text-center font-black uppercase tracking-[0.2em] text-[#1F3A4B] dark:text-[#FAFDEE]">Loading chart...</p>
+        <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.2em] text-[#1F3A4B] dark:text-[#FAFDEE]">LOADING CHART...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="w-full h-[24rem] md:h-[32rem] flex flex-col items-center justify-center p-6 md:p-8 bg-rose-50 dark:bg-rose-900/10 backdrop-blur-md rounded-[2.5rem] md:rounded-[4rem] border-2 border-rose-500/20">
+      <div className="w-full h-[24rem] md:h-[28rem] font-roboto-slab flex flex-col items-center justify-center p-6 md:p-8 bg-rose-50 dark:bg-rose-900/10 backdrop-blur-md rounded-[2.5rem] md:rounded-[4rem] border-2 border-rose-500/20">
         <Activity className="text-rose-500 mb-4" size={32} />
-        <p className="text-[10px] text-center font-black uppercase tracking-[0.2em] text-rose-600 dark:text-rose-300">{error.message || error || 'Failed to load chart data.'}</p>
+        <p className="text-xs sm:text-sm font-bold uppercase tracking-wide text-rose-600 dark:text-rose-300 text-center px-4">{error.message || error || 'FAILED TO LOAD CHART DATA.'}</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full p-6 md:p-10 h-[24rem] md:h-[32rem] bg-white dark:bg-[#1F3A4B]/20 backdrop-blur-2xl rounded-[2.5rem] md:rounded-[4rem] border-2 border-[#1F3A4B]/5 dark:border-white/5 shadow-3xl flex flex-col overflow-hidden group transition-[background-color,border-color] duration-500 relative">
-      <div className="absolute top-0 right-0 p-8 md:p-12 opacity-5 pointer-events-none group-hover:rotate-12 transition-transform duration-1000 hidden sm:block">
-        <ShieldCheck size={180} className="text-[#1F3A4B] dark:text-[#C2F84F]" />
+    <div className="w-full mx-auto p-4 font-roboto-slab antialiased">
+      
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 px-1 w-full">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-[#1F3A4B] dark:bg-[#C2F84F] rounded-2xl shadow-lg">
+            <Activity size={22} className="text-[#C2F84F] dark:text-[#1F3A4B]" />
+          </div>
+          <div>
+            <h2 className="text-xl sm:text-3xl font-extrabold italic uppercase tracking-tighter text-[#1F3A4B] dark:text-[#FAFDEE] font-sans leading-tight">
+              TASK PROGRESS
+            </h2>
+            <p className="text-xs font-bold uppercase tracking-widest opacity-50 text-[#1F3A4B] dark:text-[#FAFDEE]">
+              LAST 7 DAYS COMPLETION
+            </p>
+          </div>
+        </div>
+        
+        {/* Sync badge */}
+        <div className="flex items-center gap-2 px-5 py-2.5 bg-[#1F3A4B] dark:bg-[#C2F84F] text-[#C2F84F] dark:text-[#1F3A4B] rounded-xl sm:rounded-2xl shadow-xl border border-[#C2F84F]/20 transition-all active:scale-95 self-stretch sm:self-auto justify-center">
+          <Zap size={14} fill="currentColor" />
+          <span className="font-bold text-xs uppercase tracking-widest leading-none whitespace-nowrap">SYNCED TO TASKS</span>
+        </div>
       </div>
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 md:mb-12 gap-4 relative z-10 w-full">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-               <span className="h-2 w-2 rounded-full bg-[#C2F84F] shadow-[0_0_10px_#C2F84F]" />
-               <h2 className="text-xl sm:text-2xl md:text-3xl font-black italic tracking-tighter uppercase text-[#1F3A4B] dark:text-[#FAFDEE] leading-tight">Task Progress</h2>
-            </div>
-            <p className="text-[8px] sm:text-[10px] font-black opacity-40 uppercase tracking-[0.2em] md:tracking-[0.25em] ml-4 text-[#1F3A4B] dark:text-[#FAFDEE]">Last 7 days completion</p>
-          </div>
-          
-          <div className="flex items-center gap-2 px-4 py-2 bg-[#1F3A4B] dark:bg-[#C2F84F] text-[#C2F84F] dark:text-[#1F3A4B] rounded-xl sm:rounded-2xl shadow-xl border border-[#C2F84F]/20 transition-all active:scale-95">
-            <Zap size={12} fill="currentColor" />
-            <span className="font-black text-[8px] sm:text-[10px] uppercase tracking-widest leading-none whitespace-nowrap">Synced to tasks</span>
-          </div>
+      {/* INNER CHART DATA CONTAINER */}
+      <div className="w-full p-6 md:p-8 h-[24rem] md:h-[28rem] bg-white dark:bg-[#1F3A4B]/20 backdrop-blur-2xl rounded-[2.5rem] md:rounded-[3rem] border-2 border-[#1F3A4B]/5 dark:border-white/5 shadow-3xl flex flex-col overflow-hidden group transition-[background-color,border-color] duration-500 relative">
+        <div className="absolute top-0 right-0 p-8 md:p-12 opacity-5 pointer-events-none group-hover:rotate-12 transition-transform duration-1000 hidden sm:block">
+          <ShieldCheck size={140} className="text-[#1F3A4B] dark:text-[#C2F84F]" />
+        </div>
+        
+        <div className="flex-1 w-full relative z-10 min-h-0">
+          <Line ref={chartRef} data={chartData} options={options} />
+        </div>
       </div>
-      
-      <div className="flex-1 w-full relative z-10 min-h-0">
-        <Line ref={chartRef} data={chartData} options={options} />
-      </div>
+
     </div>
   );
 }

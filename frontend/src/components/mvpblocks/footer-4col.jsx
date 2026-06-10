@@ -78,19 +78,21 @@ const contactInfo = [
 
 export default function Footer4Col() {
   return (
-    <footer className="bg-transparent mt-16 w-full border-t-2 border-[#1F3A4B]/10 dark:border-white/10 relative z-10 font-sans">
+    // font-roboto-slab is the base font for all normal text in this footer
+    <footer className="bg-transparent mt-16 w-full border-t-2 border-[#1F3A4B]/10 dark:border-white/10 relative z-10 font-roboto-slab">
       <div className="mx-auto max-w-screen-xl pt-16 pb-6 px-6 lg:pt-20">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
           
           {/* Brand/Company Section */}
           <div className="space-y-6">
             <div className="flex justify-center sm:justify-start items-center">
-              <span className="text-4xl font-black italic tracking-tighter uppercase text-[#1F3A4B] dark:text-[#FAFDEE]">
+              <span className="text-5xl  italic tracking-tighter uppercase text-[#1F3A4B] dark:text-[#FAFDEE]">
                 HEALTH<span className="text-emerald-600 dark:text-[#C2F84F]">HUB</span>
               </span>
             </div>
 
-            <p className="text-xs font-bold tracking-wide leading-relaxed uppercase text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 text-center sm:text-left max-w-sm">
+            {/*  tracking-widest matches FAQ/features label style */}
+            <p className="text-md tracking-widest leading-relaxed uppercase text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 text-center sm:text-left max-w-sm">
               {data.company.description}
             </p>
 
@@ -115,8 +117,9 @@ export default function Footer4Col() {
             
             {/* About Us */}
             <div className="text-center sm:text-left">
-              <p className="text-[#1F3A4B] dark:text-[#FAFDEE] text-xs font-black uppercase tracking-widest mb-6">ABOUT US</p>
-              <ul className="space-y-4 text-sm font-bold tracking-wide">
+              <p className="text-[#1F3A4B] dark:text-[#FAFDEE] text-md  uppercase tracking-widest mb-6">ABOUT US</p>
+              {/*  tracking-widest matches FAQ/features link style */}
+              <ul className="space-y-4 text-md  tracking-widest">
                 {aboutLinks.map(({ text, href }) => (
                   <li key={text}>
                     <Link to={href} className="text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 hover:text-emerald-600 dark:hover:text-[#C2F84F] transition-colors">{text}</Link>
@@ -127,8 +130,9 @@ export default function Footer4Col() {
 
             {/* Services */}
             <div className="text-center sm:text-left">
-              <p className="text-[#1F3A4B] dark:text-[#FAFDEE] text-xs font-black uppercase tracking-widest mb-6">SERVICES</p>
-              <ul className="space-y-4 text-sm font-bold tracking-wide">
+              <p className="text-[#1F3A4B] dark:text-[#FAFDEE] text-md  uppercase tracking-widest mb-6">SERVICES</p>
+              {/*  tracking-widest matches FAQ/features link style */}
+              <ul className="space-y-4 text-md  tracking-widest">
                 {serviceLinks.map(({ text, href }) => (
                   <li key={text}>
                     <Link to={href} className="text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 hover:text-emerald-600 dark:hover:text-[#C2F84F] transition-colors">{text}</Link>
@@ -139,8 +143,9 @@ export default function Footer4Col() {
 
             {/* Help */}
             <div className="text-center sm:text-left">
-              <p className="text-[#1F3A4B] dark:text-[#FAFDEE] text-xs font-black uppercase tracking-widest mb-6">HELP</p>
-              <ul className="space-y-4 text-sm font-bold tracking-wide">
+              <p className="text-[#1F3A4B] dark:text-[#FAFDEE] text-md  uppercase tracking-widest mb-6">HELP</p>
+              {/*  tracking-widest matches FAQ/features link style */}
+              <ul className="space-y-4 text-md  tracking-widest">
                 {helpfulLinks.map(({ text, href, hasIndicator }) => (
                   <li key={text}>
                     <Link to={href} className={cn("transition-colors flex justify-center sm:justify-start items-center gap-2", hasIndicator ? "text-emerald-600 dark:text-[#C2F84F]" : "text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 hover:text-emerald-600 dark:hover:text-[#C2F84F]")}>
@@ -159,8 +164,9 @@ export default function Footer4Col() {
 
             {/* Contact */}
             <div className="text-center sm:text-left">
-              <p className="text-[#1F3A4B] dark:text-[#FAFDEE] text-xs font-black uppercase tracking-widest mb-6">CONTACT</p>
-              <ul className="space-y-4 text-sm font-bold tracking-wide">
+              <p className="text-[#1F3A4B] dark:text-[#FAFDEE] text-md  uppercase tracking-widest mb-6">CONTACT</p>
+              {/*  tracking-widest matches FAQ/features link style */}
+              <ul className="space-y-4 text-md  tracking-widest">
                 {contactInfo.map(({ icon: Icon, text, isAddress }) => (
                   <li key={text}>
                     <a className="flex items-center justify-center gap-3 sm:justify-start group" href={isAddress ? `https://maps.google.com/search?q=${encodeURIComponent(text)}` : text.includes("@") ? `mailto:${text}` : `tel:${text}`} target={isAddress ? "_blank" : "_self"} rel={isAddress ? "noopener noreferrer" : undefined}>
@@ -177,8 +183,8 @@ export default function Footer4Col() {
         {/* Footer Bottom */}
         <div className="mt-16 border-t border-[#1F3A4B]/10 dark:border-white/10 pt-8">
           <div className="text-center sm:flex sm:justify-between sm:text-left">
-            <p className="text-xs text-[#1F3A4B]/50 dark:text-[#FAFDEE]/50 font-black uppercase tracking-widest">ALL RIGHTS RESERVED.</p>
-            <p className="text-xs text-[#1F3A4B]/50 dark:text-[#FAFDEE]/50 mt-4 sm:mt-0 font-black tracking-widest">&copy; 2026 {data.company.name.toUpperCase()}</p>
+            <p className="text-xs text-[#1F3A4B]/50 dark:text-[#FAFDEE]/50  uppercase tracking-widest">ALL RIGHTS RESERVED.</p>
+            <p className="text-xs text-[#1F3A4B]/50 dark:text-[#FAFDEE]/50 mt-4 sm:mt-0  tracking-widest">&copy; 2026 {data.company.name.toUpperCase()}</p>
           </div>
         </div>
       </div>

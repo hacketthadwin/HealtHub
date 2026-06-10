@@ -23,6 +23,7 @@ function AIChatButton() {
         }
     };
 
+    /* Font size rules scaled up for input fields */
     const getInputFieldClasses = () => chatSize === 'small' ? 'p-1 sm:p-2 text-xs sm:text-sm' : 'p-2 sm:p-3 text-sm sm:text-base';
     const getSendButtonClasses = () => chatSize === 'small' ? 'py-1 px-2 sm:px-3 text-xs sm:text-sm ml-1' : 'py-1 sm:py-2 px-3 sm:px-4 text-sm sm:text-base ml-1';
 
@@ -56,7 +57,6 @@ function AIChatButton() {
         setMessages(prev => [...prev, newUserMessage]);
         setInputMessage('');
 
-        // Build history for backend (last 10 turns, excludes welcome message)
         const historyToSend = chatHistory.map(msg => ({
             role: msg.sender === 'user' ? 'user' : 'model',
             parts: [{ text: msg.text }],
@@ -74,14 +74,12 @@ function AIChatButton() {
 
             setMessages(prev => [...prev, { text: aiResponse, sender: 'ai' }]);
 
-            // Update conversation history
             setChatHistory(prev => [
                 ...prev,
                 { sender: 'user', text: currentInput },
                 { sender: 'ai', text: aiResponse },
             ]);
 
-            // Extract "Do these things" tasks for context
             const doTheseMatch = aiResponse.match(/<h4>Do these things:<\/h4>\s*(<ul>[\s\S]*?<\/ul>)/);
             if (doTheseMatch && doTheseMatch[1]) {
                 const html = doTheseMatch[1].trim();
@@ -103,7 +101,7 @@ function AIChatButton() {
     };
 
     return (
-        <div className="fixed bottom-8 right-8 z-[200] select-none">
+        <div className="fixed bottom-8 right-8 z-[200] select-none font-roboto-slab antialiased">
             {!isOpen ? (
                 <button
                     onClick={toggleChat}
@@ -118,7 +116,8 @@ function AIChatButton() {
                     <div className="p-5 flex justify-between items-center bg-[#1F3A4B] text-[#FAFDEE]">
                         <div className="flex items-center gap-3">
                             <span className="p-2 bg-[#C2F84F] rounded-xl"><MessageSquare size={18} className="text-[#1F3A4B]" /></span>
-                            <h3 className="font-black italic uppercase text-xs tracking-widest leading-none mt-1">Clinical AI</h3>
+                            {/* Heading title font isolated and set to uppercase case */}
+                            <h3 className="font-extrabold italic uppercase text-xs tracking-widest leading-none mt-1 font-sans">CLINICAL AI</h3>
                         </div>
                         <div className="flex items-center gap-2">
                             <button onClick={decreaseChatSize} className="p-1.5 hover:bg-white/10 rounded-lg"><Minus size={16} /></button>
@@ -130,12 +129,12 @@ function AIChatButton() {
                     <div className="flex-1 p-6 overflow-y-auto space-y-6 bg-[#FAFDEE] dark:bg-black/40 scroll-smooth">
                         {messages.map((msg, index) => (
                             <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[85%] px-5 py-4 rounded-[2rem] text-[11px] font-black leading-relaxed shadow-sm transition-all ${
+                                {/* Bubble font increased to text-sm with clean font weights */}
+                                <div className={`max-w-[85%] px-5 py-4 rounded-[2rem] text-sm font-bold leading-relaxed shadow-sm transition-all ${
                                     msg.sender === 'user'
                                         ? 'bg-[#1F3A4B] text-[#FAFDEE] rounded-tr-none'
                                         : 'bg-[#C2F84F] text-[#1F3A4B] rounded-tl-none border border-transparent dark:border-white/5 shadow-md'
                                 }`}>
-                                    {/* DOMPurify sanitizes AI HTML output (Issue 12.4) */}
                                     <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(msg.text) }} />
                                 </div>
                             </div>
@@ -147,8 +146,9 @@ function AIChatButton() {
                         <div className="bg-[#1F3A4B]/5 dark:bg-white/5 p-1 rounded-full border-2 border-[#1F3A4B]/10 flex items-center shadow-inner">
                             <input
                                 type="text"
-                                className={`flex-1 bg-transparent px-5 py-2 text-[#1F3A4B] dark:text-white outline-none font-bold text-xs ${getInputFieldClasses()}`}
-                                placeholder="Consult with AI Assistant..."
+                                /* Input text base font size increased to match console requirements */
+                                className={`flex-1 bg-transparent px-5 py-2 text-[#1F3A4B] dark:text-white outline-none font-bold text-sm uppercase tracking-wide placeholder:text-xs ${getInputFieldClasses()}`}
+                                placeholder="CONSULT WITH AI ASSISTANT..."
                                 value={inputMessage}
                                 onChange={(e) => setInputMessage(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}

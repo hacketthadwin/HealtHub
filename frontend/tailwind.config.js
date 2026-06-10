@@ -4,8 +4,11 @@ module.exports = {
   content: [
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
-theme: {
+  theme: {
     extend: {
+      fontFamily: {
+        'roboto-slab': ['"Iosevka Charon"'],
+      },
       backgroundImage: {
         'custom-gradient': "linear-gradient(to left, #FAFDEE,#1F3A4B )",
       },
@@ -23,4 +26,3 @@ theme: {
   },
   plugins: [],
 }
-

@@ -50,47 +50,49 @@ const HealthVideos = () => {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchInput.trim()) {
-      setSelectedTopic(searchInput.trim());
+      setSelectedTopic(searchInput.trim().toLowerCase());
       setSearchInput('');
     }
   };
 
   return (
-    <div className="bg-white dark:bg-white/5 rounded-[2.5rem] p-6 md:p-8 border border-[#1F3A4B]/10 shadow-2xl">
-      <h2 className="text-2xl md:text-3xl font-black italic tracking-tighter mb-1 text-[#1F3A4B] dark:text-[#FAFDEE] uppercase">
-        Health Education
+    <div className="bg-white dark:bg-white/5 rounded-[2.5rem] p-6 md:p-10 border border-[#1F3A4B]/10 dark:border-white/5 shadow-2xl font-roboto-slab antialiased">
+      
+      {/* Container Header */}
+      <h2 className="text-xl sm:text-3xl font-extrabold italic tracking-tighter mb-1 text-[#1F3A4B] dark:text-[#FAFDEE] uppercase font-sans leading-none">
+        HEALTH EDUCATION
       </h2>
-      <p className="text-[10px] font-black uppercase tracking-widest text-[#1F3A4B]/40 dark:text-[#FAFDEE]/40 mb-5">
-        Curated videos for your health journey
+      <p className="text-xs font-bold uppercase tracking-widest text-[#1F3A4B]/50 dark:text-[#FAFDEE]/50 mb-6">
+        CURATED VIDEOS FOR YOUR HEALTH JOURNEY
       </p>
 
-      {/* Search bar */}
-      <form onSubmit={handleSearch} className="flex gap-2 mb-5">
+      {/* Search Input Area */}
+      <form onSubmit={handleSearch} className="flex gap-2.5 mb-6">
         <input
           type="text"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Search health topics..."
-          className="flex-1 bg-[#1F3A4B]/5 dark:bg-white/5 px-4 py-3 rounded-full outline-none font-bold text-sm border border-[#1F3A4B]/10 dark:border-white/10 text-[#1F3A4B] dark:text-[#FAFDEE]"
+          placeholder="SEARCH HEALTH TOPICS..."
+          className="flex-1 bg-[#1F3A4B]/5 dark:bg-white/5 px-6 py-4 rounded-full outline-none font-bold text-base border border-[#1F3A4B]/10 dark:border-white/10 text-[#1F3A4B] dark:text-[#FAFDEE] uppercase tracking-wide placeholder:text-sm"
         />
         <button
           type="submit"
-          className="w-12 h-12 rounded-full bg-[#1F3A4B] dark:bg-[#C2F84F] text-[#C2F84F] dark:text-[#1F3A4B] flex items-center justify-center hover:scale-105 transition-all shadow-md"
+          className="w-14 h-14 rounded-full bg-[#1F3A4B] dark:bg-[#C2F84F] text-[#C2F84F] dark:text-[#1F3A4B] flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md shrink-0"
         >
-          <Search size={16} />
+          <Search size={18} />
         </button>
       </form>
 
-      {/* Topic chips */}
-      <div className="flex flex-wrap gap-2 mb-5">
+      {/* Filter Chips Track */}
+      <div className="flex flex-wrap gap-2 mb-6">
         {topics.slice(0, 8).map((topic) => (
           <button
             key={topic}
             onClick={() => setSelectedTopic(topic)}
-            className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${
+            className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
               selectedTopic === topic
-                ? 'bg-[#1F3A4B] text-[#C2F84F] dark:bg-[#C2F84F] dark:text-[#1F3A4B]'
-                : 'bg-[#1F3A4B]/5 dark:bg-white/10 text-[#1F3A4B] dark:text-[#FAFDEE] hover:bg-[#1F3A4B]/10'
+                ? 'bg-[#1F3A4B] text-[#C2F84F] dark:bg-[#C2F84F] dark:text-[#1F3A4B] shadow-md scale-105'
+                : 'bg-[#1F3A4B]/5 dark:bg-white/10 text-[#1F3A4B] dark:text-[#FAFDEE] hover:bg-[#1F3A4B]/10 border border-[#1F3A4B]/5'
             }`}
           >
             {topic}
@@ -98,44 +100,50 @@ const HealthVideos = () => {
         ))}
       </div>
 
-      {/* Video grid */}
+      {/* Content Render Grid */}
       {loading ? (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="rounded-2xl overflow-hidden bg-[#1F3A4B]/5 animate-pulse h-28" />
+            /* Scaled skeleton box layout parameters */
+            <div key={i} className="rounded-2xl overflow-hidden bg-[#1F3A4B]/5 dark:bg-white/5 animate-pulse h-28 sm:h-36" />
           ))}
         </div>
       ) : videos.length === 0 ? (
-        <div className="text-center py-8 text-[#1F3A4B]/40 dark:text-white/30">
-          <p className="text-xs font-black uppercase italic">No videos found</p>
+        <div className="text-center py-10 text-[#1F3A4B]/40 dark:text-white/30">
+          <p className="text-sm font-bold uppercase tracking-widest italic">NO VIDEOS FOUND</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           {videos.map((video) => (
             <a
               key={video.videoId}
               href={video.watchUrl}
               target="_blank"
               rel="noreferrer"
-              className="group rounded-2xl overflow-hidden border border-[#1F3A4B]/10 dark:border-white/10 hover:border-[#C2F84F] transition-all shadow-sm"
+              className="group rounded-2xl overflow-hidden border border-[#1F3A4B]/10 dark:border-white/10 hover:border-[#C2F84F] transition-all shadow-sm flex flex-col bg-white dark:bg-transparent"
             >
-              <div className="relative">
+              <div className="relative overflow-hidden shrink-0">
+                {/* Scaled thumbnail dimensions for clean rendering on desktops */}
                 <img
                   src={video.thumbnail}
                   alt={video.title}
-                  className="w-full h-20 object-cover"
+                  className="w-full h-24 sm:h-32 object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="w-9 h-9 rounded-full bg-[#C2F84F] flex items-center justify-center">
-                    <Play size={14} className="text-[#1F3A4B] ml-0.5" />
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="w-11 h-11 rounded-full bg-[#C2F84F] flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform">
+                    <Play size={16} className="text-[#1F3A4B] ml-0.5" />
                   </div>
                 </div>
               </div>
-              <div className="p-2.5">
-                <p className="font-black text-[9px] text-[#1F3A4B] dark:text-[#FAFDEE] leading-tight line-clamp-2">
-                  {video.title}
+              
+              <div className="p-3.5 flex-1 flex flex-col justify-between gap-1.5">
+                {/* Title font footprints adjusted higher */}
+                <p className="font-bold text-xs sm:text-sm text-[#1F3A4B] dark:text-[#FAFDEE] leading-tight line-clamp-2 uppercase tracking-wide">
+                  {video.title.toUpperCase()}
                 </p>
-                <p className="text-[8px] opacity-40 uppercase font-bold mt-0.5">{video.channelTitle}</p>
+                <p className="text-[10px] opacity-50 uppercase font-bold tracking-widest truncate mt-auto">
+                  {video.channelTitle.toUpperCase()}
+                </p>
               </div>
             </a>
           ))}

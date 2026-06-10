@@ -9,50 +9,51 @@ import { API_URL } from '../../config/api';
 
 
 // ─── Status display metadata ─────────────────────────────────────────────────
+// CONVERTED ALL LABELS TO UPPERCASE CASE ALIGNMENT
 const STATUS_META = {
   PENDING_DOCTOR_APPROVAL: {
-    label: 'Awaiting Doctor',
+    label: 'AWAITING DOCTOR',
     color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
     icon:  Hourglass,
   },
   DOCTOR_ACCEPTED_AWAITING_PAYMENT: {
-    label: 'Pay to Confirm',
+    label: 'PAY TO CONFIRM',
     color: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400',
     icon:  CreditCard,
   },
   PAID_CONFIRMED: {
-    label: 'Confirmed',
+    label: 'CONFIRMED',
     color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
     icon:  CheckCircle,
   },
   DOCTOR_REJECTED: {
-    label: 'Declined',
+    label: 'DECLINED',
     color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
     icon:  Ban,
   },
   PATIENT_CANCELLED: {
-    label: 'Cancelled',
+    label: 'CANCELLED',
     color: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
     icon:  X,
   },
   PAYMENT_EXPIRED: {
-    label: 'Payment Expired',
+    label: 'PAYMENT EXPIRED',
     color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
     icon:  TriangleAlert,
   },
   ABORTED_BY_DOCTOR: {
-    label: 'Expired — Not Attended',
+    label: 'EXPIRED — NOT ATTENDED',
     color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
     icon:  AlertTriangle,
   },
 };
 
 const formatDate = (isoString) => {
-  if (!isoString) return 'Date TBD';
+  if (!isoString) return 'DATE TBD';
   const d = new Date(isoString);
-  return isNaN(d) ? 'Date TBD' : d.toLocaleDateString('en-IN', {
+  return isNaN(d) ? 'DATE TBD' : d.toLocaleDateString('en-IN', {
     weekday: 'short', month: 'short', day: 'numeric',
-  });
+  }).toUpperCase();
 };
 
 const loadRazorpayScript = () =>
@@ -65,7 +66,6 @@ const loadRazorpayScript = () =>
     document.body.appendChild(script);
   });
 
-// localStorage key for dismissed expired appointment IDs
 const LS_KEY = 'hh_dismissed_expired';
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -75,11 +75,11 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
   const [loading,      setLoading]      = useState(true);
   const [error,        setError]        = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  /* Decoupled loading state setters using specialized token mappings */
   const [payingId,     setPayingId]     = useState(null);
   const [cancellingId, setCancellingId] = useState(null);
   const intervalRef = useRef(null);
 
-  // ── IDs of expired appointments the patient has already dismissed ──
   const [dismissedIds, setDismissedIds] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem(LS_KEY) || '[]');
@@ -88,7 +88,6 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
     }
   });
 
-  // ── Derived list — raw requests minus locally-dismissed expired ones ─
   const visibleRequests = useMemo(
     () => requests.filter(
       (r) => !(r.status === 'ABORTED_BY_DOCTOR' && dismissedIds.includes(r.id))
@@ -96,12 +95,10 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
     [requests, dismissedIds]
   );
 
-  // ── Keep currentIndex in bounds whenever visible list shrinks ────────
   useEffect(() => {
     setCurrentIndex((prev) => Math.min(prev, Math.max(0, visibleRequests.length - 1)));
   }, [visibleRequests.length]);
 
-  // ── Dismiss handler — persists to localStorage, no API call needed ──
   const handleDismiss = useCallback((id) => {
     setDismissedIds((prev) => {
       if (prev.includes(id)) return prev;
@@ -160,7 +157,6 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
     if (refreshTrigger > 0) fetchRequests();
   }, [refreshTrigger, fetchRequests]);
 
-  // ── Pay now ───────────────────────────────────────────────────────────────
   const handlePayNow = async (request) => {
     const token = localStorage.getItem('userToken');
     setPayingId(request.id);
@@ -184,7 +180,7 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
         amount:      orderData.amountPaise,
         currency:    orderData.currency || 'INR',
         name:        'HealthHub',
-        description: `Consultation with Dr. ${request.doctorName}`,
+        description: `Consultation with Dr. ${request.doctorName}`.toUpperCase(),
         order_id:    orderData.orderId,
         handler: async (response) => {
           try {
@@ -218,7 +214,6 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
     }
   };
 
-  // ── Cancel ────────────────────────────────────────────────────────────────
   const handleCancel = async (request) => {
     if (!window.confirm(`Cancel your request with Dr. ${request.doctorName}?`)) return;
     const token = localStorage.getItem('userToken');
@@ -253,25 +248,26 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
 
   if (loading) {
     return (
-      <div className="w-full h-[18rem] flex flex-col items-center justify-center p-6 bg-white/40 dark:bg-[#1F3A4B]/10 backdrop-blur-md rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-dashed border-[#1F3A4B]/10 animate-pulse">
+      <div className="w-full h-[18rem] font-roboto-slab flex flex-col items-center justify-center p-6 bg-white/40 dark:bg-[#1F3A4B]/10 backdrop-blur-md rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-dashed border-[#1F3A4B]/10 animate-pulse">
         <Activity className="text-[#1F3A4B] dark:text-[#C2F84F] animate-spin mb-4 shrink-0" size={32} />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#1F3A4B] dark:text-[#FAFDEE] text-center">Loading Requests...</p>
+        {/* Loader text size bumped up */}
+        <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.3em] text-[#1F3A4B] dark:text-[#FAFDEE] text-center">LOADING REQUESTS...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="w-full h-[18rem] flex flex-col items-center justify-center p-6 bg-rose-50 dark:bg-rose-900/10 backdrop-blur-md rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-rose-500/20 text-center">
+      <div className="w-full h-[18rem] font-roboto-slab flex flex-col items-center justify-center p-6 bg-rose-50 dark:bg-rose-900/10 backdrop-blur-md rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-rose-500/20 text-center">
         <AlertCircle className="text-rose-500 mb-4 shrink-0" size={32} />
-        <p className="text-xs font-black uppercase text-rose-600 dark:text-rose-400 break-all px-2">Error: {error.message}</p>
+        {/* Error text size bumped up */}
+        <p className="text-sm font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 break-all px-2">ERROR: {error.message.toUpperCase()}</p>
       </div>
     );
   }
 
   return (
-    // ADJUSTED CONTAINER: Changed rounded-[3rem] to adaptive, and fixed horizontal structural padding on mobile (p-4 sm:p-8)
-    <div className="w-full min-h-[20rem] p-4 sm:p-8 bg-white dark:bg-[#1F3A4B]/20 backdrop-blur-2xl rounded-[1.5rem] sm:rounded-[3rem] border-2 border-[#1F3A4B]/5 dark:border-white/5 shadow-3xl flex flex-col group relative transition-all overflow-hidden min-w-0">
+    <div className="w-full min-h-[20rem] p-5 sm:p-8 bg-white dark:bg-[#1F3A4B]/20 backdrop-blur-2xl rounded-[1.5rem] sm:rounded-[3rem] border-2 border-[#1F3A4B]/5 dark:border-white/5 shadow-3xl flex flex-col group relative transition-all overflow-hidden min-w-0 font-roboto-slab">
 
       {/* ── Header ── */}
       <div className="flex flex-row justify-between items-center gap-2 mb-6 relative z-10 w-full min-w-0">
@@ -279,8 +275,9 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
           <div className="p-2 sm:p-3 bg-[#1F3A4B] text-[#C2F84F] rounded-xl sm:rounded-2xl shadow-lg shrink-0">
             <Clock size={18} className="sm:size-[20px]" />
           </div>
-          <h2 className="text-lg sm:text-2xl font-black italic tracking-tighter uppercase text-[#1F3A4B] dark:text-[#FAFDEE] truncate">
-            My Requests
+          {/* Changed font weight structure to clean font-extrabold */}
+          <h2 className="text-xl sm:text-3xl font-extrabold italic tracking-tighter uppercase text-[#1F3A4B] dark:text-[#FAFDEE] truncate font-sans">
+            MY REQUESTS
           </h2>
         </div>
 
@@ -290,7 +287,8 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
               className="p-1.5 sm:p-2 rounded-full hover:bg-[#C2F84F] hover:text-[#1F3A4B] transition-all disabled:opacity-10 text-[#1F3A4B] dark:text-[#C2F84F]">
               <ChevronLeft size={16} />
             </button>
-            <span className="text-[9px] sm:text-[10px] font-black italic tracking-widest min-w-[32px] sm:min-w-[40px] text-center text-[#1F3A4B] dark:text-[#FAFDEE]">
+            {/* Pagination tracking metric font size bumped up */}
+            <span className="text-xs font-bold italic tracking-widest min-w-[32px] sm:min-w-[40px] text-center text-[#1F3A4B] dark:text-[#FAFDEE]">
               {currentIndex + 1}/{visibleRequests.length}
             </span>
             <button onClick={handleNext} disabled={currentIndex === visibleRequests.length - 1}
@@ -304,69 +302,69 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
       {/* ── Card ── */}
       {visibleRequests.length > 0 && current ? (
         <div className="flex-1 flex flex-col justify-between relative z-10 w-full min-w-0">
-          <div className="space-y-3 w-full min-w-0">
+          <div className="space-y-4 w-full min-w-0">
 
-            {/* Status + fee badges */}
+            {/* Status + fee badges — font footprint increased */}
             <div className="flex items-center gap-1.5 flex-wrap w-full">
-              <span className={`flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest leading-none ${statusMeta?.color}`}>
-                <StatusIcon size={9} className="shrink-0" />
+              <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest leading-none ${statusMeta?.color}`}>
+                <StatusIcon size={11} className="shrink-0" />
                 {statusMeta?.label}
               </span>
               {current.feeRupees > 0 && (
-                <span className="flex items-center gap-0.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest leading-none bg-[#C2F84F]/20 text-[#476407]">
-                  <IndianRupee size={8} className="shrink-0" />₹{current.feeRupees.toFixed(0)}
+                <span className="flex items-center gap-0.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest leading-none bg-[#C2F84F]/20 text-[#476407]">
+                  <IndianRupee size={10} className="shrink-0" />₹{current.feeRupees.toFixed(0)}
                 </span>
               )}
             </div>
 
-            {/* Doctor name — Wrapped with truncate + shrink-0 handles */}
-            <div className="text-base sm:text-xl font-black italic uppercase text-[#1F3A4B] dark:text-[#FAFDEE] leading-tight flex items-center gap-2 min-w-0 w-full">
-              <User size={16} className="opacity-40 shrink-0" />
-              <span className="truncate flex-1">Dr. {current.doctorName}</span>
+            {/* Doctor name — Wrapped text size boosted cleanly */}
+            <div className="text-lg sm:text-2xl font-extrabold italic uppercase text-[#1F3A4B] dark:text-[#FAFDEE] leading-tight flex items-center gap-2 min-w-0 w-full font-sans">
+              <User size={18} className="opacity-40 shrink-0" />
+              <span className="truncate flex-1">DR. {current.doctorName.toUpperCase()}</span>
             </div>
 
-            {/* Reason — Replaced ml-7 with an adaptive layout ml-6 */}
+            {/* Reason — Text footprint size bumped and transformed */}
             {current.reason && (
-              <p className="text-[10px] font-bold text-[#1F3A4B]/60 dark:text-white/40 ml-6 italic break-words">
-                "{current.reason}"
+              <p className="text-xs sm:text-sm font-bold text-[#1F3A4B]/60 dark:text-white/40 ml-6 italic break-words uppercase tracking-wide">
+                "{current.reason.toUpperCase()}"
               </p>
             )}
 
-            {/* Scheduled slot — Swapped hardcoded ml-7 alignment values */}
+            {/* Scheduled slot — Font footprint size bumped */}
             {current.scheduledTime && (
-              <div className="ml-6 flex flex-col gap-0.5 min-w-0">
-                <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-[#1F3A4B]/50 dark:text-white/40">
-                  {isExpired ? 'Was Scheduled' : 'Proposed Slot'}
+              <div className="ml-6 flex flex-col gap-1 min-w-0">
+                <p className="text-xs font-bold uppercase tracking-widest text-[#1F3A4B]/50 dark:text-white/40">
+                  {isExpired ? 'WAS SCHEDULED' : 'PROPOSED SLOT'}
                 </p>
-                <p className={`text-xs sm:text-sm font-black truncate ${isExpired ? 'text-rose-600/70 dark:text-rose-400/70 line-through' : 'text-[#1F3A4B] dark:text-[#FAFDEE]'}`}>
-                  {formatDate(current.scheduledDate)} · {current.scheduledTime}
+                <p className={`text-sm sm:text-base font-bold truncate uppercase tracking-wide ${isExpired ? 'text-rose-600/70 dark:text-rose-400/70 line-through' : 'text-[#1F3A4B] dark:text-[#FAFDEE]'}`}>
+                  {formatDate(current.scheduledDate)} · {current.scheduledTime.toUpperCase()}
                 </p>
               </div>
             )}
 
-            {/* Payment deadline */}
+            {/* Payment deadline — Font size expanded */}
             {canPay && current.paymentDeadline && (
-              <div className="ml-6 flex items-center gap-1.5 text-[9px] sm:text-[10px] font-bold text-amber-600 dark:text-amber-400 w-full min-w-0">
-                <Hourglass size={10} className="shrink-0" />
-                <span className="truncate">Pay before {new Date(current.paymentDeadline).toLocaleString('en-IN')}</span>
+              <div className="ml-6 flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 w-full min-w-0 uppercase tracking-wider">
+                <Hourglass size={12} className="shrink-0" />
+                <span className="truncate">PAY BEFORE {new Date(current.paymentDeadline).toLocaleString('en-IN').toUpperCase()}</span>
               </div>
             )}
 
             {/* Expired notice box with inline dismiss */}
             {isExpired && (
-              <div className="ml-0 sm:ml-6 mt-2 p-3 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/40 w-full min-w-0">
-                <div className="flex items-start gap-2 w-full min-w-0">
-                  <AlertTriangle size={14} className="text-rose-500 shrink-0 mt-0.5" />
+              <div className="ml-0 sm:ml-6 mt-2 p-4 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/40 w-full min-w-0">
+                <div className="flex items-start gap-2.5 w-full min-w-0">
+                  <AlertTriangle size={16} className="text-rose-500 shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] font-black uppercase tracking-wide text-rose-700 dark:text-rose-400">
-                      Appointment Expired
+                    <p className="text-xs font-bold uppercase tracking-wide text-rose-700 dark:text-rose-400">
+                      APPOINTMENT EXPIRED
                     </p>
-                    <p className="text-[10px] text-rose-600/80 dark:text-rose-400/70 font-medium mt-0.5 leading-normal">
-                      The consultation window has passed. Book a new appointment if you still need help.
+                    <p className="text-xs text-rose-600/80 dark:text-rose-400/70 font-bold mt-1 leading-normal uppercase tracking-wide">
+                      THE CONSULTATION WINDOW HAS PASSED. BOOK A NEW APPOINTMENT IF YOU STILL NEED HELP.
                     </p>
                     {current.abortedAt && (
-                      <p className="text-[9px] text-rose-500/60 font-medium mt-1 uppercase tracking-widest">
-                        Marked on {new Date(current.abortedAt).toLocaleDateString('en-IN')}
+                      <p className="text-[10px] text-rose-500/60 font-bold mt-1.5 uppercase tracking-widest">
+                        MARKED ON {new Date(current.abortedAt).toLocaleDateString('en-IN').toUpperCase()}
                       </p>
                     )}
                   </div>
@@ -374,28 +372,28 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
 
                 <button
                   onClick={() => handleDismiss(current.id)}
-                  className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-800/50 transition-all text-[9px] sm:text-[10px] font-black uppercase tracking-widest shrink-0"
+                  className="mt-3.5 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-800/50 transition-all text-xs font-bold uppercase tracking-widest shrink-0"
                 >
-                  <CheckCircle size={12} className="shrink-0" />
-                  Clear notice
+                  <CheckCircle size={14} className="shrink-0" />
+                  CLEAR NOTICE
                 </button>
               </div>
             )}
           </div>
 
-          {/* ── Action buttons ── FIXED FOR MOBILE ROW SQUEEZING */}
-          <div className="flex flex-row items-center gap-2 mt-5 w-full min-w-0 flex-wrap sm:flex-nowrap">
+          {/* ── Action buttons ── Font sizes boosted cleanly */}
+          <div className="flex flex-row items-center gap-2.5 mt-6 w-full min-w-0 flex-wrap sm:flex-nowrap">
             {/* Join Video Call */}
             {current.status === 'PAID_CONFIRMED' && current.meetLink && (
               <a
                 href={current.meetLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex flex-1 items-center justify-center gap-1.5 px-3 py-2.5 sm:px-5 sm:py-3 bg-[#C2F84F] text-[#1F3A4B] rounded-xl sm:rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl text-[10px] sm:text-xs font-black uppercase italic tracking-wider sm:tracking-widest min-w-0 truncate text-center"
+                className="group flex flex-1 items-center justify-center gap-1.5 px-4 py-3.5 bg-[#C2F84F] text-[#1F3A4B] rounded-xl sm:rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl text-xs sm:text-sm font-bold uppercase italic tracking-wider sm:tracking-widest min-w-0 truncate text-center"
               >
-                <Video size={13} className="shrink-0 transition-transform group-hover:rotate-12" />
-                <span className="truncate">Join Call</span>
-                <ArrowRight size={11} className="shrink-0 transition-transform group-hover:translate-x-1 hidden sm:inline" />
+                <Video size={15} className="shrink-0 transition-transform group-hover:rotate-12" />
+                <span className="truncate">JOIN CALL</span>
+                <ArrowRight size={13} className="shrink-0 transition-transform group-hover:translate-x-1 hidden sm:inline" />
               </a>
             )}
 
@@ -404,14 +402,14 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
               <button
                 onClick={() => handlePayNow(current)}
                 disabled={payingId === current.id}
-                className="flex flex-1 items-center justify-center gap-1.5 px-3 py-2.5 sm:px-5 sm:py-3 bg-[#1F3A4B] text-[#C2F84F] rounded-xl sm:rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl text-[10px] sm:text-xs font-black uppercase tracking-wider sm:tracking-widest disabled:opacity-60 min-w-0"
+                className="flex flex-1 items-center justify-center gap-1.5 px-4 py-3.5 bg-[#1F3A4B] text-[#C2F84F] rounded-xl sm:rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl text-xs sm:text-sm font-bold uppercase tracking-wider sm:tracking-widest disabled:opacity-60 min-w-0"
               >
                 {payingId === current.id ? (
-                  <div className="w-3.5 h-3.5 border-2 border-[#C2F84F] border-t-transparent rounded-full animate-spin shrink-0" />
+                  <div className="w-4 h-4 border-2 border-[#C2F84F] border-t-transparent rounded-full animate-spin shrink-0" />
                 ) : (
-                  <IndianRupee size={13} className="shrink-0" />
+                  <IndianRupee size={15} className="shrink-0" />
                 )}
-                <span className="truncate">Pay ₹{current.feeRupees.toFixed(0)}</span>
+                <span className="truncate">PAY ₹{current.feeRupees.toFixed(0)}</span>
               </button>
             )}
 
@@ -420,43 +418,44 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
               <button
                 onClick={() => handleCancel(current)}
                 disabled={cancellingId === current.id}
-                className="flex items-center justify-center gap-1 px-2.5 py-2.5 sm:px-4 sm:py-3 bg-rose-500/10 text-rose-600 border border-rose-500/20 rounded-xl sm:rounded-2xl hover:bg-rose-600 hover:text-white transition-all text-[10px] sm:text-xs font-black uppercase tracking-widest disabled:opacity-60 shrink-0"
+                className="flex items-center justify-center gap-1.5 px-4 py-3.5 bg-rose-500/10 text-rose-600 border border-rose-500/20 rounded-xl sm:rounded-2xl hover:bg-rose-600 hover:text-white transition-all text-xs sm:text-sm font-bold uppercase tracking-widest disabled:opacity-60 shrink-0"
               >
                 {cancellingId === current.id ? (
-                  <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
                 ) : (
-                  <X size={12} className="shrink-0" />
+                  <X size={14} className="shrink-0" />
                 )}
-                <span>Cancel</span>
+                <span>CANCEL</span>
               </button>
             )}
 
-            {/* Waiting hint */}
+            {/* Waiting hint — Cases updated */}
             {!canPay && !canCancel && !isExpired && current.status === 'PENDING_DOCTOR_APPROVAL' && (
-              <span className="text-[9px] font-black italic uppercase tracking-widest text-[#1F3A4B]/40 dark:text-white/20 block py-2 truncate">
-                Waiting for doctor response...
+              <span className="text-xs font-bold italic uppercase tracking-widest text-[#1F3A4B]/40 dark:text-white/20 block py-2.5 truncate">
+                WAITING FOR DOCTOR RESPONSE...
               </span>
             )}
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center text-[#1F3A4B]/40 dark:text-white/30 text-center py-6">
-          <p className="text-xs sm:text-sm font-black italic uppercase tracking-widest mb-1">No Requests Yet</p>
-          <p className="text-[9px] sm:text-[10px] font-bold uppercase opacity-60 px-4">Book your first consultation from the Appointments tab</p>
+        /* Empty States — Font footprint size increased */
+        <div className="flex-1 flex flex-col items-center justify-center text-[#1F3A4B]/40 dark:text-white/30 text-center py-8">
+          <p className="text-sm sm:text-base font-bold italic uppercase tracking-widest mb-1.5">NO REQUESTS YET</p>
+          <p className="text-xs font-bold uppercase opacity-60 px-4 tracking-wide leading-normal">BOOK YOUR FIRST CONSULTATION FROM THE APPOINTMENTS TAB</p>
         </div>
       )}
 
-      {/* ── Slot usage bar ── */}
+      {/* ── Slot usage bar ── Font footprint expanded cleanly */}
       {meta.maxAllowed > 0 && (
-        <div className="mt-4 pt-4 border-t border-[#1F3A4B]/5 dark:border-white/5 flex items-center justify-between gap-2 w-full min-w-0">
-          <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-[#1F3A4B]/40 dark:text-white/30 truncate">
-            Active slots: {meta.activeCount} / {meta.maxAllowed}
+        <div className="mt-5 pt-4 border-t border-[#1F3A4B]/5 dark:border-white/5 flex items-center justify-between gap-2 w-full min-w-0">
+          <span className="text-xs font-bold uppercase tracking-widest text-[#1F3A4B]/40 dark:text-white/30 truncate">
+            ACTIVE SLOTS: {meta.activeCount} / {meta.maxAllowed}
           </span>
-          <div className="flex gap-1 shrink-0">
+          <div className="flex gap-1.5 shrink-0">
             {Array.from({ length: meta.maxAllowed }).map((_, i) => (
               <div
                 key={i}
-                className={`h-1 w-3 sm:h-1.5 sm:w-5 rounded-full transition-all ${
+                className={`h-1 w-3 sm:h-2 sm:w-5 rounded-full transition-all ${
                   i < meta.activeCount ? 'bg-amber-400' : 'bg-[#1F3A4B]/10 dark:bg-white/10'
                 }`}
               />
