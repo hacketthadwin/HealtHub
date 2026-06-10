@@ -15,28 +15,32 @@ function FAQItem({ question, answer, index }) {
       viewport={{ once: true }}
       transition={{ duration: 0.4, delay: index * 0.05 }}
       className={cn(
-        "relative rounded-[2rem] border-2 transition-all duration-300 overflow-hidden",
-        "bg-white dark:bg-white/5 backdrop-blur-md shadow-sm", 
+        "relative rounded-[2rem] border transition-all duration-500 overflow-hidden backdrop-blur-xl shadow-lg group",
+        "bg-white/50 dark:bg-white/5",
         isOpen 
-          ? "border-[#1F3A4B] dark:border-[#C2F84F] z-10 scale-[1.01] shadow-xl" 
-          : "border-[#1F3A4B]/5 dark:border-white/5 z-0 hover:border-[#1F3A4B]/20 dark:hover:border-[#C2F84F]/30"
+          ? "border-[#1F3A4B]/20 dark:border-[#C2F84F]/30 scale-[1.01] shadow-2xl" 
+          : "border-[#1F3A4B]/10 dark:border-white/10 hover:shadow-2xl hover:scale-[1.01]"
       )}
     >
+      {/* Glassmorphic Glow Effect */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
+        <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-[#C2F84F]/10 to-transparent blur-3xl" />
+      </div>
+
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left select-none"
+        className="flex w-full items-center justify-between gap-4 px-8 py-6 text-left select-none relative z-10"
       >
-        {/* CRITICAL UPDATE: Swapped font-sans for font-roboto-slab for the questions */}
-        <h3 className="text-base md:text-lg font-medium italic uppercase tracking-wider text-[#1F3A4B] dark:text-[#FAFDEE] font-roboto-slab">
+        <h3 className="text-base md:text-lg font-bold italic uppercase tracking-wider text-[#1F3A4B] dark:text-[#FAFDEE] font-roboto-slab">
           {question}
         </h3>
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
           className="shrink-0 text-[#1F3A4B] dark:text-[#C2F84F]"
         >
-          <ChevronDown className="h-5 w-5 stroke-[2.5]" />
+          <ChevronDown className="h-6 w-6 stroke-[2.5]" />
         </motion.div>
       </button>
 
@@ -47,16 +51,17 @@ function FAQItem({ question, answer, index }) {
             animate={{ 
               height: "auto", 
               opacity: 1,
-              transition: { height: { duration: 0.3 }, opacity: { duration: 0.2 } } 
+              transition: { height: { duration: 0.3 }, opacity: { duration: 0.3 } } 
             }}
             exit={{ 
               height: 0, 
               opacity: 0,
-              transition: { height: { duration: 0.25 }, opacity: { duration: 0.15 } } 
+              transition: { height: { duration: 0.3 }, opacity: { duration: 0.2 } } 
             }}
+            className="relative z-10"
           >
-            <div className="px-6 pb-6 pt-0 border-t-2 border-[#1F3A4B]/5 dark:border-white/5 mt-1">
-              <p className="text-[#1F3A4B]/80 dark:text-[#FAFDEE]/70 text-base leading-relaxed pt-4 tracking-wide font-medium">
+            <div className="px-8 pb-8 pt-0 border-t border-[#1F3A4B]/5 dark:border-white/10">
+              <p className="text-[#1F3A4B]/80 dark:text-[#FAFDEE]/60 text-base leading-relaxed pt-6 tracking-wide font-medium italic">
                 {answer}
               </p>
             </div>
@@ -91,7 +96,6 @@ export default function CongestedFAQ() {
     <div className="w-full h-auto block relative px-4 bg-transparent transition-all duration-300 z-10 font-roboto-slab antialiased">
       <div className="max-w-4xl mx-auto">
         
-        {/* Header Block */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -109,25 +113,22 @@ export default function CongestedFAQ() {
           </p>
         </motion.div>
 
-        {/* FAQ Grid */}
         <div className="space-y-4">
           {faqs.map((faq, index) => (
             <FAQItem key={index} {...faq} index={index} />
           ))}
         </div>
 
-        {/* Support Section Footer */}
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="mt-16 p-8 md:p-12 rounded-[2.5rem] md:rounded-[4rem] text-center border-2 bg-white dark:bg-white/5 border-[#1F3A4B]/5 dark:border-white/5 shadow-2xl backdrop-blur-2xl"
+          className="mt-16 p-8 md:p-12 rounded-[2.5rem] md:rounded-[4rem] text-center border border-[#1F3A4B]/10 dark:border-white/10 bg-white/50 dark:bg-white/5 shadow-2xl backdrop-blur-2xl"
         >
           <div className="bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] inline-flex p-4 rounded-2xl mb-5 shadow-lg">
             <Mail className="w-6 h-6" />
           </div>
-          {/* CRITICAL UPDATE: Modified font weight to font-medium for standard prose alignment */}
-          <h4 className="text-[#1F3A4B] dark:text-[#FAFDEE] text-2xl md:text-4xl font-medium italic uppercase tracking-tighter mb-2 leading-none">
+          <h4 className="text-[#1F3A4B] dark:text-[#FAFDEE] text-2xl md:text-4xl font-extrabold italic uppercase tracking-tighter mb-2 leading-none font-roboto-slab">
             Still have questions?
           </h4>
           <p className="text-sm font-bold tracking-widest uppercase opacity-50 mb-8 max-w-md mx-auto leading-relaxed">
