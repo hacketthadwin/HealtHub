@@ -165,7 +165,7 @@ export default function Footer4Col() {
                       <button
                         type="button"
                         onClick={handleFaqClick}
-                        className={cn("transition-colors flex justify-center sm:justify-start items-center gap-2 underline decoration-transparent hover:decoration-current decoration-2 underline-offset-4 text-[#1F3A4B]/70 dark:text-[#FAFDEE]/60 hover:text-emerald-600 dark:hover:text-[#C2F84F]")}
+                        className={cn("block w-full text-center sm:text-left transition-colors underline decoration-transparent hover:decoration-current decoration-2 underline-offset-4 text-[#1F3A4B]/70 dark:text-[#FAFDEE]/60 hover:text-emerald-600 dark:hover:text-[#C2F84F]", hasIndicator ? "flex justify-center sm:justify-start items-center gap-2" : "")}
                       >
                         <span>{text}</span>
                         {hasIndicator && (
