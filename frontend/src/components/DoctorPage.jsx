@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import Calendar from 'react-calendar';
@@ -15,8 +15,6 @@ import {
 } from 'lucide-react';
 import Header1 from './UIcomponents/Header1';
 import { API_URL } from '../config/api';
-
-const socket = io(`${API_URL}`);
 
 const rawTimeTo12h = (raw) => {
   if (!raw) return '';
@@ -261,6 +259,8 @@ const DoctorPage = () => {
   const chatEndRef   = useRef(null);
   const fileInputRef = useRef(null);
 
+  const socketRef    = useRef(null);
+
   const [userId,       setUserId]       = useState(null);
   const [userName,     setUserName]     = useState('USER');
   const [consultingFee,          setConsultingFee]          = useState(null);
@@ -289,8 +289,11 @@ const DoctorPage = () => {
   const [abortModal,   setAbortModal]   = useState({ open: false, booking: null });
   const [abortLoading, setAbortLoading] = useState(false);
 
-  const scrollToBottom = () => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  useEffect(() => { scrollToBottom(); }, [messages]);
+  const scrollToBottom = useCallback(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => { scrollToBottom(); }, [messages, scrollToBottom]);
 
 
   const fetchProfile = useCallback(async (token) => {
@@ -383,7 +386,7 @@ const DoctorPage = () => {
           if (r.status !== 'PAID_CONFIRMED') return false;
           if (!r.proposedByDoctor?.scheduledDate) return false;
           const scheduledDate = new Date(r.proposedByDoctor.scheduledDate);
-          if (scheduledDate.toDateString() === todayStr) return false; 
+          if (scheduledDate.toDateString() === todayStr) return false;
           const durationMins = r.proposedByDoctor?.slotDurationMinutes || 30;
           const slotEnd = new Date(scheduledDate.getTime() + durationMins * 60 * 1000);
           return now > slotEnd;
@@ -412,13 +415,12 @@ const DoctorPage = () => {
 
   useEffect(() => {
     if (!userId) return;
-    socket.emit('joinUserRoom', userId);
-  }, [userId]);
 
+    const sock = io(API_URL);
+    socketRef.current = sock;
+    sock.emit('joinUserRoom', userId);
 
-  useEffect(() => {
-    if (!userId) return;
-    socket.on('previousMessages', (prev) => {
+    const onPreviousMessages = (prev) => {
       setMessages(prev.map((msg) => ({
         text:        msg.message || '',
         sender:      msg.sender === userId ? 'doctor' : 'patient',
@@ -428,8 +430,9 @@ const DoctorPage = () => {
         fileType:    msg.fileType || null,
         messageType: msg.messageType || 'text',
       })));
-    });
-    socket.on('receiveMessage', (msgData) => {
+    };
+
+    const onReceiveMessage = (msgData) => {
       setMessages((prev) => [...prev, {
         text:        msgData.message || '',
         sender:      msgData.senderId === userId ? 'doctor' : 'patient',
@@ -439,16 +442,31 @@ const DoctorPage = () => {
         fileType:    msgData.fileType || null,
         messageType: msgData.messageType || 'text',
       }]);
-    });
-    return () => { socket.off('previousMessages'); socket.off('receiveMessage'); };
+    };
+
+    sock.on('previousMessages', onPreviousMessages);
+    sock.on('receiveMessage',   onReceiveMessage);
+
+    return () => {
+      sock.off('previousMessages', onPreviousMessages);
+      sock.off('receiveMessage',   onReceiveMessage);
+      sock.disconnect();
+    };
   }, [userId]);
+
+  const todaysScheduleWithFlags = useMemo(() =>
+    todaysAppointments.map((app) => ({ ...app, eligible: isAbortEligible(app) })),
+    [todaysAppointments]
+  );
 
   const handleOpenChat = (patient) => {
     setChatPatient(patient);
     setChatOpen(true);
     setMessages([]);
     const roomId = [userId, patient.id].sort().join('_');
-    if (userId) socket.emit('joinRoom', { roomId, userId, role: 'doctor' });
+    if (userId && socketRef.current) {
+      socketRef.current.emit('joinRoom', { roomId, userId, role: 'doctor' });
+    }
   };
 
   const handleCloseChat = () => {
@@ -577,7 +595,7 @@ const DoctorPage = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const roomId = [userId, chatPatient.id].sort().join('_');
-        socket.emit('sendMessage', {
+        socketRef.current?.emit('sendMessage', {
           roomId, senderId: userId, senderName: userName, receiverId: chatPatient.id,
           message: '', fileUrl: data.url, fileName: data.fileName, fileType: data.fileType, messageType: 'file',
         });
@@ -590,7 +608,7 @@ const DoctorPage = () => {
 
     if (inputMessage.trim() && chatPatient) {
       const roomId = [userId, chatPatient.id].sort().join('_');
-      socket.emit('sendMessage', {
+      socketRef.current?.emit('sendMessage', {
         roomId, senderId: userId, senderName: userName,
         receiverId: chatPatient.id, message: inputMessage,
       });
@@ -623,8 +641,10 @@ const DoctorPage = () => {
         />
       )}
 
-      {/* ── Ambient blobs ── */}
-      <div className="fixed inset-0 pointer-events-none opacity-40 dark:opacity-20 z-0">
+      <div
+        className="fixed inset-0 pointer-events-none opacity-40 dark:opacity-20 z-0"
+        style={{ willChange: 'filter' }}
+      >
         <div className="absolute top-[-5%] left-[-5%] w-[45%] h-[45%] bg-[#C2F84F] rounded-full blur-[140px]" />
         <div className="absolute bottom-[-5%] right-[-5%] w-[35%] h-[35%] bg-cyan-400 rounded-full blur-[140px]" />
       </div>
@@ -696,7 +716,6 @@ const DoctorPage = () => {
                 .react-calendar__navigation button:enabled:hover { color: #C2F84F !important; }
                 .react-calendar__month-view__weekdays__weekday { text-transform: uppercase; font-weight: 900; opacity: 0.6; color: #1F3A4B; }
                 .dark .react-calendar__month-view__weekdays__weekday { color: #FAFDEE; }
-                /* FIXED CALENDAR DARK MODE FONT COLOR TO INHERIT DYNAMICALLY */
                 .react-calendar__month-view__days__day { color: #1F3A4B !important; }
                 .dark .react-calendar__month-view__days__day { color: #FAFDEE !important; }
                 .react-calendar__month-view__days__day--neighboringMonth { opacity: 0.25; }
@@ -711,11 +730,12 @@ const DoctorPage = () => {
             <div className="bg-white dark:bg-white/5 backdrop-blur-xl rounded-[2.5rem] md:rounded-[4rem] p-6 md:p-10 border-2 border-[#1F3A4B]/5 dark:border-white/5 shadow-2xl min-h-[380px]">
               <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold italic tracking-tighter mb-6 uppercase text-[#1F3A4B] dark:text-[#FAFDEE] font-sans leading-none">TODAY'S SCHEDULE</h2>
               <div className="space-y-4">
-                {todaysAppointments.length === 0 ? (
+                {todaysScheduleWithFlags.length === 0 ? (
                   <p className="text-center py-16 opacity-50 italic font-bold text-base uppercase tracking-wider">No appointments today</p>
                 ) : (
-                  todaysAppointments.map((app) => {
-                    const eligible = isAbortEligible(app);
+
+                  todaysScheduleWithFlags.map((app) => {
+                    const { eligible } = app;
                     return (
                       <div key={app.id} className={`p-5 rounded-2xl border flex flex-col gap-3 transition-all ${eligible ? 'bg-rose-50/50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-800/40' : 'bg-[#1F3A4B]/5 dark:bg-white/5 border-[#1F3A4B]/10'}`}>
                         <div className="flex justify-between items-start">

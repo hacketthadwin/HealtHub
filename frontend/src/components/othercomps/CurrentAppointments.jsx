@@ -7,9 +7,7 @@ import {
 } from 'lucide-react';
 import { API_URL } from '../../config/api';
 
-
-// ─── Status display metadata ─────────────────────────────────────────────────
-// CONVERTED ALL LABELS TO UPPERCASE CASE ALIGNMENT
+// ─── Status display metadata ──────────────────────────────────────────────────
 const STATUS_META = {
   PENDING_DOCTOR_APPROVAL: {
     label: 'AWAITING DOCTOR',
@@ -59,33 +57,29 @@ const formatDate = (isoString) => {
 const loadRazorpayScript = () =>
   new Promise((resolve) => {
     if (window.Razorpay) { resolve(true); return; }
-    const script    = document.createElement('script');
-    script.src      = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.onload   = () => resolve(true);
-    script.onerror  = () => resolve(false);
+    const script   = document.createElement('script');
+    script.src     = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload  = () => resolve(true);
+    script.onerror = () => resolve(false);
     document.body.appendChild(script);
   });
 
 const LS_KEY = 'hh_dismissed_expired';
 
-// ─── Component ───────────────────────────────────────────────────────────────
+// ─── Component ────────────────────────────────────────────────────────────────
 function CurrentAppointments({ refreshTrigger = 0 }) {
-  const [requests,     setRequests]     = useState([]);
-  const [meta,         setMeta]         = useState({ activeCount: 0, maxAllowed: 5 });
-  const [loading,      setLoading]      = useState(true);
-  const [error,        setError]        = useState(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  /* Decoupled loading state setters using specialized token mappings */
-  const [payingId,     setPayingId]     = useState(null);
-  const [cancellingId, setCancellingId] = useState(null);
+  const [requests,      setRequests]      = useState([]);
+  const [meta,          setMeta]          = useState({ activeCount: 0, maxAllowed: 5 });
+  const [loading,       setLoading]       = useState(true);
+  const [error,         setError]         = useState(null);
+  const [currentIndex,  setCurrentIndex]  = useState(0);
+  const [payingId,      setPayingId]      = useState(null);
+  const [cancellingId,  setCancellingId]  = useState(null);
   const intervalRef = useRef(null);
 
   const [dismissedIds, setDismissedIds] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem(LS_KEY) || '[]');
-    } catch {
-      return [];
-    }
+    try   { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); }
+    catch { return []; }
   });
 
   const visibleRequests = useMemo(
@@ -95,20 +89,6 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
     [requests, dismissedIds]
   );
 
-  useEffect(() => {
-    setCurrentIndex((prev) => Math.min(prev, Math.max(0, visibleRequests.length - 1)));
-  }, [visibleRequests.length]);
-
-  const handleDismiss = useCallback((id) => {
-    setDismissedIds((prev) => {
-      if (prev.includes(id)) return prev;
-      const updated = [...prev, id];
-      try {
-        localStorage.setItem(LS_KEY, JSON.stringify(updated));
-      } catch { /* storage quota hit */ }
-      return updated;
-    });
-  }, []);
 
   const fetchRequests = useCallback(async () => {
     const token = localStorage.getItem('userToken');
@@ -138,8 +118,9 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
 
       setRequests(formatted);
       setMeta(data.meta || { activeCount: 0, maxAllowed: 5 });
+
       setCurrentIndex((prev) => Math.min(prev, Math.max(0, formatted.length - 1)));
-   } catch (e) {
+    } catch (e) {
       console.error('Error fetching booking requests:', e);
       setError(e);
     } finally {
@@ -157,6 +138,17 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
     if (refreshTrigger > 0) fetchRequests();
   }, [refreshTrigger, fetchRequests]);
 
+  const handleDismiss = useCallback((id) => {
+    setDismissedIds((prev) => {
+      if (prev.includes(id)) return prev;
+      const updated = [...prev, id];
+      try { localStorage.setItem(LS_KEY, JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+
+    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : 0));
+  }, []);
+
   const handlePayNow = async (request) => {
     const token = localStorage.getItem('userToken');
     setPayingId(request.id);
@@ -164,7 +156,7 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
       const loaded = await loadRazorpayScript();
       if (!loaded) { alert('Razorpay failed to load. Please check your connection.'); return; }
 
-      const { data: keyData } = await axios.get(
+      const { data: keyData }   = await axios.get(
         `${API_URL}/api/v1/payment/razorpay-key`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -204,8 +196,12 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
         modal: { ondismiss: () => { setPayingId(null); } },
         theme: { color: '#1F3A4B' },
       };
+
       const rp = new window.Razorpay(options);
-      rp.on('payment.failed', (resp) => { alert(`Payment failed: ${resp.error.description}`); setPayingId(null); });
+      rp.on('payment.failed', (resp) => {
+        alert(`Payment failed: ${resp.error.description}`);
+        setPayingId(null);
+      });
       rp.open();
     } catch (err) {
       alert(err.response?.data?.message || err.message || 'Payment initiation failed');
@@ -250,7 +246,6 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
     return (
       <div className="w-full h-[18rem] font-roboto-slab flex flex-col items-center justify-center p-6 bg-white/40 dark:bg-[#1F3A4B]/10 backdrop-blur-md rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-dashed border-[#1F3A4B]/10 animate-pulse">
         <Activity className="text-[#1F3A4B] dark:text-[#C2F84F] animate-spin mb-4 shrink-0" size={32} />
-        {/* Loader text size bumped up */}
         <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.3em] text-[#1F3A4B] dark:text-[#FAFDEE] text-center">LOADING REQUESTS...</p>
       </div>
     );
@@ -260,7 +255,6 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
     return (
       <div className="w-full h-[18rem] font-roboto-slab flex flex-col items-center justify-center p-6 bg-rose-50 dark:bg-rose-900/10 backdrop-blur-md rounded-[1.5rem] sm:rounded-[2.5rem] border-2 border-rose-500/20 text-center">
         <AlertCircle className="text-rose-500 mb-4 shrink-0" size={32} />
-        {/* Error text size bumped up */}
         <p className="text-sm font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 break-all px-2">ERROR: {error.message.toUpperCase()}</p>
       </div>
     );
@@ -269,13 +263,12 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
   return (
     <div className="w-full min-h-[20rem] p-5 sm:p-8 bg-white dark:bg-[#1F3A4B]/20 backdrop-blur-2xl rounded-[1.5rem] sm:rounded-[3rem] border-2 border-[#1F3A4B]/5 dark:border-white/5 shadow-3xl flex flex-col group relative transition-all overflow-hidden min-w-0 font-roboto-slab">
 
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="flex flex-row justify-between items-center gap-2 mb-6 relative z-10 w-full min-w-0">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <div className="p-2 sm:p-3 bg-[#1F3A4B] text-[#C2F84F] rounded-xl sm:rounded-2xl shadow-lg shrink-0">
             <Clock size={18} className="sm:size-[20px]" />
           </div>
-          {/* Changed font weight structure to clean font-extrabold */}
           <h2 className="text-xl sm:text-3xl font-extrabold italic tracking-tighter uppercase text-[#1F3A4B] dark:text-[#FAFDEE] truncate font-sans">
             MY REQUESTS
           </h2>
@@ -283,28 +276,33 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
 
         {visibleRequests.length > 0 && (
           <div className="flex items-center gap-1 bg-[#1F3A4B]/5 dark:bg-white/5 p-0.5 sm:p-1 rounded-full border border-black/5 dark:border-white/5 shrink-0">
-            <button onClick={handlePrev} disabled={currentIndex === 0}
-              className="p-1.5 sm:p-2 rounded-full hover:bg-[#C2F84F] hover:text-[#1F3A4B] transition-all disabled:opacity-10 text-[#1F3A4B] dark:text-[#C2F84F]">
+            <button
+              onClick={handlePrev}
+              disabled={currentIndex === 0}
+              className="p-1.5 sm:p-2 rounded-full hover:bg-[#C2F84F] hover:text-[#1F3A4B] transition-all disabled:opacity-10 text-[#1F3A4B] dark:text-[#C2F84F]"
+            >
               <ChevronLeft size={16} />
             </button>
-            {/* Pagination tracking metric font size bumped up */}
             <span className="text-xs font-bold italic tracking-widest min-w-[32px] sm:min-w-[40px] text-center text-[#1F3A4B] dark:text-[#FAFDEE]">
               {currentIndex + 1}/{visibleRequests.length}
             </span>
-            <button onClick={handleNext} disabled={currentIndex === visibleRequests.length - 1}
-              className="p-1.5 sm:p-2 rounded-full hover:bg-[#C2F84F] hover:text-[#1F3A4B] transition-all disabled:opacity-10 text-[#1F3A4B] dark:text-[#C2F84F]">
+            <button
+              onClick={handleNext}
+              disabled={currentIndex === visibleRequests.length - 1}
+              className="p-1.5 sm:p-2 rounded-full hover:bg-[#C2F84F] hover:text-[#1F3A4B] transition-all disabled:opacity-10 text-[#1F3A4B] dark:text-[#C2F84F]"
+            >
               <ChevronRight size={16} />
             </button>
           </div>
         )}
       </div>
 
-      {/* ── Card ── */}
+      {/* Card */}
       {visibleRequests.length > 0 && current ? (
         <div className="flex-1 flex flex-col justify-between relative z-10 w-full min-w-0">
           <div className="space-y-4 w-full min-w-0">
 
-            {/* Status + fee badges — font footprint increased */}
+            {/* Status + fee badges */}
             <div className="flex items-center gap-1.5 flex-wrap w-full">
               <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest leading-none ${statusMeta?.color}`}>
                 <StatusIcon size={11} className="shrink-0" />
@@ -317,20 +315,20 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
               )}
             </div>
 
-            {/* Doctor name — Wrapped text size boosted cleanly */}
+            {/* Doctor name */}
             <div className="text-lg sm:text-2xl font-extrabold italic uppercase text-[#1F3A4B] dark:text-[#FAFDEE] leading-tight flex items-center gap-2 min-w-0 w-full font-sans">
               <User size={18} className="opacity-40 shrink-0" />
               <span className="truncate flex-1">DR. {current.doctorName.toUpperCase()}</span>
             </div>
 
-            {/* Reason — Text footprint size bumped and transformed */}
+            {/* Reason */}
             {current.reason && (
               <p className="text-xs sm:text-sm font-bold text-[#1F3A4B]/60 dark:text-white/40 ml-6 italic break-words uppercase tracking-wide">
                 "{current.reason.toUpperCase()}"
               </p>
             )}
 
-            {/* Scheduled slot — Font footprint size bumped */}
+            {/* Scheduled slot */}
             {current.scheduledTime && (
               <div className="ml-6 flex flex-col gap-1 min-w-0">
                 <p className="text-xs font-bold uppercase tracking-widest text-[#1F3A4B]/50 dark:text-white/40">
@@ -342,7 +340,7 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
               </div>
             )}
 
-            {/* Payment deadline — Font size expanded */}
+            {/* Payment deadline */}
             {canPay && current.paymentDeadline && (
               <div className="ml-6 flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 w-full min-w-0 uppercase tracking-wider">
                 <Hourglass size={12} className="shrink-0" />
@@ -350,7 +348,7 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
               </div>
             )}
 
-            {/* Expired notice box with inline dismiss */}
+            {/* Expired notice */}
             {isExpired && (
               <div className="ml-0 sm:ml-6 mt-2 p-4 rounded-xl bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/40 w-full min-w-0">
                 <div className="flex items-start gap-2.5 w-full min-w-0">
@@ -369,7 +367,6 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
                     )}
                   </div>
                 </div>
-
                 <button
                   onClick={() => handleDismiss(current.id)}
                   className="mt-3.5 w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-200 dark:hover:bg-rose-800/50 transition-all text-xs font-bold uppercase tracking-widest shrink-0"
@@ -381,9 +378,8 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
             )}
           </div>
 
-          {/* ── Action buttons ── Font sizes boosted cleanly */}
+          {/* Action buttons */}
           <div className="flex flex-row items-center gap-2.5 mt-6 w-full min-w-0 flex-wrap sm:flex-nowrap">
-            {/* Join Video Call */}
             {current.status === 'PAID_CONFIRMED' && current.meetLink && (
               <a
                 href={current.meetLink}
@@ -397,39 +393,32 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
               </a>
             )}
 
-            {/* Pay Now */}
             {canPay && (
               <button
                 onClick={() => handlePayNow(current)}
                 disabled={payingId === current.id}
                 className="flex flex-1 items-center justify-center gap-1.5 px-4 py-3.5 bg-[#1F3A4B] text-[#C2F84F] rounded-xl sm:rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl text-xs sm:text-sm font-bold uppercase tracking-wider sm:tracking-widest disabled:opacity-60 min-w-0"
               >
-                {payingId === current.id ? (
-                  <div className="w-4 h-4 border-2 border-[#C2F84F] border-t-transparent rounded-full animate-spin shrink-0" />
-                ) : (
-                  <IndianRupee size={15} className="shrink-0" />
-                )}
+                {payingId === current.id
+                  ? <div className="w-4 h-4 border-2 border-[#C2F84F] border-t-transparent rounded-full animate-spin shrink-0" />
+                  : <IndianRupee size={15} className="shrink-0" />}
                 <span className="truncate">PAY ₹{current.feeRupees.toFixed(0)}</span>
               </button>
             )}
 
-            {/* Cancel */}
             {canCancel && (
               <button
                 onClick={() => handleCancel(current)}
                 disabled={cancellingId === current.id}
                 className="flex items-center justify-center gap-1.5 px-4 py-3.5 bg-rose-500/10 text-rose-600 border border-rose-500/20 rounded-xl sm:rounded-2xl hover:bg-rose-600 hover:text-white transition-all text-xs sm:text-sm font-bold uppercase tracking-widest disabled:opacity-60 shrink-0"
               >
-                {cancellingId === current.id ? (
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
-                ) : (
-                  <X size={14} className="shrink-0" />
-                )}
+                {cancellingId === current.id
+                  ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
+                  : <X size={14} className="shrink-0" />}
                 <span>CANCEL</span>
               </button>
             )}
 
-            {/* Waiting hint — Cases updated */}
             {!canPay && !canCancel && !isExpired && current.status === 'PENDING_DOCTOR_APPROVAL' && (
               <span className="text-xs font-bold italic uppercase tracking-widest text-[#1F3A4B]/40 dark:text-white/20 block py-2.5 truncate">
                 WAITING FOR DOCTOR RESPONSE...
@@ -438,14 +427,13 @@ function CurrentAppointments({ refreshTrigger = 0 }) {
           </div>
         </div>
       ) : (
-        /* Empty States — Font footprint size increased */
         <div className="flex-1 flex flex-col items-center justify-center text-[#1F3A4B]/40 dark:text-white/30 text-center py-8">
           <p className="text-sm sm:text-base font-bold italic uppercase tracking-widest mb-1.5">NO REQUESTS YET</p>
           <p className="text-xs font-bold uppercase opacity-60 px-4 tracking-wide leading-normal">BOOK YOUR FIRST CONSULTATION FROM THE APPOINTMENTS TAB</p>
         </div>
       )}
 
-      {/* ── Slot usage bar ── Font footprint expanded cleanly */}
+      {/* Slot usage bar */}
       {meta.maxAllowed > 0 && (
         <div className="mt-5 pt-4 border-t border-[#1F3A4B]/5 dark:border-white/5 flex items-center justify-between gap-2 w-full min-w-0">
           <span className="text-xs font-bold uppercase tracking-widest text-[#1F3A4B]/40 dark:text-white/30 truncate">

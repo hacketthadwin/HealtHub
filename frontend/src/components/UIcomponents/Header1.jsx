@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, ArrowRight, Moon, Sun, Home, LogOut } from 'lucide-react';
 
+import { useTheme } from '../../context/ThemeContext';
+
 const navItems = [
   { name: 'FEATURES', scrollTo: 'features' },
   { name: 'FAQ',      scrollTo: 'faq' },
@@ -11,14 +13,17 @@ const navItems = [
 ];
 
 export default function Header1() {
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [isScrolled,      setIsScrolled]      = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [theme, setTheme] = useState('light');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [dashboardRoute, setDashboardRoute] = useState('/');
-  const location = useLocation();
-  const navigate = useNavigate();
+  const [isLoggedIn,      setIsLoggedIn]       = useState(false);
+  const [dashboardRoute,  setDashboardRoute]   = useState('/');
 
+  const location = useLocation();
+  const navigate  = useNavigate();
+
+  const { isDarkMode, toggleTheme } = useTheme();
+
+  // Auth state — re-evaluated on every navigation.
   useEffect(() => {
     const token = localStorage.getItem('userToken');
     const role  = localStorage.getItem('role');
@@ -32,27 +37,12 @@ export default function Header1() {
     }
   }, [location]);
 
+  // Scroll listener — passive flag prevents janking the main thread.
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 15);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 15);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  useEffect(() => {
-    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const savedTheme = localStorage.getItem('theme') || (isDark ? 'dark' : 'light');
-    setTheme(savedTheme);
-    document.documentElement.classList.toggle('dark', savedTheme === 'dark');
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    document.documentElement.classList.toggle('dark', newTheme === 'dark');
-  };
 
   const handleLogout = () => {
     localStorage.removeItem('userToken');
@@ -63,14 +53,9 @@ export default function Header1() {
 
   const handleScrollNav = (sectionId) => {
     setIsMobileMenuOpen(false);
-    
     const scrollToTarget = () => {
-      const el = document.getElementById(sectionId);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
-      }
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
     };
-
     if (location.pathname === '/') {
       setTimeout(scrollToTarget, 100);
     } else {
@@ -83,14 +68,13 @@ export default function Header1() {
     <>
       <div className="h-28" />
 
-      {/* Main header container set to font-roboto-slab layout */}
       <motion.header
         className="fixed top-0 left-0 right-0 z-50 py-5 font-roboto-slab px-4 sm:px-6 lg:px-8 antialiased"
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ type: 'spring', stiffness: 260, damping: 26 }}
       >
-        <div 
+        <div
           className={`mx-auto max-w-7xl rounded-2xl transition-all duration-500 border px-4 lg:px-4 xl:px-8 relative z-50 ${
             isScrolled || isMobileMenuOpen
               ? 'bg-white/70 dark:bg-[#070c14]/75 backdrop-blur-xl border-neutral-200/30 dark:border-white/5 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.06)] dark:shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6)] py-3'
@@ -98,23 +82,21 @@ export default function Header1() {
           }`}
         >
           <div className="flex items-center justify-between gap-2 xl:gap-4">
-            
-            {/* LOGO - Locked exclusively to font-sans font-extrabold */}
+
+            {/* Logo */}
             <div className="flex items-center shrink-0">
               <Link to="/" className="group relative block py-1">
-                <span 
-                  className="text-2xl sm:text-3xl lg:text-4xl font-extrabold italic tracking-tighter uppercase text-[#1F3A4B] dark:text-[#FAFDEE] group-hover:text-emerald-600 dark:group-hover:text-[#C2F84F] transition-colors duration-300 select-none block leading-none font-sans"
-                >
+                <span className="text-2xl sm:text-3xl lg:text-4xl font-extrabold italic tracking-tighter uppercase text-[#1F3A4B] dark:text-[#FAFDEE] group-hover:text-emerald-600 dark:group-hover:text-[#C2F84F] transition-colors duration-300 select-none block leading-none font-sans">
                   HEALTH<span className="text-emerald-600 dark:text-[#C2F84F]">HUB</span>
                 </span>
               </Link>
             </div>
 
-            {/* DESKTOP NAVIGATION - Updated to font-roboto-slab */}
+            {/* Desktop navigation */}
             <nav className="hidden lg:flex items-center bg-neutral-200/40 dark:bg-[#121c26]/40 p-1 rounded-full border border-neutral-300/20 dark:border-white/5 shadow-sm">
               {navItems.map((item) => {
-                const isActive = item.href && location.pathname === item.href;
-                const linkClass = `relative px-3 xl:px-6 py-2.5 text-sm xl:text-base font-bold tracking-wider transition-all duration-300 rounded-full text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 hover:text-emerald-600 dark:hover:text-[#C2F84F] uppercase font-roboto-slab`;
+                const isActive   = item.href && location.pathname === item.href;
+                const linkClass  = `relative px-3 xl:px-6 py-2.5 text-sm xl:text-base font-bold tracking-wider transition-all duration-300 rounded-full text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 hover:text-emerald-600 dark:hover:text-[#C2F84F] uppercase font-roboto-slab`;
 
                 if (item.scrollTo) {
                   return (
@@ -143,26 +125,28 @@ export default function Header1() {
               })}
             </nav>
 
-            {/* DESKTOP CONTROLS - Action texts updated to font-roboto-slab */}
+            {/* Desktop controls */}
             <div className="hidden lg:flex items-center gap-1.5 xl:gap-4 space-x-0 xl:space-x-4 shrink-0">
+              {/* Theme toggle — reads/writes via ThemeContext only */}
               <button
                 onClick={toggleTheme}
                 className="relative p-2.5 rounded-full border border-neutral-200 dark:border-white/10 bg-white/40 dark:bg-white/5 hover:bg-neutral-100/80 dark:hover:bg-white/10 transition-all text-[#1F3A4B] dark:text-[#FAFDEE]"
                 aria-label="Toggle theme"
               >
+
                 <motion.div
                   initial={false}
-                  animate={{ rotate: theme === 'dark' ? 180 : 0, scale: theme === 'dark' ? 0 : 1 }}
+                  animate={{ rotate: isDarkMode ? 180 : 0, scale: isDarkMode ? 0 : 1 }}
                   transition={{ duration: 0.3 }}
-                  className={theme === 'dark' ? 'absolute' : ''}
+                  className={isDarkMode ? 'absolute' : ''}
                 >
                   <Sun size={18} className="text-amber-500" />
                 </motion.div>
                 <motion.div
                   initial={false}
-                  animate={{ rotate: theme === 'dark' ? 0 : -180, scale: theme === 'dark' ? 1 : 0 }}
+                  animate={{ rotate: isDarkMode ? 0 : -180, scale: isDarkMode ? 1 : 0 }}
                   transition={{ duration: 0.3 }}
-                  className={theme === 'light' ? 'absolute' : ''}
+                  className={!isDarkMode ? 'absolute' : ''}
                 >
                   <Moon size={18} className="text-[#C2F84F]" />
                 </motion.div>
@@ -204,14 +188,17 @@ export default function Header1() {
               )}
             </div>
 
-            {/* MOBILE NAVIGATION TRIGGERS */}
+            {/* Mobile controls */}
             <div className="flex lg:hidden items-center gap-2 shrink-0">
               <button
                 onClick={toggleTheme}
                 className="p-2.5 rounded-full bg-neutral-200/50 dark:bg-white/5 border border-neutral-300/20 dark:border-white/10 text-[#1F3A4B] dark:text-[#FAFDEE]"
                 aria-label="Toggle theme"
               >
-                {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-500" /> : <Moon className="h-4 w-4 text-slate-700" />}
+
+                {isDarkMode
+                  ? <Sun  className="h-4 w-4 text-amber-500" />
+                  : <Moon className="h-4 w-4 text-slate-700" />}
               </button>
               <button
                 className="p-2.5 rounded-full bg-[#1F3A4B] dark:bg-[#C2F84F] text-white dark:text-[#1F3A4B] transition-transform active:scale-95"
@@ -223,7 +210,7 @@ export default function Header1() {
             </div>
           </div>
 
-          {/* COMPACT DROP-DOWN CONTAINER - Updated to font-roboto-slab */}
+          {/* Mobile drop-down */}
           <AnimatePresence>
             {isMobileMenuOpen && (
               <motion.div
@@ -235,7 +222,7 @@ export default function Header1() {
               >
                 <div className="pt-6 pb-2 border-t border-neutral-200/40 dark:border-white/5 mt-4 flex flex-col gap-1.5">
                   {navItems.map((item) => {
-                    const isActive = item.href && location.pathname === item.href;
+                    const isActive  = item.href && location.pathname === item.href;
                     const itemClass = `w-full text-left py-3.5 px-4 rounded-xl text-base font-bold uppercase tracking-wider transition-colors flex items-center justify-between text-[#1F3A4B]/90 dark:text-[#FAFDEE]/90 hover:bg-neutral-100 dark:hover:bg-white/5 font-roboto-slab`;
 
                     if (item.scrollTo) {
@@ -263,7 +250,6 @@ export default function Header1() {
                     );
                   })}
 
-                  {/* Auth Actions - Updated to font-roboto-slab */}
                   <div className="mt-4 pt-4 border-t border-neutral-200/40 dark:border-white/5 flex flex-col gap-2">
                     {isLoggedIn ? (
                       <>

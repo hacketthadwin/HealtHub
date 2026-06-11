@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { Play, Search } from 'lucide-react';
 import { API_URL } from '../../config/api';
 
 const HealthVideos = () => {
-  const [topics, setTopics] = useState([]);
+  const [topics,       setTopics]       = useState([]);
   const [selectedTopic, setSelectedTopic] = useState('diabetes management');
-  const [videos, setVideos] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [searchInput, setSearchInput] = useState('');
+  const [videos,       setVideos]       = useState([]);
+  const [loading,      setLoading]      = useState(false);
+  const [searchInput,  setSearchInput]  = useState('');
 
-  const token = localStorage.getItem('userToken');
+  const token = useMemo(() => localStorage.getItem('userToken'), []);
 
   useEffect(() => {
     const fetchTopics = async () => {
@@ -26,11 +26,11 @@ const HealthVideos = () => {
     fetchTopics();
   }, [token]);
 
-  const fetchVideos = async (topic) => {
+  const fetchVideos = useCallback(async (topic) => {
     setLoading(true);
     try {
       const { data } = await axios.get(`${API_URL}/api/v1/videos/health`, {
-        params: { topic, maxResults: 4 },
+        params:  { topic, maxResults: 4 },
         headers: { Authorization: `Bearer ${token}` },
       });
       setVideos(data.videos || []);
@@ -40,12 +40,12 @@ const HealthVideos = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
+  // No eslint-disable comment needed: fetchVideos is now a stable useCallback ref.
   useEffect(() => {
     fetchVideos(selectedTopic);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTopic]);
+  }, [selectedTopic, fetchVideos]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -57,8 +57,7 @@ const HealthVideos = () => {
 
   return (
     <div className="bg-white dark:bg-white/5 rounded-[2.5rem] p-6 md:p-10 border border-[#1F3A4B]/10 dark:border-white/5 shadow-2xl font-roboto-slab antialiased">
-      
-      {/* Container Header */}
+
       <h2 className="text-xl sm:text-3xl font-extrabold italic tracking-tighter mb-1 text-[#1F3A4B] dark:text-[#FAFDEE] uppercase font-sans leading-none">
         HEALTH EDUCATION
       </h2>
@@ -66,7 +65,7 @@ const HealthVideos = () => {
         CURATED VIDEOS FOR YOUR HEALTH JOURNEY
       </p>
 
-      {/* Search Input Area */}
+      {/* Search */}
       <form onSubmit={handleSearch} className="flex gap-2.5 mb-6">
         <input
           type="text"
@@ -83,7 +82,7 @@ const HealthVideos = () => {
         </button>
       </form>
 
-      {/* Filter Chips Track */}
+      {/* Topic chips */}
       <div className="flex flex-wrap gap-2 mb-6">
         {topics.slice(0, 8).map((topic) => (
           <button
@@ -100,11 +99,10 @@ const HealthVideos = () => {
         ))}
       </div>
 
-      {/* Content Render Grid */}
+      {/* Content */}
       {loading ? (
         <div className="grid grid-cols-2 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            /* Scaled skeleton box layout parameters */
             <div key={i} className="rounded-2xl overflow-hidden bg-[#1F3A4B]/5 dark:bg-white/5 animate-pulse h-28 sm:h-36" />
           ))}
         </div>
@@ -123,7 +121,6 @@ const HealthVideos = () => {
               className="group rounded-2xl overflow-hidden border border-[#1F3A4B]/10 dark:border-white/10 hover:border-[#C2F84F] transition-all shadow-sm flex flex-col bg-white dark:bg-transparent"
             >
               <div className="relative overflow-hidden shrink-0">
-                {/* Scaled thumbnail dimensions for clean rendering on desktops */}
                 <img
                   src={video.thumbnail}
                   alt={video.title}
@@ -135,9 +132,7 @@ const HealthVideos = () => {
                   </div>
                 </div>
               </div>
-              
               <div className="p-3.5 flex-1 flex flex-col justify-between gap-1.5">
-                {/* Title font footprints adjusted higher */}
                 <p className="font-bold text-xs sm:text-sm text-[#1F3A4B] dark:text-[#FAFDEE] leading-tight line-clamp-2 uppercase tracking-wide">
                   {video.title.toUpperCase()}
                 </p>

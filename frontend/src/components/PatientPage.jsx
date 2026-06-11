@@ -16,12 +16,16 @@ import HealthVideos             from './othercomps/HealthVideos';
 import Header1                  from './UIcomponents/Header1';
 import { API_URL }              from '../config/api';
 
-const socket = io(`${API_URL}`);
+
 
 const PatientPage = () => {
   const navigate     = useNavigate();
   const chatEndRef   = useRef(null);
   const fileInputRef = useRef(null);
+
+  const socketRef    = useRef(null);
+
+  const chartRef     = useRef(null);
 
   const [userId,      setUserId]      = useState(null);
   const [userName,    setUserName]    = useState('USER');
@@ -30,7 +34,6 @@ const PatientPage = () => {
   const [maxAllowed,  setMaxAllowed]  = useState(5);
 
   const [appointmentRefreshKey, setAppointmentRefreshKey] = useState(0);
-  const [refreshChartKey, setRefreshChartKey]   = useState(0);
   const [chatView,        setChatView]           = useState('closed');
   const [selectedDoctor,  setSelectedDoctor]     = useState(null);
   const [messages,        setMessages]           = useState([]);
@@ -39,8 +42,12 @@ const PatientPage = () => {
   const [selectedFile,    setSelectedFile]       = useState(null);
   const [isUploading,     setIsUploading]        = useState(false);
 
-  const scrollToBottom = () => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  useEffect(() => { scrollToBottom(); }, [messages]);
+
+  const scrollToBottom = useCallback(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => { scrollToBottom(); }, [messages, scrollToBottom]);
 
   const fetchDoctors = useCallback(async (token, currentUserId) => {
     try {
@@ -92,31 +99,15 @@ const PatientPage = () => {
     }
   }, [navigate, fetchDoctors]);
 
-  useEffect(() => {
-    if (!userId) return;
-    socket.emit('joinUserRoom', userId);
-  }, [userId]);
 
   useEffect(() => {
     if (!userId) return;
 
-    const handleAppointmentAborted = () => {
-      setAppointmentRefreshKey((prev) => prev + 1);
-      const token = localStorage.getItem('userToken');
-      if (token) fetchDoctors(token, userId);
-    };
+    const sock = io(API_URL);
+    socketRef.current = sock;
+    sock.emit('joinUserRoom', userId);
 
-    socket.on('appointment_aborted', handleAppointmentAborted);
-
-    return () => {
-      socket.off('appointment_aborted', handleAppointmentAborted);
-    };
-  }, [userId, fetchDoctors]);
-
-  useEffect(() => {
-    if (!userId) return;
-
-    socket.on('previousMessages', (prevMessages) => {
+    const onPreviousMessages = (prevMessages) => {
       setMessages(
         prevMessages.map((msg) => ({
           text:        msg.message || '',
@@ -128,9 +119,9 @@ const PatientPage = () => {
           messageType: msg.messageType || 'text',
         }))
       );
-    });
+    };
 
-    socket.on('receiveMessage', (messageData) => {
+    const onReceiveMessage = (messageData) => {
       setMessages((prev) => [
         ...prev,
         {
@@ -143,20 +134,34 @@ const PatientPage = () => {
           messageType: messageData.messageType || 'text',
         },
       ]);
-    });
+    };
+
+    const onAppointmentAborted = () => {
+      setAppointmentRefreshKey((prev) => prev + 1);
+      const token = localStorage.getItem('userToken');
+      if (token) fetchDoctors(token, userId);
+    };
+
+    sock.on('previousMessages',     onPreviousMessages);
+    sock.on('receiveMessage',        onReceiveMessage);
+    sock.on('appointment_aborted',   onAppointmentAborted);
 
     return () => {
-      socket.off('previousMessages');
-      socket.off('receiveMessage');
+      sock.off('previousMessages',   onPreviousMessages);
+      sock.off('receiveMessage',      onReceiveMessage);
+      sock.off('appointment_aborted', onAppointmentAborted);
+      sock.disconnect();
     };
-  }, [userId]);
+  }, [userId, fetchDoctors]);
 
   const handleSelectDoctor = (doctor) => {
     const roomId = [userId, doctor.id].sort().join('_');
     setSelectedDoctor({ ...doctor, roomId });
     setChatView('chatting');
     setMessages([]);
-    if (userId) socket.emit('joinRoom', { roomId, userId, role: 'patient' });
+    if (userId && socketRef.current) {
+      socketRef.current.emit('joinRoom', { roomId, userId, role: 'patient' });
+    }
   };
 
   const handleFileSelect = (e) => {
@@ -180,7 +185,7 @@ const PatientPage = () => {
           formData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        socket.emit('sendMessage', {
+        socketRef.current?.emit('sendMessage', {
           roomId:      selectedDoctor.roomId,
           senderId:    userId,
           senderName:  userName,
@@ -199,7 +204,7 @@ const PatientPage = () => {
     }
 
     if (inputMessage.trim() && selectedDoctor) {
-      socket.emit('sendMessage', {
+      socketRef.current?.emit('sendMessage', {
         roomId:     selectedDoctor.roomId,
         senderId:   userId,
         senderName: userName,
@@ -210,15 +215,19 @@ const PatientPage = () => {
     }
   };
 
+
   const triggerChartRefresh = useCallback(() => {
-    setRefreshChartKey((prev) => prev + 1);
+    chartRef.current?.refresh();
   }, []);
 
   return (
     <div className="min-h-screen bg-[#FAFDEE] dark:bg-[#0a111a] transition-all duration-500 text-[#1F3A4B] dark:text-[#FAFDEE] font-roboto-slab overflow-x-hidden antialiased">
       <Header1 />
 
-      <div className="fixed inset-0 pointer-events-none opacity-40 dark:opacity-20">
+      <div
+        className="fixed inset-0 pointer-events-none opacity-40 dark:opacity-20"
+        style={{ willChange: 'filter' }}
+      >
         <div className="absolute top-[-5%] left-[-5%] w-[45%] h-[45%] bg-[#C2F84F] rounded-full blur-[140px] dark:blur-[120px]" />
         <div className="absolute bottom-[-5%] right-[-5%] w-[35%] h-[35%] bg-cyan-400 rounded-full blur-[140px] dark:blur-[100px]" />
       </div>
@@ -259,10 +268,11 @@ const PatientPage = () => {
             </div>
           </div>
 
-          {/* Chart + Log Log Grid Modules */}
+          {/* Chart + Log Grid Modules */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             <div className="bg-white dark:bg-white/5 rounded-[2.5rem] md:rounded-[4rem] p-4 border border-[#1F3A4B]/10 dark:border-white/5 shadow-2xl overflow-hidden">
-              <DailyTaskCompletionChart key={refreshChartKey} />
+
+              <DailyTaskCompletionChart ref={chartRef} />
             </div>
             <div className="bg-white dark:bg-white/5 rounded-[2.5rem] md:rounded-[4rem] p-4 border border-[#1F3A4B]/10 dark:border-white/5 shadow-2xl overflow-hidden">
               <DailyTaskLog onTaskUpdate={triggerChartRefresh} />
@@ -390,7 +400,6 @@ const PatientPage = () => {
                   <ChevronRight size={12} className="rotate-180" /> BACK TO LIST
                 </button>
 
-                {/* Chat Feed Wrapper — Embedded custom transparent scroll parameters */}
                 <div className="flex-1 overflow-y-auto pr-2 space-y-4 min-h-0
                   [&::-webkit-scrollbar]:w-1.5
                   [&::-webkit-scrollbar-track]:bg-transparent

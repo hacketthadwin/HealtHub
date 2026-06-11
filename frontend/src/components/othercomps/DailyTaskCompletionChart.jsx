@@ -1,4 +1,7 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, {
+  useEffect, useState, useRef, useMemo, useCallback,
+  forwardRef, useImperativeHandle,
+} from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -13,7 +16,9 @@ import {
 } from 'chart.js';
 import axios from 'axios';
 import { Activity, ShieldCheck, Zap } from 'lucide-react';
-import { API_URL } from "../../config/api";
+import { API_URL } from '../../config/api';
+
+import { useTheme } from '../../context/ThemeContext';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
@@ -22,23 +27,17 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('en-IN', options).toUpperCase();
 };
 
-function DailyTaskCompletionChart() {
+
+const DailyTaskCompletionChart = forwardRef(function DailyTaskCompletionChart(props, ref) {
   const [taskRawData, setTaskRawData] = useState({ labels: [], values: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const chartRef = useRef(null);
 
-  const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
 
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsDark(document.documentElement.classList.contains('dark'));
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, []);
+  const { isDarkMode: isDark } = useTheme();
 
-  const fetchTaskData = async () => {
+  const fetchTaskData = useCallback(async () => {
     try {
       setLoading(true);
       const res = await axios.get(`${API_URL}/api/v1/get-7days-tasks`);
@@ -74,13 +73,17 @@ function DailyTaskCompletionChart() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchTaskData();
     const interval = setInterval(fetchTaskData, 24 * 60 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchTaskData]);
+
+  useImperativeHandle(ref, () => ({
+    refresh: fetchTaskData,
+  }), [fetchTaskData]);
 
   const chartData = useMemo(() => ({
     labels: taskRawData.labels,
@@ -132,17 +135,16 @@ function DailyTaskCompletionChart() {
         grid: { color: isDark ? 'rgba(250, 253, 238, 0.1)' : 'rgba(31, 58, 75, 0.04)', drawBorder: false },
         ticks: {
           color: isDark ? '#FAFDEE' : '#1F3A4B',
-          font: { weight: '800', size: 10 }, 
+          font: { weight: '800', size: 10 },
           callback: (v) => v + '%',
-          /* Hard-set specific 20% steps for the line spacing grids */
-          stepSize: 20, 
+          stepSize: 20,
         },
       },
       x: {
-        grid: { display: false }, 
+        grid: { display: false },
         ticks: {
           color: isDark ? '#FAFDEE' : '#1F3A4B',
-          font: { weight: '900', size: 11, style: 'italic' }, 
+          font: { weight: '900', size: 11, style: 'italic' },
         },
       },
     },
@@ -205,6 +207,6 @@ function DailyTaskCompletionChart() {
 
     </div>
   );
-}
+});
 
 export default DailyTaskCompletionChart;
