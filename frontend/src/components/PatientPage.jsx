@@ -16,7 +16,23 @@ import HealthVideos             from './othercomps/HealthVideos';
 import Header1                  from './UIcomponents/Header1';
 import { API_URL }              from '../config/api';
 
-
+const handleFileDownload = async (fileUrl, fileName) => {
+  try {
+    const res  = await fetch(fileUrl);
+    if (!res.ok) throw new Error('fetch failed');
+    const blob    = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link    = document.createElement('a');
+    link.href     = blobUrl;
+    link.download = fileName || 'file';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(blobUrl);
+  } catch {
+    window.open(fileUrl, '_blank');
+  }
+};
 
 const PatientPage = () => {
   const navigate     = useNavigate();
@@ -417,9 +433,13 @@ const PatientPage = () => {
                         }`}
                       >
                         {m.messageType === 'file' ? (
-                          <a href={m.fileUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 underline font-extrabold uppercase text-xs tracking-wider">
-                            <FileText size={16} />{m.fileName ? m.fileName.toUpperCase() : 'VIEW DOCUMENT'}
-                          </a>
+                          <button
+                            type="button"
+                            onClick={() => handleFileDownload(m.fileUrl, m.fileName)}
+                            className="flex items-center gap-2 underline font-extrabold uppercase text-xs tracking-wider border-0 bg-transparent p-0 cursor-pointer text-inherit"
+                          >
+                            <FileText size={16} />{m.fileName ? m.fileName.toUpperCase() : 'DOWNLOAD FILE'}
+                          </button>
                         ) : (
                           <span className="uppercase tracking-wide">{m.text.toUpperCase()}</span>
                         )}
@@ -455,7 +475,7 @@ const PatientPage = () => {
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
+                    accept=".jpg,.jpeg,.png"
                     className="hidden"
                     onChange={handleFileSelect}
                   />

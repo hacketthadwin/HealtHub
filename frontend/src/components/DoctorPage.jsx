@@ -253,6 +253,30 @@ const AcceptModal = ({ request, onClose, onSubmit, loading }) => {
   );
 };
 
+// fetch the file as a blob then trigger a real browser download.
+// the HTML `download` attribute is only honoured for same-origin URLs;
+// for cross-origin URLs (Cloudinary) the browser silently ignores it.
+// creating a local blob: URL makes the link same-origin, so the
+// download attribute is respected and the file saves with the correct name.
+const handleFileDownload = async (fileUrl, fileName) => {
+  try {
+    const res  = await fetch(fileUrl);
+    if (!res.ok) throw new Error('fetch failed');
+    const blob    = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link    = document.createElement('a');
+    link.href     = blobUrl;
+    link.download = fileName || 'file';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(blobUrl);
+  } catch {
+    // fallback: open in new tab so nothing is lost
+    window.open(fileUrl, '_blank');
+  }
+};
+
 
 const DoctorPage = () => {
   const navigate     = useNavigate();
@@ -1025,9 +1049,13 @@ const DoctorPage = () => {
               <div key={i} className={`flex ${m.sender === 'doctor' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`p-4 text-sm font-bold leading-relaxed max-w-[85%] rounded-[1.5rem] shadow-sm ${m.sender === 'doctor' ? 'bg-[#1F3A4B] text-[#FAFDEE] rounded-tr-none shadow-md' : 'bg-[#C2F84F] text-[#1F3A4B] rounded-tl-none border border-transparent dark:border-white/5'}`}>
                   {m.messageType === 'file' ? (
-                    <a href={m.fileUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 underline font-extrabold uppercase text-xs tracking-wider">
-                      <FileText size={16} />{m.fileName ? m.fileName.toUpperCase() : 'VIEW DOCUMENT'}
-                    </a>
+                    <button
+                      type="button"
+                      onClick={() => handleFileDownload(m.fileUrl, m.fileName)}
+                      className="flex items-center gap-2 underline font-extrabold uppercase text-xs tracking-wider border-0 bg-transparent p-0 cursor-pointer text-inherit"
+                    >
+                      <FileText size={16} />{m.fileName ? m.fileName.toUpperCase() : 'DOWNLOAD FILE'}
+                    </button>
                   ) : <span className="uppercase tracking-wide">{m.text.toUpperCase()}</span>}
                 </div>
               </div>
@@ -1044,7 +1072,7 @@ const DoctorPage = () => {
             <button type="button" onClick={() => fileInputRef.current?.click()} className="h-12 w-12 rounded-full flex items-center justify-center text-[#1F3A4B]/50 dark:text-white/40 hover:text-[#1F3A4B] dark:hover:text-[#C2F84F] transition-all ml-1">
               <Paperclip size={18} />
             </button>
-            <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={handleFileSelect} />
+            <input ref={fileInputRef} type="file" accept=".jpg,.jpeg,.png" className="hidden" onChange={handleFileSelect} />
             <input value={inputMessage} onChange={(e) => setInputMessage(e.target.value)}
               className="flex-1 bg-transparent px-4 py-3 font-bold text-sm uppercase tracking-wide placeholder:text-xs outline-none"
               placeholder={selectedFile ? 'PRESS SEND TO UPLOAD...' : 'TYPE A MESSAGE...'}

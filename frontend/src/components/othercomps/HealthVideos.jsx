@@ -136,7 +136,7 @@ const HealthVideos = () => {
                 <p className="font-bold text-xs sm:text-sm text-[#1F3A4B] dark:text-[#FAFDEE] leading-tight line-clamp-2 uppercase tracking-wide">
                   {video.title.toUpperCase()}
                 </p>
-                <p className="text-[10px] opacity-50 uppercase font-bold tracking-widest truncate mt-auto">
+                <p className="text-[10px] opacity-50 uppercase font-bold dark:text-[#d2ff20] tracking-widest truncate mt-auto">
                   {video.channelTitle.toUpperCase()}
                 </p>
               </div>
