@@ -145,7 +145,7 @@ export default function ContactUs1() {
                   CONTACT
                 </h2>
                 <span className="text-[#476407] dark:text-[#C2F84F] relative z-10 text-3xl sm:text-5xl font-extrabold tracking-tighter italic uppercase font-sans leading-none">
-                  HEALTHHUB
+                  HEALTHUB
                 </span>
 
                 {loadParticles && (

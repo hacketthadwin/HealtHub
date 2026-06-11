@@ -11,11 +11,11 @@ import {
 import { cn } from "../../lib/utils";
 
 const data = {
-  facebookLink: "https://facebook.com/HealthHub",
-  instaLink: "https://instagram.com/HealthHub",
-  twitterLink: "https://twitter.com/HealthHub",
-  githubLink: "https://github.com/HealthHub",
-  dribbbleLink: "https://dribbble.com/HealthHub",
+  facebookLink: "https://facebook.com/Healthub",
+  instaLink: "https://instagram.com/Healthub",
+  twitterLink: "https://twitter.com/Healthub",
+  githubLink: "https://github.com/Healthub",
+  dribbbleLink: "https://dribbble.com/Healthub",
   services: {
     appointments: "/book-appointment",
     doctors: "/find-doctors",
@@ -34,12 +34,12 @@ const data = {
     livechat: "/chat-with-doctor",
   },
   contact: {
-    email: "support@healthhub.com",
+    email: "support@healthub.com",
     phone: "+91 8637373116",
     address: "Kolkata, West Bengal, India",
   },
   company: {
-    name: "HEALTHHUB",
+    name: "HEALTHUB",
     description: "A MODERN HEALTHCARE MANAGEMENT SYSTEMS ENGINE OVERSEEING DUAL WORKFLOW SCHEDULING ROUTINES AND COMPLIANCE CHANNELS.",
   },
 };
@@ -86,7 +86,7 @@ export default function Footer4Col() {
           <div className="space-y-6">
             <div className="flex justify-center sm:justify-start items-center">
               <span className="text-4xl md:text-5xl font-extrabold italic tracking-tighter uppercase text-[#1F3A4B] dark:text-[#FAFDEE] font-sans">
-                HEALTH<span className="text-emerald-600 dark:text-[#C2F84F]">HUB</span>
+                HEALT<span className="text-emerald-600 dark:text-[#C2F84F]">HUB</span>
               </span>
             </div>
 

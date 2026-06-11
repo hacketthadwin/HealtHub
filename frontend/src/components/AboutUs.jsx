@@ -67,7 +67,7 @@ export default function AboutUs() {
             Bridging the Gap in Modern <span className="text-emerald-600 dark:text-[#C2F84F]">Healthcare</span>
           </h1>
           <p className="text-sm md:text-base font-bold tracking-widest uppercase text-[#1F3A4B]/80 dark:text-[#FAFDEE]/60 max-w-3xl mx-auto leading-relaxed">
-            HEALTHHUB IS A UNIFIED PLATFORM BUILT TO CONNECT PATIENTS, DOCTORS, AND HOSPITALS THROUGH SMART DASHBOARD TOOLS THAT PLACE YOUR WELLNESS FIRST.
+            HEALTHUB IS A UNIFIED PLATFORM BUILT TO CONNECT PATIENTS, DOCTORS, AND HOSPITALS THROUGH SMART DASHBOARD TOOLS THAT PLACE YOUR WELLNESS FIRST.
           </p>
         </div>
 
@@ -109,7 +109,7 @@ export default function AboutUs() {
               Designed for Patients <br /> Built for Professionals
             </h2>
             <p className="text-sm md:text-base tracking-wide uppercase text-[#1F3A4B]/70 dark:text-[#FAFDEE]/50 leading-relaxed">
-              WHETHER YOU NEED QUICK CHAT ANSWERS OR SYSTEM DASHBOARD PANELS FOR AN ENTIRE HOSPITAL INFRASTRUCTURE, HEALTHHUB PROVIDES A SMOOTH EXPERIENCE ACROSS EVERY ROLE.
+              WHETHER YOU NEED QUICK CHAT ANSWERS OR SYSTEM DASHBOARD PANELS FOR AN ENTIRE HOSPITAL INFRASTRUCTURE, HEALTHUB PROVIDES A SMOOTH EXPERIENCE ACROSS EVERY ROLE.
             </p>
           </div>
           <div className="rounded-[2rem] bg-gradient-to-br from-emerald-800 to-emerald-800/40 dark:from-[#C2F84F] dark:to-[#C2F84F]/40 border border-black/5 dark:border-white/5 p-6 flex flex-col justify-center h-full min-h-[160px] shadow-xl">

@@ -87,7 +87,7 @@ export default function Header1() {
             <div className="flex items-center shrink-0">
               <Link to="/" className="group relative block py-1">
                 <span className="text-2xl sm:text-3xl lg:text-4xl font-extrabold italic tracking-tighter uppercase text-[#1F3A4B] dark:text-[#FAFDEE] group-hover:text-emerald-600 dark:group-hover:text-[#C2F84F] transition-colors duration-300 select-none block leading-none font-sans">
-                  HEALTH<span className="text-emerald-600 dark:text-[#C2F84F]">HUB</span>
+                  HEALT<span className="text-emerald-600 dark:text-[#C2F84F]">HUB</span>
                 </span>
               </Link>
             </div>
