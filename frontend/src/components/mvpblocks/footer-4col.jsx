@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Facebook,
   Instagram,
@@ -18,25 +18,25 @@ const data = {
   dribbbleLink: "https://dribbble.com/Healthub",
   services: {
     appointments: "/book-appointment",
-    doctors: "/find-doctors",
+    doctors: "/book-appointment",
     community: "/community-support",
-    aiassistant: "/ai-health-assistant",
+    aiassistant: "/login",
   },
   about: {
-    history: "/our-journey",
-    team: "/our-doctors",
-    handbook: "/patient-guidelines",
-    careers: "/join-us",
+    history: "/about",
+    team: "/book-appointment",
+    handbook: "/about",
+    careers: "/contact",
   },
   help: {
-    faqs: "/faqs",
-    support: "/patient-support",
-    livechat: "/chat-with-doctor",
+    faqs: "faq",
+    support: "/contact",
+    livechat: "/book-appointment",
   },
   contact: {
     email: "support@healthub.com",
-    phone: "+91 8637373116",
-    address: "Kolkata, West Bengal, India",
+    phone: "+91 8899223344",
+    address: "Patna, Bihar, India",
   },
   company: {
     name: "HEALTHUB",
@@ -65,7 +65,7 @@ const serviceLinks = [
 ];
 
 const helpfulLinks = [
-  { text: "FAQS", href: data.help.faqs },
+  { text: "FAQS", href: data.help.faqs, scrollTo: true },
   { text: "PATIENT SUPPORT", href: data.help.support },
   { text: "CHAT WITH DOCTOR", href: data.help.livechat, hasIndicator: true },
 ];
@@ -77,6 +77,22 @@ const contactInfo = [
 ];
 
 export default function Footer4Col() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleFaqClick = () => {
+    const scrollFaq = () => {
+      document.getElementById("faq")?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    if (location.pathname === "/") {
+      scrollFaq();
+    } else {
+      navigate("/");
+      setTimeout(scrollFaq, 350);
+    }
+  };
+
   return (
     <footer className="bg-white dark:bg-white/5 backdrop-blur-2xl mt-24 w-full border-t border-[#1F3A4B]/10 dark:border-white/5 relative z-10 font-roboto-slab antialiased">
       <div className="mx-auto max-w-screen-xl pt-16 pb-8 px-6 lg:pt-20">
@@ -143,17 +159,33 @@ export default function Footer4Col() {
             <div className="text-center sm:text-left">
               <p className="text-[#1F3A4B] dark:text-[#FAFDEE] text-base font-extrabold uppercase tracking-widest mb-6 font-sans">HELP</p>
               <ul className="space-y-4 text-sm md:text-base font-bold tracking-wider">
-                {helpfulLinks.map(({ text, href, hasIndicator }) => (
+                {helpfulLinks.map(({ text, href, hasIndicator, scrollTo }) => (
                   <li key={text}>
-                    <Link to={href} className={cn("transition-colors flex justify-center sm:justify-start items-center gap-2 underline decoration-transparent hover:decoration-current decoration-2 underline-offset-4", hasIndicator ? "text-emerald-600 dark:text-[#C2F84F]" : "text-[#1F3A4B]/70 dark:text-[#FAFDEE]/60 hover:text-emerald-600 dark:hover:text-[#C2F84F]")}>
-                      <span>{text}</span>
-                      {hasIndicator && (
-                        <span className="relative flex w-2.5 h-2.5">
-                          <span className="bg-emerald-600 dark:bg-[#C2F84F] animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" />
-                          <span className="bg-emerald-600 dark:bg-[#C2F84F] relative inline-flex w-2.5 h-2.5 rounded-full" />
-                        </span>
-                      )}
-                    </Link>
+                    {scrollTo ? (
+                      <button
+                        type="button"
+                        onClick={handleFaqClick}
+                        className={cn("transition-colors flex justify-center sm:justify-start items-center gap-2 underline decoration-transparent hover:decoration-current decoration-2 underline-offset-4 text-[#1F3A4B]/70 dark:text-[#FAFDEE]/60 hover:text-emerald-600 dark:hover:text-[#C2F84F]")}
+                      >
+                        <span>{text}</span>
+                        {hasIndicator && (
+                          <span className="relative flex w-2.5 h-2.5">
+                            <span className="bg-emerald-600 dark:bg-[#C2F84F] animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" />
+                            <span className="bg-emerald-600 dark:bg-[#C2F84F] relative inline-flex w-2.5 h-2.5 rounded-full" />
+                          </span>
+                        )}
+                      </button>
+                    ) : (
+                      <Link to={href} className={cn("transition-colors flex justify-center sm:justify-start items-center gap-2 underline decoration-transparent hover:decoration-current decoration-2 underline-offset-4", hasIndicator ? "text-emerald-600 dark:text-[#C2F84F]" : "text-[#1F3A4B]/70 dark:text-[#FAFDEE]/60 hover:text-emerald-600 dark:hover:text-[#C2F84F]")}>
+                        <span>{text}</span>
+                        {hasIndicator && (
+                          <span className="relative flex w-2.5 h-2.5">
+                            <span className="bg-emerald-600 dark:bg-[#C2F84F] animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" />
+                            <span className="bg-emerald-600 dark:bg-[#C2F84F] relative inline-flex w-2.5 h-2.5 rounded-full" />
+                          </span>
+                        )}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
