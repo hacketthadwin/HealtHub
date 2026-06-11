@@ -59,7 +59,7 @@ const Signup = () => {
   };
 
   return (
-    <main className="min-h-screen w-full flex flex-col items-center justify-center pt-24 md:pt-0 pb-12 px-6 bg-[#FAFDEE] dark:bg-[#0a111a] transition-colors duration-300 font-roboto-slab relative overflow-x-hidden antialiased">
+    <main className="min-h-screen w-full flex flex-col items-center justify-start pt-16 md:pt-24 pb-12 px-6 bg-[#FAFDEE] dark:bg-[#0a111a] transition-colors duration-300 font-roboto-slab relative overflow-x-hidden antialiased">
 
       {/* Background Blobs */}
       <div className="fixed inset-0 pointer-events-none opacity-40 dark:opacity-20 z-0">
@@ -148,7 +148,7 @@ const Signup = () => {
             </div>
 
             {formData.role === 'Doctor' && (
-              <div className="space-y-5 md:space-y-6 pt-3 border-t border-[#1F3A4B]/10">
+              <div className="space-y-5 md:space-y-6 pt-3 border-t border-[#1F3A4B]/10 animate-fade-in">
                 <p className="text-xs font-black uppercase tracking-widest text-[#1F3A4B]/60 dark:text-[#FAFDEE]/60 text-center">DOCTOR PROFILE</p>
 
                 <div>
