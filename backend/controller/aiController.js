@@ -2,7 +2,6 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Concise system instruction — fewer tokens = fewer rate-limit hits
 const SYSTEM_INSTRUCTION = `You are a clinical assistant for HealthHub, a healthcare platform.
 STRICT RULES:
 1. Only answer health-related questions (symptoms, diseases, treatments, medications, wellness, mental health, fitness).
@@ -27,9 +26,6 @@ exports.chatWithAI = async (req, res) => {
     return res.status(400).json({ success: false, message: "Prompt too long (max 2000 chars)" });
   }
 
-  // Inline history in the prompt — avoids startChat session overhead
-  // which was sending systemInstruction + full history tokens on every call,
-  // causing consistent 429 rate-limit errors on the free Gemini tier.
   let historyContext = "";
   if (Array.isArray(history) && history.length > 0) {
     historyContext =
@@ -50,7 +46,6 @@ exports.chatWithAI = async (req, res) => {
 
   let lastError;
 
-  // Up to 3 attempts with exponential back-off on 429
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       const result = await model.generateContent(fullPrompt);
@@ -61,14 +56,13 @@ exports.chatWithAI = async (req, res) => {
       const is429 =
         error?.status === 429 || error?.message?.includes("429");
       if (is429 && attempt < 3) {
-        await sleep(attempt * 2000); // 2 s, then 4 s
+        await sleep(attempt * 2000);
         continue;
       }
       break;
     }
   }
 
-  // All retries exhausted — return appropriate error
   console.error("Gemini error:", lastError?.message || lastError);
 
   const is429 =
