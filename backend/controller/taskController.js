@@ -16,8 +16,8 @@ exports.createTask = async (req, res) => {
 
         const taskDate = date || new Date().toISOString().split('T')[0];
 
-        // --- Logic for 7-day task limit per user ---
-        // Get all unique dates for tasks belonging to the current user.
+        // logic for 7-day task limit per user
+        // get all unique dates for tasks belonging to the current user.
         const existingDates = await Task.distinct("date", { userId: userId }); 
 
         // If the current taskDate is not among the existing dates for this user
