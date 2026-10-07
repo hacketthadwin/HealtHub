@@ -12,12 +12,15 @@ const Login = () => {
   const [password, setPassword] = useState("");
   /* Decoupled state variable name to prevent execution crashes */
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
+  const [isSlow, setIsSlow] = useState(false); // slow response => backend is probably cold-starting
 
   const navigate = useNavigate();
 
   const onSubmit = (e) => {
     e.preventDefault();
     setIsSubmitLoading(true);
+    setIsSlow(false);
+    const slowTimer = setTimeout(() => setIsSlow(true), 4000);
 
     axios
       .post(`${API_URL}/api/v1/login`, {
@@ -45,6 +48,8 @@ const Login = () => {
         toast.error(error.response?.data?.message || "Login failed!");
       })
       .finally(() => {
+        clearTimeout(slowTimer);
+        setIsSlow(false);
         setIsSubmitLoading(false);
       });
   };
@@ -125,6 +130,12 @@ const Login = () => {
               {isSubmitLoading ? "VERIFYING..." : "LOGIN"}
               {!isSubmitLoading && <ArrowRight size={20} />}
             </button>
+
+            {isSubmitLoading && isSlow && (
+              <p role="status" className="text-center text-xs font-bold uppercase tracking-widest text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70">
+                Server is waking up. The first login after a while can take up to a minute, please keep this tab open.
+              </p>
+            )}
           </div>
         </form>
         

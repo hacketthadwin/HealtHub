@@ -2,7 +2,7 @@ require("dotenv").config();
 const express   = require("express");
 const app       = express();
 const helmet    = require("helmet");
-const rateLimit = require("express-rate-limit");
+const { apiLimiter, loginLimiters, signupLimiter } = require("./middlewares/rateLimiters");
 const Message   = require("./models/message");
 const cors      = require("cors");
 const http      = require("http");
@@ -30,6 +30,21 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
+// Render puts a reverse proxy in front of the app. Without this, req.ip is the proxy's address,
+// so EVERY visitor shares one rate-limit bucket. Override with TRUST_PROXY_HOPS if
+// /api/v1/debug-ip (enable with DEBUG_IP=true) shows the wrong address.
+app.set("trust proxy", Number(process.env.TRUST_PROXY_HOPS) || 1);
+
+if (process.env.DEBUG_IP === "true") {
+  app.get("/api/v1/debug-ip", (req, res) => {
+    res.json({
+      ip: req.ip,
+      xForwardedFor: req.headers["x-forwarded-for"] || null,
+      trustProxyHops: app.get("trust proxy"),
+    });
+  });
+}
+
 app.use(helmet());
 app.use(cors(corsOptions));
 app.use(express.json());
@@ -43,16 +58,10 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max:      100,
-  message:  { success: false, message: "Too many requests. Please try again later." },
-});
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max:      10,
-  message:  { success: false, message: "Too many login attempts. Please try again in 15 minutes." },
+// Health check used by the frontend warm-up and by uptime monitors. Registered BEFORE the
+// rate limiter so these pings never use up (or get blocked by) the API budget.
+app.get("/api/v1/ping", (req, res) => {
+  res.status(200).json({ status: "ok", timestamp: Date.now() });
 });
 
 app.use("/api/v1", apiLimiter);
@@ -141,8 +150,8 @@ const { auth }    = require("./middlewares/authMiddleware");
 const { getMyProfile } = require("./controller/doctorController");
 const razorpay    = require("./config/paymentConfig");
 
-app.use("/api/v1/login",  authLimiter);
-app.use("/api/v1/signup", authLimiter);
+app.post("/api/v1/login",  ...loginLimiters);
+app.post("/api/v1/signup", signupLimiter);
 
 
 app.use("/api/v1", userRoutes);
@@ -168,10 +177,6 @@ app.use("/api/v1", require("./routes/uploadRoutes"));
 app.use("/api/v1", require("./routes/videoRoutes"));
 app.use("/api/v1", require("./routes/prescriptionRoutes"));
 app.use("/api/v1", require("./routes/reviewRoutes"));
-
-app.get("/api/v1/ping", (req, res) => {
-  res.status(200).json({ status: "ok", timestamp: Date.now() });
-});
 
 app.get("/", (req, res) => {
   res.send("HealthHub API is running (PPR mode).");

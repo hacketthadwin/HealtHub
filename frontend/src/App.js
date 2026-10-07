@@ -17,11 +17,25 @@ import RoleProtectedRoute from './components/RoleProtectedRoute';
 import ContactUs1 from './components/mvpblocks/contact-us-1';
 import CongestedPricing from './components/mvpblocks/congusted-pricing';
 import AboutUs from './components/AboutUs';
+import { API_URL } from './config/api';
 function App() {
   const { pathname } = useLocation();
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
+
+  // Render's free tier sleeps after 15 min idle. Wake it as soon as anyone lands on the site
+  // so it is warm by the time they reach login. Long timeout: a cold start can take ~1 min.
+  useEffect(() => {
+    const base = String(API_URL).replace(/\/api\/v1\/?$/, '').replace(/\/$/, '');
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 65000);
+    fetch(`${base}/api/v1/ping`, { signal: controller.signal })
+      .catch(() => {})                       // wake-up is best effort; never surface errors
+      .finally(() => clearTimeout(timer));
+    return () => controller.abort();
+  }, []);
+
   return (
     <ThemeProvider>
     <AIResponseProvider>
