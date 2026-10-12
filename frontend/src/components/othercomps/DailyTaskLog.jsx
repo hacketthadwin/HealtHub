@@ -12,6 +12,11 @@ import { API_URL } from "../../config/api";
 
 const getAuthToken = () => localStorage.getItem('userToken');
 
+// The AI reply lives in a context that outlives this component. Remembering the last reply we already turned
+// into tasks at module level means leaving this page and coming back (or a second effect run) can't log the
+// same reply again.
+let lastHandledAIMessage = null;
+
 const formatDate = (dateString) => {
   const opts = { weekday: 'short', month: 'short', day: 'numeric' };
   return new Date(dateString).toLocaleDateString('en-IN', opts).toUpperCase();
@@ -138,14 +143,29 @@ function DailyTaskLog({ onTaskUpdate }) {
   }, [fetchTaskLog]);
 
   useEffect(() => {
-    if (!lastAIMessage) return;
-    const aiItems = parseHTMLList(lastAIMessage);
+    if (!lastAIMessage || lastAIMessage === lastHandledAIMessage) return;
+
+    // De-duplicate within the reply itself (case-insensitive), keeping the first spelling.
+    const seen = new Map();
+    parseHTMLList(lastAIMessage).filter(Boolean).forEach(desc => {
+      const key = desc.toLowerCase();
+      if (!seen.has(key)) seen.set(key, desc);
+    });
+    const aiItems = [...seen.values()];
     if (!aiItems.length) return;
+
+    lastHandledAIMessage = lastAIMessage;   // claim it before the async work starts
+
     const postTasksAndRefresh = async () => {
       try {
-        await Promise.all(aiItems.map(desc => postNewTask(desc)));
+        for (const desc of aiItems) {       // one at a time so the server can spot repeats reliably
+          await postNewTask(desc);
+        }
         fetchTaskLog();
-      } catch (e) { console.error(e); }
+      } catch (e) {
+        console.error(e);
+        lastHandledAIMessage = null;        // allow a retry; the server ignores tasks that already exist
+      }
     };
     postTasksAndRefresh();
   }, [lastAIMessage, postNewTask, fetchTaskLog]);

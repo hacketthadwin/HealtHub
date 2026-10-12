@@ -38,7 +38,7 @@ const Login = () => {
           
           toast.success("Logged in successfully!");
           setTimeout(() => {
-            navigate(role === "doctor" ? "/doctor" : "/patient");
+            navigate(role === "doctor" ? "/doctor" : role === "admin" ? "/admin" : "/patient", { replace: true });
           }, 1500);
         } else {
           toast.error(response.data.message || "Invalid credentials!");

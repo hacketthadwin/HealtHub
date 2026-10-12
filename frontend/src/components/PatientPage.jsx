@@ -119,7 +119,7 @@ const PatientPage = () => {
   useEffect(() => {
     if (!userId) return;
 
-    const sock = io(API_URL);
+    const sock = io(API_URL, { auth: { token: localStorage.getItem('userToken') } });
     socketRef.current = sock;
     sock.emit('joinUserRoom', userId);
 

@@ -4,10 +4,13 @@ const BOOKING_STATES = [
   "PENDING_DOCTOR_APPROVAL",
   "DOCTOR_ACCEPTED_AWAITING_PAYMENT",
   "PAID_CONFIRMED",
+  "COMPLETED",                  // consultation finished (doctor marked it) — payout becomes due
   "DOCTOR_REJECTED",
   "PATIENT_CANCELLED",
+  "PAID_CANCELLED",             // cancelled after payment (patient or doctor) — refunded
   "PAYMENT_EXPIRED",
-  "ABORTED_BY_DOCTOR",          // ← NEW: doctor marks expired after consultation window passes
+  "REQUEST_EXPIRED",            // doctor never answered within the response window
+  "ABORTED_BY_DOCTOR",          // doctor marks expired after consultation window passes
 ];
 
 const ACTIVE_STATUSES = [
@@ -54,6 +57,9 @@ const bookingRequestSchema = new mongoose.Schema(
       slotDurationMinutes: { type: Number, default: 30 },
     },
 
+    // Doctor must accept/reject before this; the background job expires the request afterwards.
+    responseDeadline: { type: Date, default: null },
+
     paymentDeadline: { type: Date, default: null },
 
     razorpayOrderId: { type: String, default: null },
@@ -69,6 +75,12 @@ const bookingRequestSchema = new mongoose.Schema(
 
     rejectionReason:    { type: String, default: null },
     cancellationReason: { type: String, default: null },
+    cancelledBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    cancelledAt: { type: Date, default: null },
 
     // ── Abort / expire fields (populated when doctor marks appointment expired) ──
     abortedBy: {
@@ -78,6 +90,22 @@ const bookingRequestSchema = new mongoose.Schema(
     },
     abortedAt:   { type: Date,   default: null },
     abortReason: { type: String, default: null },
+
+    // ── Completion ──
+    completedAt: { type: Date, default: null },
+    completedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+
+    // ── Reminder bookkeeping (claimed atomically by the reminder job so each is sent once) ──
+    reminder24hSentAt:  { type: Date, default: null },
+    reminderSoonSentAt: { type: Date, default: null },
+
+    // ── AI pre-consult summary for the doctor (cached) ──
+    aiIntakeSummary: {
+      text:          { type: String, default: null },
+      generatedAt:   { type: Date,   default: null },
+      redFlags:      { type: [String], default: [] },
+      usedProfile:   { type: Boolean, default: false },
+    },
   },
   { timestamps: true }
 );
@@ -95,6 +123,16 @@ bookingRequestSchema.index(
 bookingRequestSchema.index(
   { paymentDeadline: 1 },
   { sparse: true, name: "idx_payment_deadline" }
+);
+
+bookingRequestSchema.index(
+  { responseDeadline: 1 },
+  { sparse: true, name: "idx_response_deadline" }
+);
+
+bookingRequestSchema.index(
+  { razorpayOrderId: 1 },
+  { sparse: true, name: "idx_razorpay_order" }
 );
 
 const BookingRequest = mongoose.model("BookingRequest", bookingRequestSchema);

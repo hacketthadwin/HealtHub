@@ -5,6 +5,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import 'react-toastify/dist/ReactToastify.css';
 import { API_URL } from '../config/api';
+import { ThemedSelect, NumberStepper } from './UIcomponents/FormControls';
 
 const SPECIALIZATIONS = [
   'General Physician', 'Cardiologist', 'Dermatologist', 'Neurologist',
@@ -16,6 +17,7 @@ const SPECIALIZATIONS = [
 const Signup = () => {
   const [formData, setFormData] = useState({
     username: '', email: '', password: '', confirmPassword: '', role: '', specialization: '', experience: '',
+    registrationNumber: '', registrationCouncil: '', phone: '', notifyConsent: false,
   });
   /* Decoupled state variable name to prevent execution crashes */
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
@@ -27,6 +29,10 @@ const Signup = () => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match!');
+      return;
+    }
+    if (formData.role === 'Doctor' && (!formData.registrationNumber.trim() || !formData.registrationCouncil.trim())) {
+      toast.error('Enter your medical registration number and council.');
       return;
     }
     setIsSubmitLoading(true);
@@ -41,6 +47,13 @@ const Signup = () => {
     if (formData.role === 'Doctor') {
       if (formData.specialization) payload.specialization = formData.specialization;
       if (formData.experience) payload.experience = parseInt(formData.experience);
+      payload.registrationNumber  = formData.registrationNumber.trim();
+      payload.registrationCouncil = formData.registrationCouncil.trim();
+    }
+
+    if (formData.phone.trim()) {
+      payload.phone = formData.phone.trim();
+      payload.notifyConsent = formData.notifyConsent;
     }
 
     axios.post(`${API_URL}/api/v1/signup`, payload)
@@ -153,34 +166,84 @@ const Signup = () => {
 
                 <div>
                   <label className="block font-bold text-[#1F3A4B]/80 dark:text-[#FAFDEE]/80 uppercase tracking-widest text-sm mb-2 ml-1">SPECIALIZATION</label>
-                  <select
+                  <ThemedSelect
                     name="specialization"
                     value={formData.specialization}
                     onChange={onChange}
-                    className="w-full rounded-2xl border border-[#1F3A4B]/10 bg-[#1F3A4B]/5 dark:bg-white/5 px-5 py-4 text-[#1F3A4B] dark:text-[#FAFDEE] font-bold text-base outline-none focus:border-[#C2F84F] transition-all uppercase"
-                  >
-                    <option value="" className="text-xs">SELECT SPECIALIZATION...</option>
-                    {SPECIALIZATIONS.map((s) => (
-                      <option key={s} value={s} className="text-base">{s.toUpperCase()}</option>
-                    ))}
-                  </select>
+                    options={SPECIALIZATIONS.map((x) => x)}
+                    placeholder="SELECT SPECIALIZATION..."
+                    ariaLabel="Specialization"
+                  />
                 </div>
 
                 <div>
                   <label className="block font-bold text-[#1F3A4B]/80 dark:text-[#FAFDEE]/80 uppercase tracking-widest text-sm mb-2 ml-1">YEARS OF EXPERIENCE</label>
-                  <input
+                  <NumberStepper
                     name="experience"
-                    type="number"
-                    placeholder="E.G. 5"
-                    min="0"
-                    max="60"
                     value={formData.experience}
+                    onChange={onChange}
+                    min={0}
+                    max={60}
+                    placeholder="E.G. 5"
+                    ariaLabel="years of experience"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-[#1F3A4B]/80 dark:text-[#FAFDEE]/80 uppercase tracking-widest text-sm mb-2 ml-1">MEDICAL REGISTRATION NUMBER</label>
+                  <input
+                    name="registrationNumber"
+                    type="text"
+                    placeholder="E.G. MH-12345"
+                    maxLength={40}
+                    value={formData.registrationNumber}
                     onChange={onChange}
                     className="w-full rounded-2xl border border-[#1F3A4B]/10 bg-[#1F3A4B]/5 dark:bg-white/5 px-5 py-4 text-[#1F3A4B] dark:text-[#FAFDEE] font-bold text-base outline-none focus:border-[#C2F84F] transition-all uppercase placeholder:text-sm"
                   />
                 </div>
+
+                <div>
+                  <label className="block font-bold text-[#1F3A4B]/80 dark:text-[#FAFDEE]/80 uppercase tracking-widest text-sm mb-2 ml-1">REGISTRATION COUNCIL</label>
+                  <input
+                    name="registrationCouncil"
+                    type="text"
+                    placeholder="E.G. MAHARASHTRA MEDICAL COUNCIL"
+                    maxLength={80}
+                    value={formData.registrationCouncil}
+                    onChange={onChange}
+                    className="w-full rounded-2xl border border-[#1F3A4B]/10 bg-[#1F3A4B]/5 dark:bg-white/5 px-5 py-4 text-[#1F3A4B] dark:text-[#FAFDEE] font-bold text-base outline-none focus:border-[#C2F84F] transition-all uppercase placeholder:text-sm"
+                  />
+                  <p className="mt-2 ml-1 text-xs font-bold uppercase tracking-wide text-[#1F3A4B]/60 dark:text-[#FAFDEE]/60">
+                    OUR TEAM VERIFIES YOUR REGISTRATION BEFORE PATIENTS CAN FIND YOU.
+                  </p>
+                </div>
               </div>
             )}
+
+            <div className="space-y-3 pt-3 border-t border-[#1F3A4B]/10">
+              <div>
+                <label className="block font-bold text-[#1F3A4B]/80 dark:text-[#FAFDEE]/80 uppercase tracking-widest text-sm mb-2 ml-1">MOBILE NUMBER (OPTIONAL)</label>
+                <input
+                  name="phone"
+                  type="tel"
+                  placeholder="+91 98765 43210"
+                  maxLength={16}
+                  value={formData.phone}
+                  onChange={onChange}
+                  className="w-full rounded-2xl border border-[#1F3A4B]/10 bg-[#1F3A4B]/5 dark:bg-white/5 px-5 py-4 text-[#1F3A4B] dark:text-[#FAFDEE] font-bold text-base outline-none focus:border-[#C2F84F] transition-all placeholder:text-sm"
+                />
+              </div>
+              <label className="flex items-start gap-3 ml-1 text-xs font-bold uppercase tracking-wide text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 accent-emerald-600"
+                  checked={formData.notifyConsent}
+                  disabled={!formData.phone.trim()}
+                  onChange={(e) => setFormData({ ...formData, notifyConsent: e.target.checked })}
+                />
+                SEND ME APPOINTMENT REMINDERS ON SMS / WHATSAPP
+              </label>
+            </div>
 
             <button 
               type="submit" 

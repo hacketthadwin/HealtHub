@@ -79,7 +79,10 @@ function AIChatButton() {
         { sender: 'ai',   text: aiResponse  },
       ]);
 
-      const doTheseMatch = aiResponse.match(/<h4>Do these things:<\/h4>\s*(<ul>[\s\S]*?<\/ul>)/);
+      // Emergency guidance ("call 112…") is advice, not a daily habit — never log it as tasks.
+      const doTheseMatch = response.data.emergency
+        ? null
+        : aiResponse.match(/<h4>Do these things:<\/h4>\s*(<ul>[\s\S]*?<\/ul>)/);
       if (doTheseMatch?.[1]) {
         const html = doTheseMatch[1].trim();
         setLastAIMessage(html);

@@ -1,6 +1,6 @@
 const express  = require("express");
 const router   = express.Router();
-const { auth, isPatient, isDoctor } = require("../middlewares/authMiddleware");
+const { auth, isPatient, isDoctor, requireApprovedDoctor } = require("../middlewares/authMiddleware");
 
 const {
   createBookingRequest,
@@ -8,7 +8,10 @@ const {
   cancelBookingRequest,
   acceptBookingRequest,
   rejectBookingRequest,
-  abortBookingRequest,      
+  abortBookingRequest,
+  completeBookingRequest,
+  cancelPaidBooking,
+  doctorCancelPaidBooking,
   getDoctorQueue,
   getSingleRequest,
 } = require("../controller/bookingRequestController");
@@ -34,10 +37,14 @@ router.patch( "/:id/cancel",           auth, isPatient, cancelBookingRequest);
 router.post(  "/:id/initiate-payment", auth, isPatient, initiatePayment);
 router.post(  "/:id/verify-payment",   auth, isPatient, verifyPayment);
 
-router.patch( "/:id/accept", auth, isDoctor,  acceptBookingRequest);
+router.patch( "/:id/cancel-paid",      auth, isPatient, cancelPaidBooking);
+
+router.patch( "/:id/accept", auth, isDoctor, requireApprovedDoctor, acceptBookingRequest);
 router.patch( "/:id/reject", auth, isDoctor,  rejectBookingRequest);
 
 router.patch( "/:id/abort",  auth, isDoctor,  abortBookingRequest);
+router.patch( "/:id/complete",      auth, isDoctor, requireApprovedDoctor, completeBookingRequest);
+router.patch( "/:id/doctor-cancel", auth, isDoctor, requireApprovedDoctor, doctorCancelPaidBooking);
 
 
 router.get(   "/:id",        auth, getSingleRequest);

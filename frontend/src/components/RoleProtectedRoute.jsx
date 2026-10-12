@@ -12,7 +12,7 @@ const RoleProtectedRoute = ({ children, allowedRole }) => {
 
   if (role !== allowedRole.toLowerCase()) {
     // Redirect based on actual role
-    return <Navigate to={role === "doctor" ? "/doctor" : "/patient"} replace />;
+    return <Navigate to={role === "doctor" ? "/doctor" : role === "admin" ? "/admin" : "/patient"} replace />;
   }
 
   return children;

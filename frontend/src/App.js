@@ -17,6 +17,9 @@ import RoleProtectedRoute from './components/RoleProtectedRoute';
 import ContactUs1 from './components/mvpblocks/contact-us-1';
 import CongestedPricing from './components/mvpblocks/congusted-pricing';
 import AboutUs from './components/AboutUs';
+import ConsultationsPage from './components/ConsultationsPage';
+import HealthProfilePage from './components/HealthProfilePage';
+import AdminPage from './components/AdminPage';
 import { API_URL } from './config/api';
 function App() {
   const { pathname } = useLocation();
@@ -75,6 +78,21 @@ function App() {
           <PrivateRoute>
             <CommuntiySupport/>
           </PrivateRoute>
+        } />
+        <Route path="/consultations" element={
+          <PrivateRoute>
+            <ConsultationsPage/>
+          </PrivateRoute>
+        } />
+        <Route path="/health-profile" element={
+          <RoleProtectedRoute allowedRole="patient">
+            <HealthProfilePage/>
+          </RoleProtectedRoute>
+        } />
+        <Route path="/admin" element={
+          <RoleProtectedRoute allowedRole="admin">
+            <AdminPage/>
+          </RoleProtectedRoute>
         } />
       </Routes>
     </div>

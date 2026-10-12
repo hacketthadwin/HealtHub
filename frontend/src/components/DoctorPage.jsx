@@ -34,6 +34,9 @@ const isAbortEligible = (booking) => {
   return new Date() > slotEnd;
 };
 
+const hasStarted = (booking) =>
+  !!booking?.scheduledDate && new Date() >= new Date(booking.scheduledDate);
+
 // ─── Abort Confirmation Modal ──────────────────────────────────────────────
 const AbortConfirmModal = ({ booking, onClose, onConfirm, loading }) => (
   <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 font-roboto-slab">
@@ -289,6 +292,7 @@ const DoctorPage = () => {
   const [userName,     setUserName]     = useState('USER');
   const [consultingFee,          setConsultingFee]          = useState(null);
   const [consultingFeeConfirmed, setConsultingFeeConfirmed] = useState(false);
+  const [verification, setVerification] = useState(null);
   const [feeInput,               setFeeInput]               = useState('');
   const [updatingFee,            setUpdatingFee]            = useState(false);
   const feePanelRef = useRef(null);
@@ -331,6 +335,7 @@ const DoctorPage = () => {
           setFeeInput(String(data.data.consultingFee / 100));
         }
         setConsultingFeeConfirmed(data.data.consultingFeeConfirmed ?? false);
+        setVerification({ status: data.data.verificationStatus, note: data.data.verificationNote });
       }
     } catch { /* silent */ }
   }, []);
@@ -440,7 +445,7 @@ const DoctorPage = () => {
   useEffect(() => {
     if (!userId) return;
 
-    const sock = io(API_URL);
+    const sock = io(API_URL, { auth: { token: localStorage.getItem('userToken') } });
     socketRef.current = sock;
     sock.emit('joinUserRoom', userId);
 
@@ -572,6 +577,23 @@ const DoctorPage = () => {
   };
 
 
+  const handleCompleteBooking = async (booking) => {
+    if (!window.confirm('Mark this consultation as completed? This starts your payout and lets the patient review you.')) return;
+    const token = localStorage.getItem('userToken');
+    try {
+      await axios.patch(
+        `${API_URL}/api/v1/booking-requests/${booking.id}/complete`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Consultation marked as completed.');
+      fetchAppointments();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to mark the consultation as completed.');
+    }
+  };
+
+
   const handleFeeUpdate = async () => {
     const fee = parseFloat(feeInput);
     if (!fee || fee <= 0 || fee > 50000) {
@@ -692,6 +714,23 @@ const DoctorPage = () => {
       <main className="relative z-10 max-w-[1700px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 px-4 md:px-10 pb-24">
         <div className="lg:col-span-8 space-y-6 md:space-y-10">
 
+          {/* ── Registration verification banner ── */}
+          {verification && verification.status !== 'approved' && (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-400 rounded-[2rem] shadow-md">
+              <TriangleAlert className="text-amber-500 shrink-0 mt-0.5" size={22} />
+              <div className="flex-1">
+                <p className="font-extrabold text-amber-800 dark:text-amber-300 text-sm uppercase tracking-wide">
+                  {verification.status === 'rejected' ? 'REGISTRATION COULD NOT BE VERIFIED' : 'REGISTRATION VERIFICATION PENDING'}
+                </p>
+                <p className="text-xs text-amber-700 dark:text-amber-400 mt-1 font-bold uppercase tracking-wide">
+                  {verification.status === 'rejected'
+                    ? (verification.note || 'PLEASE CONTACT SUPPORT.')
+                    : 'PATIENTS CAN FIND YOU, AND YOU CAN ACCEPT BOOKINGS, ONCE AN ADMIN APPROVES YOUR REGISTRATION.'}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* ── Fee-not-confirmed banner ── */}
           {!consultingFeeConfirmed && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-400 rounded-[2rem] shadow-md">
@@ -788,6 +827,14 @@ const DoctorPage = () => {
                               <Video size={14} /> START CALL
                             </a>
                           )}
+                          {hasStarted(app) && !eligible && (
+                            <button
+                              onClick={() => handleCompleteBooking(app)}
+                              className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-full font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all w-fit shadow-md"
+                            >
+                              <CheckCircle size={14} /> MARK COMPLETED
+                            </button>
+                          )}
                           {eligible && (
                             <button
                               onClick={() => handleAbortOpen(app)}
@@ -840,12 +887,20 @@ const DoctorPage = () => {
                         </p>
                       )}
                     </div>
-                    <button
-                      onClick={() => handleAbortOpen(booking)}
-                      className="flex items-center gap-2 px-5 py-2.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all shrink-0 shadow-sm active:scale-95"
-                    >
-                      <Ban size={14} /> MARK AS EXPIRED
-                    </button>
+                    <div className="flex flex-wrap gap-2 shrink-0">
+                      <button
+                        onClick={() => handleCompleteBooking(booking)}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:scale-105 transition-all shrink-0 shadow-sm active:scale-95"
+                      >
+                        <CheckCircle size={14} /> MARK COMPLETED
+                      </button>
+                      <button
+                        onClick={() => handleAbortOpen(booking)}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all shrink-0 shadow-sm active:scale-95"
+                      >
+                        <Ban size={14} /> MARK AS EXPIRED
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

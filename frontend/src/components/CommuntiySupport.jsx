@@ -107,7 +107,7 @@ const CommunitySupport = () => {
 
       {/* Professional Back Button — Position adjusted for responsive alignment layout */}
       <button 
-        onClick={() => navigate('/patient')} 
+        onClick={() => { const r = localStorage.getItem('role'); navigate(r === 'doctor' ? '/doctor' : r === 'admin' ? '/admin' : '/patient'); }} 
         className="absolute top-6 left-4 md:top-8 md:left-8 z-20 group flex items-center justify-center gap-3.5 h-12 w-12 md:h-auto md:w-auto md:px-6 md:py-3.5 rounded-full border border-neutral-200/40 dark:border-white/5 bg-white/40 dark:bg-neutral-950/20 backdrop-blur-md text-[#1F3A4B]/80 dark:text-[#FAFDEE]/80 text-sm font-bold tracking-widest transition-all duration-300 hover:text-emerald-600 dark:hover:text-[#C2F84F] hover:border-neutral-300/60 dark:hover:border-white/20 hover:shadow-[0_12px_30px_-5px_rgba(0,0,0,0.05)] uppercase"
       >
         <ArrowLeft size={18} className="transition-transform duration-300 group-hover:-translate-x-0.5" />

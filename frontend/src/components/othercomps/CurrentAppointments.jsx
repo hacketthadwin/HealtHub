@@ -39,6 +39,21 @@ const STATUS_META = {
     color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
     icon:  TriangleAlert,
   },
+  COMPLETED: {
+    label: 'COMPLETED',
+    color: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400',
+    icon:  CheckCircle,
+  },
+  PAID_CANCELLED: {
+    label: 'CANCELLED — REFUNDED',
+    color: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
+    icon:  X,
+  },
+  REQUEST_EXPIRED: {
+    label: 'NO RESPONSE — EXPIRED',
+    color: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400',
+    icon:  Clock,
+  },
   ABORTED_BY_DOCTOR: {
     label: 'EXPIRED — NOT ATTENDED',
     color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',

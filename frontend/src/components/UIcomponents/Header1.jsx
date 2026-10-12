@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ArrowRight, Moon, Sun, Home, LogOut } from 'lucide-react';
+import { Menu, X, ArrowRight, Moon, Sun, Home, LogOut, ClipboardList, HeartPulse } from 'lucide-react';
 
 import { useTheme } from '../../context/ThemeContext';
 
@@ -17,6 +17,7 @@ export default function Header1() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoggedIn,      setIsLoggedIn]       = useState(false);
   const [dashboardRoute,  setDashboardRoute]   = useState('/');
+  const [userRole,        setUserRole]         = useState('');
 
   const location = useLocation();
   const navigate  = useNavigate();
@@ -31,7 +32,9 @@ export default function Header1() {
       setIsLoggedIn(true);
       if (role === 'doctor')       setDashboardRoute('/doctor');
       else if (role === 'patient') setDashboardRoute('/patient');
+      else if (role === 'admin')   setDashboardRoute('/admin');
       else                         setDashboardRoute('/dashboard');
+      setUserRole(role || '');
     } else {
       setIsLoggedIn(false);
     }
@@ -69,13 +72,13 @@ export default function Header1() {
       <div className="h-28" />
 
       <motion.header
-        className="fixed top-0 left-0 right-0 z-50 py-5 font-roboto-slab px-4 sm:px-6 lg:px-8 antialiased"
+        className={`fixed top-0 left-0 right-0 z-50 py-5 font-roboto-slab px-4 sm:px-6 ${isLoggedIn ? 'lg:px-4' : 'lg:px-8'} antialiased`}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ type: 'spring', stiffness: 260, damping: 26 }}
       >
         <div
-          className={`mx-auto max-w-7xl rounded-2xl transition-all duration-500 border px-4 lg:px-4 xl:px-8 relative z-50 ${
+          className={`mx-auto ${isLoggedIn ? 'max-w-[100rem] xl:px-6' : 'max-w-7xl xl:px-8'} rounded-2xl transition-all duration-500 border px-4 lg:px-4 relative z-50 ${
             isScrolled || isMobileMenuOpen
               ? 'bg-white/70 dark:bg-[#070c14]/75 backdrop-blur-xl border-neutral-200/30 dark:border-white/5 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.06)] dark:shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6)] py-3'
               : 'bg-white/20 dark:bg-neutral-900/10 backdrop-blur-lg border-transparent py-4'
@@ -96,7 +99,7 @@ export default function Header1() {
             <nav className="hidden lg:flex items-center bg-neutral-200/40 dark:bg-[#121c26]/40 p-1 rounded-full border border-neutral-300/20 dark:border-white/5 shadow-sm">
               {navItems.map((item) => {
                 const isActive   = item.href && location.pathname === item.href;
-                const linkClass  = `relative px-3 xl:px-6 py-2.5 text-sm xl:text-base font-bold tracking-wider transition-all duration-300 rounded-full text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 hover:text-emerald-600 dark:hover:text-[#C2F84F] uppercase font-roboto-slab`;
+                const linkClass  = `relative px-3 ${isLoggedIn ? 'xl:px-4 2xl:px-6' : 'xl:px-6'} py-2.5 text-sm xl:text-base font-bold tracking-wider transition-all duration-300 rounded-full text-[#1F3A4B]/70 dark:text-[#FAFDEE]/70 hover:text-emerald-600 dark:hover:text-[#C2F84F] uppercase font-roboto-slab`;
 
                 if (item.scrollTo) {
                   return (
@@ -126,7 +129,7 @@ export default function Header1() {
             </nav>
 
             {/* Desktop controls */}
-            <div className="hidden lg:flex items-center gap-1.5 xl:gap-4 space-x-0 xl:space-x-4 shrink-0">
+            <div className={`hidden lg:flex items-center shrink-0 ${isLoggedIn ? 'gap-1.5 xl:gap-2' : 'gap-1.5 xl:gap-4 space-x-0 xl:space-x-4'}`}>
               {/* Theme toggle — reads/writes via ThemeContext only */}
               <button
                 onClick={toggleTheme}
@@ -154,19 +157,45 @@ export default function Header1() {
 
               {isLoggedIn ? (
                 <div className="flex items-center gap-2 xl:gap-2.5">
+                  {(userRole === 'doctor' || userRole === 'patient') && (
+                    <Link
+                      to="/consultations"
+                      title="Consultations"
+                      aria-label="Consultations"
+                      className="inline-flex items-center gap-2 rounded-full bg-neutral-200/50 hover:bg-neutral-300/50 dark:bg-white/5 dark:hover:bg-white/10 px-3 2xl:px-5 py-2.5 xl:py-3 text-sm xl:text-base font-bold uppercase tracking-wider text-[#1F3A4B] dark:text-[#FAFDEE] hover:scale-[1.01] active:scale-[0.99] transition-all font-roboto-slab"
+                    >
+                      <ClipboardList className="h-4 w-4" />
+                      <span className="hidden 2xl:inline">CONSULTATIONS</span>
+                    </Link>
+                  )}
+                  {userRole === 'patient' && (
+                    <Link
+                      to="/health-profile"
+                      title="Health profile"
+                      aria-label="Health profile"
+                      className="inline-flex items-center gap-2 rounded-full bg-neutral-200/50 hover:bg-neutral-300/50 dark:bg-white/5 dark:hover:bg-white/10 px-3 2xl:px-5 py-2.5 xl:py-3 text-sm xl:text-base font-bold uppercase tracking-wider text-[#1F3A4B] dark:text-[#FAFDEE] hover:scale-[1.01] active:scale-[0.99] transition-all font-roboto-slab"
+                    >
+                      <HeartPulse className="h-4 w-4" />
+                      <span className="hidden 2xl:inline">HEALTH PROFILE</span>
+                    </Link>
+                  )}
                   <Link
                     to={dashboardRoute}
-                    className="inline-flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 dark:bg-[#C2F84F] dark:hover:bg-[#b0e342] px-4 xl:px-6 py-2.5 xl:py-3 text-sm xl:text-base font-bold uppercase tracking-wider text-white dark:text-[#1F3A4B] shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all font-roboto-slab"
+                    title="Dashboard"
+                    aria-label="Dashboard"
+                    className="inline-flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 dark:bg-[#C2F84F] dark:hover:bg-[#b0e342] px-3 xl:px-5 py-2.5 xl:py-3 text-sm xl:text-base font-bold uppercase tracking-wider text-white dark:text-[#1F3A4B] shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all font-roboto-slab"
                   >
                     <Home className="h-4 w-4" />
-                    <span>DASHBOARD</span>
+                    <span className="hidden xl:inline">DASHBOARD</span>
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="inline-flex items-center gap-2 rounded-full bg-neutral-200/50 hover:bg-rose-100/50 dark:bg-white/5 dark:hover:bg-rose-950/20 px-4 xl:px-6 py-2.5 xl:py-3 text-sm xl:text-base font-bold uppercase tracking-wider text-rose-900 dark:text-rose-400 hover:scale-[1.01] active:scale-[0.99] transition-all font-roboto-slab"
+                    title="Logout"
+                    aria-label="Logout"
+                    className="inline-flex items-center gap-2 rounded-full bg-neutral-200/50 hover:bg-rose-100/50 dark:bg-white/5 dark:hover:bg-rose-950/20 px-3 xl:px-5 py-2.5 xl:py-3 text-sm xl:text-base font-bold uppercase tracking-wider text-rose-900 dark:text-rose-400 hover:scale-[1.01] active:scale-[0.99] transition-all font-roboto-slab"
                   >
                     <LogOut className="h-4 w-4" />
-                    <span>LOGOUT</span>
+                    <span className="hidden xl:inline">LOGOUT</span>
                   </button>
                 </div>
               ) : (
@@ -253,6 +282,26 @@ export default function Header1() {
                   <div className="mt-4 pt-4 border-t border-neutral-200/40 dark:border-white/5 flex flex-col gap-2">
                     {isLoggedIn ? (
                       <>
+                        {(userRole === 'doctor' || userRole === 'patient') && (
+                          <Link
+                            to="/consultations"
+                            className="w-full py-3.5 rounded-xl bg-neutral-200/50 dark:bg-white/5 flex items-center justify-center gap-2 text-base font-bold uppercase tracking-wider text-[#1F3A4B] dark:text-[#FAFDEE] font-roboto-slab"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                            <ClipboardList className="h-4 w-4" />
+                            CONSULTATIONS
+                          </Link>
+                        )}
+                        {userRole === 'patient' && (
+                          <Link
+                            to="/health-profile"
+                            className="w-full py-3.5 rounded-xl bg-neutral-200/50 dark:bg-white/5 flex items-center justify-center gap-2 text-base font-bold uppercase tracking-wider text-[#1F3A4B] dark:text-[#FAFDEE] font-roboto-slab"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
+                            <HeartPulse className="h-4 w-4" />
+                            HEALTH PROFILE
+                          </Link>
+                        )}
                         <Link
                           to={dashboardRoute}
                           className="w-full py-3.5 rounded-xl bg-[#1F3A4B] dark:bg-[#C2F84F] flex items-center justify-center gap-2 text-base font-bold uppercase tracking-wider text-white dark:text-[#1F3A4B] font-roboto-slab"

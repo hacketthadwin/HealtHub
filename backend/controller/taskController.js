@@ -16,6 +16,28 @@ exports.createTask = async (req, res) => {
 
         const taskDate = date || new Date().toISOString().split('T')[0];
 
+        const cleanName = String(name || '').trim();
+        if (!cleanName) {
+            return res.status(400).json({ success: false, message: "Task name is required." });
+        }
+
+        // Same task, same day, same user is stored once (case-insensitive). Repeats - from the AI suggesting the
+        // same tip again, a page re-mount or a double click - get the existing task back instead of a copy.
+        const escapedName = cleanName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const existing = await Task.findOne({
+            userId: userId,
+            date: taskDate,
+            name: { $regex: `^${escapedName}$`, $options: 'i' },
+        });
+        if (existing) {
+            return res.status(200).json({
+                success: true,
+                message: "Task already exists for this day",
+                duplicate: true,
+                data: existing
+            });
+        }
+
         // logic for 7-day task limit per user
         // get all unique dates for tasks belonging to the current user.
         const existingDates = await Task.distinct("date", { userId: userId }); 
@@ -34,7 +56,7 @@ exports.createTask = async (req, res) => {
         }
 
         // Create the new task, explicitly associating it with the current user's ID.
-        const newTask = await Task.create({ name, completed, date: taskDate, userId: userId });
+        const newTask = await Task.create({ name: cleanName, completed: completed === true, date: taskDate, userId: userId });
 
         res.status(200).json({
             success: true,

@@ -41,6 +41,9 @@ const PublicRoute = ({ children }) => {
       console.log("Logged in as Patient, navigating to /patient");
       return <Navigate to="/patient" replace />;
     }
+    if (role === "Admin") {
+      return <Navigate to="/admin" replace />;
+    }
     // Fallback if logged in but role is not Doctor or Patient, or is null
     console.log("Logged in with unhandled role or no role, navigating to /");
     return <Navigate to="/" replace />;

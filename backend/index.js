@@ -3,7 +3,6 @@ const express   = require("express");
 const app       = express();
 const helmet    = require("helmet");
 const { apiLimiter, loginLimiters, signupLimiter } = require("./middlewares/rateLimiters");
-const Message   = require("./models/message");
 const cors      = require("cors");
 const http      = require("http");
 const { Server } = require("socket.io");
@@ -18,14 +17,18 @@ if (process.env.NODE_ENV !== "production") {
   console.log("DB connection initiated (development mode)");
 }
 
+// One list for both HTTP CORS and Socket.IO. Extra origins can be added with EXTRA_ALLOWED_ORIGINS (comma-separated).
+const ALLOWED_ORIGINS = [
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "https://healthub-six.vercel.app",
+  "https://healthub-hmdmkbue6-adarsh-jhas-projects-f89f8c07.vercel.app",
+  ...(process.env.EXTRA_ALLOWED_ORIGINS || "").split(",").map((s) => s.trim()).filter(Boolean),
+];
+
 const corsOptions = {
-  origin: [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "https://healthub-six.vercel.app",
-    "https://healthub-hmdmkbue6-adarsh-jhas-projects-f89f8c07.vercel.app",
-  ],
-  methods:        ["GET", "POST", "PATCH", "DELETE"],
+  origin:         ALLOWED_ORIGINS,
+  methods:        ["GET", "POST", "PUT", "PATCH", "DELETE"],
   credentials:    true,
   allowedHeaders: ["Content-Type", "Authorization"],
 };
@@ -47,6 +50,15 @@ if (process.env.DEBUG_IP === "true") {
 
 app.use(helmet());
 app.use(cors(corsOptions));
+
+// Razorpay webhook: needs the RAW request body to verify its signature, so it is registered BEFORE
+// express.json() and before the rate limiter (Razorpay retries must never be throttled).
+app.post(
+  "/api/v1/payment/webhook",
+  express.raw({ type: "application/json", limit: "1mb" }),
+  require("./controller/razorpayWebhookController").razorpayWebhook
+);
+
 app.use(express.json());
 
 if (process.env.NODE_ENV === "production") {
@@ -64,20 +76,15 @@ app.get("/api/v1/ping", (req, res) => {
   res.status(200).json({ status: "ok", timestamp: Date.now() });
 });
 
+// Scheduler hook for an external cron (protected by CRON_SECRET). Also before the limiter.
+app.use("/api/v1", require("./routes/internalRoutes"));
+
 app.use("/api/v1", apiLimiter);
-
-
-require("./config/database").connect();
 
 
 const io = new Server(server, {
   cors: {
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:5173",
-      "https://healthub-six.vercel.app",
-      "https://healthub-hmdmkbue6-adarsh-jhas-projects-f89f8c07.vercel.app",
-    ],
+    origin:      ALLOWED_ORIGINS,
     methods:     ["GET", "POST"],
     credentials: true,
   },
@@ -85,63 +92,8 @@ const io = new Server(server, {
 
 socketManager.setIO(io);
 
-io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
-
-  socket.on("joinUserRoom", (userId) => {
-    if (!userId) return;
-    const roomName = `user:${userId}`;
-    socket.join(roomName);
-    console.log(`User ${userId} joined personal room: ${roomName}`);
-  });
-
-  socket.on("joinRoom", async ({ roomId, userId, role }) => {
-    socket.join(roomId);
-    console.log(`${role} ${userId} joined room: ${roomId}`);
-    try {
-      const messages = await Message.find({ roomId }).sort({ timestamp: 1 });
-      socket.emit("previousMessages", messages);
-    } catch (err) {
-      console.error("Error fetching previous messages:", err);
-    }
-  });
-
-  socket.on("sendMessage", async ({
-    roomId, senderId, senderName, receiverId, message,
-    fileUrl, fileName, fileType, messageType,
-  }) => {
-    const msgData = {
-      senderId,
-      senderName,
-      message:     message || "",
-      fileUrl:     fileUrl  || null,
-      fileName:    fileName || null,
-      fileType:    fileType || null,
-      messageType: messageType || "text",
-      timestamp:   Date.now(),
-      roomId,
-    };
-    io.to(roomId).emit("receiveMessage", msgData);
-    try {
-      await Message.create({
-        roomId,
-        sender:      senderId,
-        receiver:    receiverId,
-        message:     message || "",
-        fileUrl:     fileUrl  || null,
-        fileName:    fileName || null,
-        fileType:    fileType || null,
-        messageType: messageType || "text",
-      });
-    } catch (err) {
-      console.error("Error saving message:", err);
-    }
-  });
-
-  socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
-  });
-});
+// JWT-authenticated chat: see sockets/chatSocket.js
+require("./sockets/chatSocket")(io);
 
 
 const userRoutes  = require("./routes/user");
@@ -177,17 +129,36 @@ app.use("/api/v1", require("./routes/uploadRoutes"));
 app.use("/api/v1", require("./routes/videoRoutes"));
 app.use("/api/v1", require("./routes/prescriptionRoutes"));
 app.use("/api/v1", require("./routes/reviewRoutes"));
+app.use("/api/v1", require("./routes/consultationRoutes"));
+app.use("/api/v1", require("./routes/profileRoutes"));
+app.use("/api/v1", require("./routes/recordRoutes"));
+app.use("/api/v1/admin", require("./routes/adminRoutes"));
 
 app.get("/", (req, res) => {
   res.send("HealthHub API is running (PPR mode).");
 });
 
-
-const expireStalePayments = require("./jobs/expireStalePayments");
-expireStalePayments();
-setInterval(expireStalePayments, 30 * 60 * 1000);
-
-
-server.listen(5000, () => {
-  console.log("Server is running on port 5000 (PPR architecture active)");
+// Last-resort JSON error handler (bad JSON bodies etc.)
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  const status = err.status || err.statusCode || 500;
+  if (status >= 500) console.error("Unhandled error:", err);
+  res.status(status).json({ success: false, message: status >= 500 ? "Server error." : (err.message || "Bad request.") });
 });
+
+
+// Started only when run directly (node index.js), so tests can import the app without a database.
+if (require.main === module) {
+  require("./config/database").connect();
+
+  // Background work (payment expiry, doctor-response expiry, reminders). Driven by database state, so it is
+  // safe to run from this timer AND from an external cron (POST /api/v1/internal/run-jobs).
+  require("./jobs/runJobs").startJobs();
+
+  const PORT = Number(process.env.PORT) || 5000;
+  server.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT} (PPR architecture active)`);
+  });
+}
+
+module.exports = { app, server, io };
